@@ -53,7 +53,8 @@ export type Screen =
   | "family"
   | "missions"
   | "properties"
-  | "notifications";
+  | "notifications"
+  | "account";
 
 export interface Town {
   id: TownId;

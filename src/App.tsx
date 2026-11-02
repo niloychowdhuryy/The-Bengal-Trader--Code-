@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AccountPanel from "./components/AccountPanel";
 import BengalMap from "./components/BengalMap";
 import { VesselPortrait } from "./components/map-art/VesselArt";
 import CityScene, {
@@ -58,6 +59,8 @@ import {
   type VesselClass,
   type VesselClassId,
 } from "./game/model";
+import { createAccountService, type AccountStatus } from "./online/account";
+import { APP_VERSION, getOnlineConfig, getProblemReportUrl } from "./online/config";
 import { applyCommand, type CommandResult, type GameCommand, type RecordedCommand } from "./game/commands";
 import { commitGame, openGameSession, startCommandLog } from "./game/storage";
 import {
@@ -2217,12 +2220,19 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [accountService] = useState(() => {
+    const config = getOnlineConfig();
+    return config ? createAccountService(config) : null;
+  });
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>({ kind: "loading" });
   const gameRef = useRef<GameState | null>(null);
   gameRef.current = game;
   // Commands applied since the last save. They are written together with the game.
   const pendingCommands = useRef<RecordedCommand[]>([]);
   const nextSeq = useRef(1);
   const lastCommandAt = useRef(0);
+
+  useEffect(() => accountService?.subscribe(setAccountStatus), [accountService]);
 
   useEffect(() => {
     let active = true;
@@ -2656,6 +2666,7 @@ export default function App() {
     missions: "Mission board",
     properties: "Properties",
     notifications: "Notices",
+    account: "Account",
   };
 
   const closePanel = () => {
@@ -2863,6 +2874,9 @@ export default function App() {
               )}
               {screen === "progress" && <ProgressPanel state={game} />}
               {screen === "family" && <HouseholdPanel state={game} />}
+              {screen === "account" && accountService && (
+                <AccountPanel service={accountService} status={accountStatus} />
+              )}
               {screen === "missions" && (
                 <MissionBoardPanel state={game} onAccept={handleAcceptMission} />
               )}
@@ -2957,6 +2971,7 @@ export default function App() {
                 ["family", "Household"],
                 ["properties", "Properties"],
                 ["notifications", "Notifications"],
+                ...(accountService ? ([["account", "Account"]] as const) : []),
               ] as const).map(([destination, label]) => (
                 <button
                   key={destination}
@@ -2968,6 +2983,12 @@ export default function App() {
                   {label}
                 </button>
               ))}
+              <p className="more-menu-version">
+                Version {APP_VERSION} ·{" "}
+                <a href={getProblemReportUrl()} target="_blank" rel="noreferrer">
+                  Report a problem
+                </a>
+              </p>
             </nav>
           )}
         </section>

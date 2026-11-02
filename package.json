@@ -12,6 +12,7 @@
     "build:server": "vite build --config vite.server.config.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

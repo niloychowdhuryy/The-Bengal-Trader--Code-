@@ -66,7 +66,11 @@ The voyage clock is the one exception to recording. Background checkpoints aren'
 
 `src/server/sync.ts` handles a batch of commands independently of any platform, and `src/server/supabase-store.ts` connects it to Supabase. `npm run build:server` bundles them with the game rules into `supabase/functions/_shared/game-server.js` (generated, not committed) for the Edge Function in `supabase/functions/sync/`. `supabase/migrations/` holds the schema: players can read their own records, and every write goes through server functions using the service role, whose key exists only in Supabase's secrets.
 
-The browser game doesn't import any of this and makes no network requests yet. Cloud saves connect it in Stage 3.
+The browser game doesn't import any of this. Cloud saves connect it in Stage 3.
+
+## Accounts
+
+`src/online/config.ts` reads the public `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, set in Vercel and in a local, uncommitted `.env.local`. Without them the game stays offline with no login shown, and it refuses a secret key. `src/online/account.ts` wraps Google sign-in and loads `supabase-js` separately, so offline play never depends on it. `src/components/AccountPanel.tsx` is the interface. A database trigger creates each profile, and `complete_profile` is the only way to change one. Signing out touches only the session, never the saved game. Accounts aren't connected to saves yet.
 
 ## Save and offline behavior
 

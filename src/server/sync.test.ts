@@ -61,7 +61,6 @@ function testClient(database: PGlite): SupabaseLike {
 
 async function seedPlayer(id: string, gold = 2_000) {
   await db.query("insert into auth.users (id) values ($1)", [id]);
-  await db.query("insert into public.profiles (id) values ($1)", [id]);
   await db.query(
     `insert into public.game_states (player_id, state, schema_version, last_at, provenance)
      values ($1, $2::jsonb, 19, $3, 'verified')`,
@@ -85,6 +84,9 @@ beforeAll(async () => {
   `);
   await db.exec(
     readFileSync("supabase/migrations/20261102000000_foundation.sql", "utf8"),
+  );
+  await db.exec(
+    readFileSync("supabase/migrations/20261102000100_profiles.sql", "utf8"),
   );
   await db.exec(`grant all on all tables in schema public to service_role;`);
   store = createSupabaseSyncStore(testClient(db));
@@ -234,6 +236,69 @@ describe("database access rules", () => {
     ["calling the save function", `select public.commit_sync('${ALICE}', 0, '{}', 19, 1, 1, '${uuid(9)}', 1, '[]')`],
   ])("stops anonymous visitors %s", async (_name, sql) => {
     await expect(as("anon", null, sql)).rejects.toThrow(/permission denied/);
+  });
+
+  describe("profiles", () => {
+    const setProfile = (player: string | null, name: string, age = true) =>
+      as(player ? "authenticated" : "anon", player, `select public.complete_profile('${name}', ${age})`);
+    const profile = async (player: string) =>
+      (await db.query<{ display_name: string | null; age_confirmed_at: string | null }>(
+        "select display_name, age_confirmed_at from public.profiles where id = $1",
+        [player],
+      )).rows[0];
+
+    it("creates an empty profile for each new account, with no Google details", async () => {
+      expect(await profile(ALICE)).toEqual({ display_name: null, age_confirmed_at: null });
+    });
+
+    it("lets a player set their own name and confirm their age", async () => {
+      await setProfile(ALICE, "Rani of Dhaka");
+      const saved = await profile(ALICE);
+      expect(saved.display_name).toBe("Rani of Dhaka");
+      expect(saved.age_confirmed_at).not.toBeNull();
+      expect((await profile(BOB)).display_name).toBeNull();
+    });
+
+    it("trims the name and keeps the first age confirmation", async () => {
+      await setProfile(ALICE, "  Rani  ");
+      const first = await profile(ALICE);
+      expect(first.display_name).toBe("Rani");
+      await setProfile(ALICE, "Rani Two");
+      expect((await profile(ALICE)).age_confirmed_at).toEqual(first.age_confirmed_at);
+    });
+
+    it("refuses without age confirmation", async () => {
+      await expect(setProfile(ALICE, "Rani", false)).rejects.toThrow(/age-required/);
+      expect((await profile(ALICE)).display_name).toBeNull();
+    });
+
+    it.each(["", "a", "x".repeat(25), "<script>", "Rani!", " ", "-Rani", "Rani-"])(
+      "refuses the name %j",
+      async (name) => {
+        await expect(setProfile(ALICE, name)).rejects.toThrow(/name-invalid/);
+      },
+    );
+
+    it("refuses a name someone else has, ignoring capitals", async () => {
+      await setProfile(ALICE, "Rani");
+      await expect(setProfile(BOB, "RANI")).rejects.toThrow(/name-taken/);
+    });
+
+    it("stops anonymous visitors using it", async () => {
+      await expect(setProfile(null, "Rani")).rejects.toThrow(/permission denied/);
+    });
+
+    it("doesn't let players run the account trigger function", async () => {
+      await expect(
+        as("authenticated", ALICE, "select public.handle_new_user()"),
+      ).rejects.toThrow(/permission denied|trigger/);
+    });
+
+    it("hides other players' profiles", async () => {
+      await setProfile(BOB, "Bob");
+      const rows = await as("authenticated", ALICE, "select display_name from public.profiles");
+      expect(rows.rows).toEqual([{ display_name: null }]);
+    });
   });
 
   it("removes all of a player's data when their account is deleted", async () => {

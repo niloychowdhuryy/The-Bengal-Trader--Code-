@@ -217,9 +217,9 @@ Visual polish is committed. The owner has approved a larger online expansion, wh
 
 **Essential milestones, not optional extras:**
 
-- **Milestone S, online staging deployment: next.** An early playable game at a stable web address, updated automatically. Needs the owner's GitHub and Vercel accounts.
-- **Online Stage 2, Google login and profiles: next.** Needs the owner's Supabase project and Google OAuth setup.
-- **Milestone N, correct water and land navigation:** comes before cloud saves, Coins, markets and voyage events. The route network doesn't match the painted map and needs retracing, with land legs and boat-to-cart transitions where the map needs them.
+- **Milestone S, online staging deployment: live** at https://bengal-trader-staging.vercel.app. It updates automatically after tests pass, and shows its version with a problem-report link.
+- **Online Stage 2, Google login and profiles: implemented.** Sign-in, merchant names and a 13+ check were tested by the owner on a local copy against the real project. Saves stay on the device until Stage 3.
+- **Milestone N, correct water and land navigation: next after Stage 2.** It comes before cloud saves, Coins, markets and voyage events. The route network doesn't match the painted map and needs retracing, with land legs and boat-to-cart transitions where the map needs them.
 - **Milestone T, individual town identities:** every town gets its own look, layout and landmarks, with every important building functional. Built with Stage 9; see [TOWN_IDENTITY_PLAN.md](./TOWN_IDENTITY_PLAN.md).
 
 Exit checks are in the plan. Each stage gets its own commit, passing tests and build, and a report. Physical mobile testing is a later dedicated phase.
