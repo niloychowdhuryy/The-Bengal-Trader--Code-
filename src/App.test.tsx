@@ -12,6 +12,7 @@ import {
   arriveAtDestination,
   buyFarm,
   buyPlayerShip,
+  configureAutomatedTradeRoute,
   createNewGame,
   FARM_OUTPUT_CAPACITY,
   FARM_PRICE,
@@ -446,6 +447,46 @@ describe("first game screen", () => {
       .toBeVisible();
     expect(screen.getByText(/Running · docked/)).toBeVisible();
     expect(screen.getByText(/Rules: Rice/)).toBeVisible();
+  });
+
+  it("manages a docked automated ship's route from Fleet while the player's ship is sailing", async () => {
+    const purchased = buyPlayerShip({
+      ...createNewGame("Maya"),
+      gold: 2_000,
+      highestGold: 2_000,
+      visitedTowns: ["dhaka", "sonargaon"],
+    }).state;
+    const assigned = configureAutomatedTradeRoute(
+      purchased,
+      purchased.fleet[1].id,
+      "sonargaon",
+      [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
+      300,
+    ).state;
+    await saveGame(
+      startVoyage({ ...assigned, selectedTown: "sonargaon" }, Date.now()),
+    );
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "The Bengal Trader" });
+    fireEvent.click(screen.getByRole("button", { name: "Open fleet" }));
+    expect(await screen.findByRole("heading", { name: "2 ships" })).toBeVisible();
+    expect(screen.getByText(/sailing to Sonargaon/)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    expect(await screen.findByRole("button", { name: "Resume" })).toBeVisible();
+    expect(screen.getByText("Paused")).toBeVisible();
+    expect(screen.getByText(/sailing to Sonargaon/)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save route" }));
+    expect(await screen.findByText(/will trade between Dhaka and Sonargaon/))
+      .toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel route" }));
+    expect(await screen.findByText("No automated route")).toBeVisible();
+    expect(screen.getByText(/300 gold returned to your purse/)).toBeVisible();
+    expect(screen.getByText(/sailing to Sonargaon/)).toBeVisible();
   });
 
   it("opens a port's city and interactive market directly from the illustrated scene", async () => {

@@ -103,7 +103,7 @@ Stage each system as a small, testable game loop, following the recommended rule
 
 **Exit check:** Verified purchase and affordability, partial/full-day production, output cap and overflow behavior, collection and cargo limits, save/load, migration and no closed-app production.
 
-## Stage 10 — Marriage and household foundations
+## Stage 10 — Marriage and household foundations: implemented
 
 - Require the player to own and be present at a residence before marriage is available; charge 100 gold as a clearly labeled gameplay abstraction.
 - Save spouse status and the in-game day marriage was established. Keep marriage explicit and one-time.
@@ -158,7 +158,7 @@ Stage each system as a small, testable game loop, following the recommended rule
 - Assign non-selected ships to optional two-port routes between ports the player has visited. Routes use open connected river paths and existing whole-day sailing checkpoints.
 - Configure per-good buy-at-origin and sell-at-destination rules. Route capital is transferred from the player's purse, limited to 5,000 gold, and held separately until the route is cancelled at a dock.
 - Run no more than one unit per selected good per matching port checkpoint. Share existing market prices and stock limits; use each ship's cargo capacity and preserve its cargo, location and route progress in saves.
-- Allow pause, resume, editing and cancellation while docked. Automated progress occurs only with active in-game sailing-day advances, never while the game is closed. Automation does not earn mission or reputation rewards.
+- Allow pause, resume, editing and cancellation while the automated ship is docked, including while the player's selected ship is sailing. Automated progress occurs only with active in-game sailing-day advances, never while the game is closed. Automation does not earn mission or reputation rewards.
 - Migrate version 17 saves to version 18 by initializing routes as unassigned while preserving each ship and any active player voyage.
 
 **Dependencies:** Stages 3, 4, 12A and 12B.

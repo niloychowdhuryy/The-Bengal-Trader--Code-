@@ -797,6 +797,34 @@ describe("IndexedDB offline saves", () => {
     expect(restored?.marketStock).toEqual(traveling.marketStock);
   });
 
+  it("reloads a route changed while the player's ship is sailing", async () => {
+    const purchased = buyPlayerShip({
+      ...createNewGame("Asha"),
+      gold: 2_000,
+      highestGold: 2_000,
+      visitedTowns: ["dhaka", "sonargaon"],
+    }).state;
+    const sailing = startVoyage({ ...purchased, selectedTown: "sonargaon" }, 1_000);
+    const changed = configureAutomatedTradeRoute(
+      sailing,
+      sailing.fleet[1].id,
+      "sonargaon",
+      [{ good: "lac", buyAtOrigin: true, sellAtDestination: true }],
+      300,
+    ).state;
+    expect(changed.fleet[1].automatedRoute?.capital).toBe(300);
+    await saveGame(changed);
+
+    vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
+    const restored = await loadGame();
+    expect(restored?.fleet[1].automatedRoute).toEqual(
+      changed.fleet[1].automatedRoute,
+    );
+    expect(restored?.gold).toBe(changed.gold);
+    expect(restored?.voyage?.destination).toBe("sonargaon");
+    expect(restored?.voyage?.elapsedMs).toBe(changed.voyage?.elapsedMs);
+  });
+
   it("does not produce farm goods from wall-clock time while the game is closed", async () => {
     const purchased = buyFarm({
       ...createNewGame("Asha"),

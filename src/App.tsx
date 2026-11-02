@@ -261,7 +261,7 @@ function IntroScreen({
         <div className="cover-copy">
           <p className="eyebrow cover-kicker">BENGAL · CIRCA 1665</p>
           <h1>The<br />Bengal<br /><em>Trader</em></h1>
-          <p className="cover-story">Five river towns. One little boat.<br />A big adventure ahead.</p>
+          <p className="cover-story">Fifteen river towns. One little boat.<br />A big adventure ahead.</p>
         </div>
         <div className="cover-ship" aria-hidden="true">
           <svg viewBox="0 0 240 102" fill="none">

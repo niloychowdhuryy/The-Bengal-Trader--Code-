@@ -1880,6 +1880,107 @@ describe("first playable journey", () => {
     expect(pausedEdit.state.fleet[1].automatedRoute?.status).toBe("paused");
   });
 
+  it("changes a docked automated ship's route while the player's ship is sailing", () => {
+    const purchased = buyPlayerShip({
+      ...createNewGame("Maya"),
+      gold: 3_000,
+      highestGold: 3_000,
+      visitedTowns: ["dhaka", "sonargaon"],
+    }).state;
+    const shipId = purchased.fleet[1].id;
+    const sailing = startVoyage({ ...purchased, selectedTown: "sonargaon" }, 1_000);
+    expect(sailing.voyage).not.toBeNull();
+
+    const assigned = configureAutomatedTradeRoute(
+      sailing,
+      shipId,
+      "sonargaon",
+      [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
+      400,
+    );
+    expect(assigned.error).toBeUndefined();
+    expect(assigned.state.gold).toBe(sailing.gold - 400);
+    expect(assigned.state.fleet[1].automatedRoute?.capital).toBe(400);
+
+    const edited = configureAutomatedTradeRoute(
+      assigned.state,
+      shipId,
+      "sonargaon",
+      [{ good: "lac", buyAtOrigin: true, sellAtDestination: true }],
+      0,
+    );
+    expect(edited.error).toBeUndefined();
+    expect(edited.state.fleet[1].automatedRoute?.rules[0].good).toBe("lac");
+    expect(edited.state.fleet[1].automatedRoute?.capital).toBe(400);
+    expect(edited.state.gold).toBe(assigned.state.gold);
+
+    const paused = setAutomatedTradeRouteStatus(edited.state, shipId, "paused");
+    expect(paused.error).toBeUndefined();
+    expect(paused.state.fleet[1].automatedRoute?.status).toBe("paused");
+    const resumed = setAutomatedTradeRouteStatus(paused.state, shipId, "running");
+    expect(resumed.error).toBeUndefined();
+    expect(resumed.state.fleet[1].automatedRoute?.status).toBe("running");
+
+    const cancelled = cancelAutomatedTradeRoute(resumed.state, shipId);
+    expect(cancelled.error).toBeUndefined();
+    expect(cancelled.state.gold).toBe(sailing.gold);
+    expect(cancelled.state.fleet[1].automatedRoute).toBeNull();
+
+    for (const changed of [assigned, edited, paused, resumed, cancelled]) {
+      expect(changed.state.voyage).toEqual(sailing.voyage);
+      expect(changed.state.selectedShipId).toBe(sailing.selectedShipId);
+    }
+
+    const arrived = arriveAtDestination(cancelled.state);
+    expect(arrived.currentTown).toBe("sonargaon");
+    expect(arrived.fleet[1].currentPort).toBe("dhaka");
+  });
+
+  it("still blocks route changes for encounters, the selected ship, and ships underway", () => {
+    const purchased = buyPlayerShip({
+      ...createNewGame("Maya"),
+      gold: 3_000,
+      highestGold: 3_000,
+      visitedTowns: ["dhaka", "sonargaon"],
+    }).state;
+    const shipId = purchased.fleet[1].id;
+    const rules = [{ good: "lac" as const, buyAtOrigin: true, sellAtDestination: true }];
+    const assigned = configureAutomatedTradeRoute(
+      purchased,
+      shipId,
+      "sonargaon",
+      rules,
+      400,
+    ).state;
+
+    const inEncounter = { ...assigned, encounterPending: true };
+    expect(configureAutomatedTradeRoute(inEncounter, shipId, "sonargaon", rules, 0).error)
+      .toBe("unavailable");
+    expect(setAutomatedTradeRouteStatus(inEncounter, shipId, "paused").error)
+      .toBe("unavailable");
+    expect(cancelAutomatedTradeRoute(inEncounter, shipId).error).toBe("unavailable");
+
+    const sailing = startVoyage({ ...assigned, selectedTown: "sonargaon" }, 1_000);
+    expect(
+      configureAutomatedTradeRoute(
+        sailing,
+        sailing.selectedShipId,
+        "sonargaon",
+        rules,
+        100,
+      ).error,
+    ).toBe("active-ship");
+
+    const underway = advanceNpcWorld(sailing, 1);
+    expect(underway.voyage).not.toBeNull();
+    expect(underway.fleet[1].automatedRoute?.phase).toBe("traveling");
+    expect(configureAutomatedTradeRoute(underway, shipId, "sonargaon", rules, 0).error)
+      .toBe("not-docked");
+    expect(setAutomatedTradeRouteStatus(underway, shipId, "paused").error)
+      .toBe("not-docked");
+    expect(cancelAutomatedTradeRoute(underway, shipId).error).toBe("not-docked");
+  });
+
   it("respects market stock, cargo capacity, and the route capital ceiling", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),

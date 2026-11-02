@@ -21,7 +21,7 @@ Use delicate low-contrast paper texture beneath art, but keep labels, touch targ
 - The navigable network in `src/game/navigation.ts` is the source for waterways, port-node positions, route highlights, route distance and moving-ship interpolation. Never draw a separate decorative route or animate the vessel away from its displayed channels.
 - The world-map prototype is a naturalistic top-down landscape rather than an isometric board. Build layered floodplain, riverbank, field, woodland and island details from reusable art components in `src/components/map-art/`.
 - The broad painted channels follow the existing graph. Narrow wetland creeks in the prototype are scenic marks only; do not make them look like selectable or navigable routes until navigation data supports them.
-- Keep all five port labels and hit areas readable in portrait orientation. Use the SVG viewBox camera for drag, pinch, wheel and button zoom; camera movement must not alter game-world coordinates.
+- Keep all 15 port labels and hit areas readable in portrait orientation. Use the SVG viewBox camera for drag, pinch, wheel and button zoom; camera movement must not alter game-world coordinates.
 - Blocked channels should be visibly distinct, labeled with their cause and reflected in route availability.
 - Preserve visible room around port names and route overlays. Avoid contextual panels hiding destinations or making selection difficult.
 - Use irregular hand-shaped banks, river islands, clustered settlements, groves, fine linework and the established paper texture.
@@ -41,7 +41,7 @@ Use delicate low-contrast paper texture beneath art, but keep labels, touch targ
 
 - Give every vessel a distinctive hand-built hull silhouette, joined plank detail, useful rigging and readable sail. The moving boat must remain recognisable at small mobile sizes.
 - The prototype trading vessel is an original reusable SVG asset in `src/components/map-art/`; preserve its wood, cloth and warm-light materials when more classes are added.
-- Give towns distinct vernacular layouts and work rhythms; do not make five ports identical icon clusters.
+- Give towns distinct vernacular layouts and work rhythms; do not make ports identical icon clusters.
 - Building controls must remain accessible with large hit areas, clear labels and selected/focus states. The artwork supports the action; it must not obscure the control.
 - Panels resemble durable travel papers or carved timber labels, not CRM cards. Keep one dominant action and reveal details only when needed.
 

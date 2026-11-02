@@ -6,6 +6,26 @@ This audit compares the current design and roadmap with the running implementati
 
 The review covered [GAME_DESIGN.md](./GAME_DESIGN.md), [GAME_RULES.md](./GAME_RULES.md), [ROADMAP.md](./ROADMAP.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [ART_GUIDE.md](./ART_GUIDE.md), [MAP_ROUTE_NOTES.md](./MAP_ROUTE_NOTES.md), [TRADE_ECONOMY_DESIGN.md](./TRADE_ECONOMY_DESIGN.md), [CITY_ECONOMIC_IDENTITY_AUDIT.md](./CITY_ECONOMIC_IDENTITY_AUDIT.md), and [HISTORICAL_EVENTS.md](./HISTORICAL_EVENTS.md). The implementation review covered `src/App.tsx`, `src/game/model.ts`, `src/game/storage.ts`, `src/game/navigation.ts`, `src/game/travel-time.ts`, `src/game/city-economic-identities.ts`, `src/components/BengalMap.tsx`, `src/components/CityScene.tsx`, `src/components/city-art/city-layout.ts`, `src/styles.css`, and the six test files under `src/`.
 
+## Status update — 2 November 2026
+
+The rest of this audit is a historical snapshot from before Stage 5 and is left as written. Where it says a system is missing, use this section, [ROADMAP.md](./ROADMAP.md) and [GAME_RULES.md](./GAME_RULES.md) instead. The current save format is version 18.
+
+| Audit said missing or partial | Current state |
+|---|---|
+| Reputation and optional milestones | Implemented in Stage 5; local standing added in Stage 11 |
+| Owned property | Warehouses (Stage 6), residence (Stage 8), farms (Stage 9) |
+| Shipyard | Repairs and upgrades at every port (Stage 7) |
+| Home and family | Marriage and household foundation (Stage 10); children, aging and succession remain unimplemented |
+| Missions and contracts | Finite contract boards and travel events (Stage 11) |
+| NPC merchants | Four bounded traders (Stage 12A) |
+| Multiple ships and fleet automation | Player-owned ships (Stage 12B) and two-port automated routes (Stage 12C) |
+
+Resolved mismatches from section 3: port-count copy, the opium "regulated" label, repeated encounter behavior, and stage plan drift.
+
+**Dependency note:** Stage 12C added a small automation layer before vessel classes were defined, which reverses this audit's recommended order. Stage 13 vessel classes must therefore stay compatible with existing automated routes.
+
+**Still open:** guided tutorial, vessel classes, captains and wider fleet logistics, political actions and standing effects, children and succession, workshops, distinct city layouts beyond Dhaka, sound, browser-based layout and accessibility verification, and release criteria.
+
 ## Executive summary
 
 **What exists:** A local, offline-friendly game prototype with an illustrated map, 15 selectable ports, continuous waterway routes, a moving ship, adjustable sailing speed, a deterministic eight-good market, finite local stall stock, cargo accounting, one ship with purchasable upgrades, a small encounter, an illustrated city scene, and IndexedDB saves with migrations.

@@ -609,7 +609,7 @@ export const GOODS: TradeGood[] = [
   { id: "silk", name: "Raw silk", description: "Silk from Bengal's weaving districts", icon: "silk" },
   { id: "sugar", name: "Sugar and molasses", description: "Sweet cargo from agricultural markets", icon: "sugar" },
   { id: "saltpetre", name: "Saltpetre", description: "A specialist mineral trade good", icon: "saltpetre" },
-  { id: "opium", name: "Opium", description: "A regulated, high-value commodity", icon: "opium" },
+  { id: "opium", name: "Opium", description: "A high-value commodity", icon: "opium" },
   { id: "lac", name: "Lac resin", description: "A compact resin from wooded hinterlands", icon: "lac" },
 ];
 
