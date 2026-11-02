@@ -1,5 +1,7 @@
 # Visual Polish Handoff
 
+**Status, 2 November 2026:** the items below were carried out, see [ART_GUIDE.md](./ART_GUIDE.md) and [ARCHITECTURE.md](./ARCHITECTURE.md). This file is kept as the record of the brief, except for the "How to verify" section, which still applies. City scenes (item 9) now vary by port, the favicon (item 10) is linked, and the served map (item 11) is a 1 MB WebP.
+
 **For:** Fable, taking on the v1 visual-polish stage.
 
 **Goal:** make the existing game look and read better on phones and desktop. All gameplay for v1 is finished. This stage changes how things look, not how they work.

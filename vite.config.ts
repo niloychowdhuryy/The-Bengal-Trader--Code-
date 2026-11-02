@@ -13,8 +13,8 @@ export default defineConfig({
         short_name: "Bengal Trader",
         description:
           "Trade Bengal's rivers, outfit your boat, and grow your family's fortune.",
-        theme_color: "#244b3b",
-        background_color: "#f5efdf",
+        theme_color: "#2f1d10",
+        background_color: "#21140b",
         display: "standalone",
         scope: "/",
         start_url: "/",
@@ -28,8 +28,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{html,js,css,svg,ico,png,woff2}"],
-        maximumFileSizeToCacheInBytes: 24 * 1024 * 1024,
+        globPatterns: ["**/*.{html,js,css,svg,ico,png,webp,woff2}"],
       },
     }),
   ],

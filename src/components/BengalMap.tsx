@@ -1,4 +1,5 @@
 import {
+  memo,
   useEffect,
   useId,
   useRef,
@@ -10,15 +11,18 @@ import {
   TOWNS,
   getTown,
   getSelectedVesselClass,
+  getShipRouteConditions,
   getShipRoutePreview,
   getTownRoute,
   isHistoricalRouteAlertActive,
   type GameState,
+  type PlayerShip,
   type TownId,
 } from "../game/model";
 import {
   pointAlongRiverRoute,
   riverPointsToSvgPath,
+  type RiverPoint,
   type RiverRoute,
 } from "../game/navigation";
 import {
@@ -40,6 +44,25 @@ const MOBILE_INITIAL_ZOOM = 1.5;
 const MOBILE_INITIAL_FOCUS = {
   x: ((718 + 858) / 2) * NAVIGATION_TO_MAP_SCALE_X,
   y: (320 + 296) / 2,
+};
+
+const LABEL_CHARACTER_WIDTH = 8.1;
+const LABEL_PADDING = 24;
+
+// Keeps each name clear of its own port and its neighbours' markers.
+const LABEL_PLACEMENT: Partial<Record<TownId, { dx: number; dy: number }>> = {
+  hooghly: { dx: -6, dy: -33 },
+  satgaon: { dx: 10, dy: 33 },
+  rajmahal: { dx: 0, dy: -30 },
+  tanda: { dx: -47, dy: 0 },
+  kasimbazar: { dx: 0, dy: 32 },
+  jessore: { dx: 6, dy: 32 },
+  malda: { dx: 24, dy: 31 },
+  sonargaon: { dx: 22, dy: -30 },
+  dhaka: { dx: -8, dy: 32 },
+  "bakla-chandradwip": { dx: 8, dy: 32 },
+  sandwip: { dx: 0, dy: 33 },
+  balasore: { dx: 14, dy: 32 },
 };
 
 interface MapCamera {
@@ -73,8 +96,10 @@ function getCameraSize(zoom: number, aspectRatio: number): MapPointer {
   return { x: height * aspectRatio, y: height };
 }
 
-function getMinimumZoom(aspectRatio: number): number {
-  return Math.min(MIN_ZOOM, aspectRatio / DEFAULT_ASPECT_RATIO);
+// The painting always fills the frame; squarer screens pan across it instead of
+// showing empty bands above and below.
+function getMinimumZoom(_aspectRatio: number): number {
+  return MIN_ZOOM;
 }
 
 function clampCamera(camera: MapCamera, aspectRatio: number): MapCamera {
@@ -131,6 +156,98 @@ function getDisplayedRoute(state: GameState): RiverRoute | null {
   return state.voyage?.route ?? getShipRoutePreview(state, state.selectedTown).route;
 }
 
+function toMapPoint(point: RiverPoint): RiverPoint {
+  return { x: point.x * NAVIGATION_TO_MAP_SCALE_X, y: point.y };
+}
+
+function toMapPath(points: RiverPoint[]): string {
+  return riverPointsToSvgPath(points.map(toMapPoint));
+}
+
+function getRouteFacing(route: RiverRoute, progress: number): 1 | -1 {
+  const ahead = pointAlongRiverRoute(route, Math.min(1, progress + 0.02));
+  const behind = pointAlongRiverRoute(route, Math.max(0, progress - 0.02));
+  return ahead.x >= behind.x ? 1 : -1;
+}
+
+function getFleetShipRoute(
+  state: GameState,
+  ship: PlayerShip,
+): { route: RiverRoute; progress: number } | null {
+  const trip = ship.returnOrder
+    ? {
+        destination: ship.returnOrder.destination,
+        remaining: ship.returnOrder.travelDaysRemaining,
+        total: ship.returnOrder.travelDaysTotal,
+      }
+    : ship.automatedRoute?.phase === "traveling"
+      ? {
+          destination: ship.automatedRoute.destinationPort,
+          remaining: ship.automatedRoute.travelDaysRemaining,
+          total: ship.automatedRoute.travelDaysTotal,
+        }
+      : null;
+  if (!trip || trip.destination === ship.currentPort) return null;
+  const route = getTownRoute(
+    ship.currentPort,
+    trip.destination,
+    getShipRouteConditions(state.navigationConditions, ship.vesselClass),
+  );
+  return route
+    ? { route, progress: Math.max(0, Math.min(1, 1 - trip.remaining / trip.total)) }
+    : null;
+}
+
+// Painted layers are separate elements so the browser can animate them without
+// repainting the markers and routes that sit above them.
+const MapPlates = memo(function MapPlates({ viewBox }: { viewBox: string }) {
+  const plate = (href: string, className: string) => (
+    <svg className={`map-plate ${className}`} viewBox={viewBox} aria-hidden="true">
+      <image
+        href={href}
+        x="0"
+        y="0"
+        width={MAP_WIDTH}
+        height={MAP_HEIGHT}
+        preserveAspectRatio="xMidYMid meet"
+      />
+    </svg>
+  );
+  return (
+    <>
+      {plate("/images/bengal-world-map.webp", "map-plate-base")}
+      {plate("/images/water-shimmer-a.webp", "map-plate-shimmer-a")}
+      {plate("/images/water-shimmer-b.webp", "map-plate-shimmer-b")}
+    </>
+  );
+});
+
+const MapAtmosphere = memo(function MapAtmosphere() {
+  return (
+    <div className="map-atmosphere" aria-hidden="true">
+      <span className="cloud-shadow cloud-shadow-a" />
+      <span className="cloud-shadow cloud-shadow-b" />
+      <span className="cloud-wisp" />
+      <svg className="map-birds" viewBox="0 0 90 30">
+        <path d="M6 16q5-7 9 0 5-7 9 0M36 8q4-6 8 0 4-6 8 0M58 22q4-6 8 0 4-6 8 0" fill="none" stroke="#2a1b12" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+});
+
+const MapCompass = memo(function MapCompass() {
+  return (
+    <svg className="map-compass" viewBox="-50 -50 100 100" aria-hidden="true">
+      <circle r="44" fill="#f0e3c3" fillOpacity=".9" stroke="#3a2513" strokeWidth="2" />
+      <circle r="38" fill="none" stroke="#8a6a2a" strokeWidth="1" />
+      <path d="M0-36 7-7 36 0 7 7 0 36-7 7-36 0-7-7Z" fill="#3a2513" />
+      <path d="M0-36V0L7-7ZM36 0H0L7 7ZM0 36V0L-7 7ZM-36 0H0L-7-7Z" fill="#b28a3c" />
+      <path d="M-20-20-4-4M20-20 4-4M20 20 4 4M-20 20-4 4" stroke="#3a2513" strokeWidth="2.4" strokeLinecap="round" />
+      <text y="-27" textAnchor="middle" className="map-compass-north">N</text>
+    </svg>
+  );
+});
+
 export default function BengalMap({
   state,
   now,
@@ -140,6 +257,10 @@ export default function BengalMap({
   const uniqueId = useId().replace(/:/g, "");
   const [camera, setCamera] = useState<MapCamera>({ x: 0, y: 0, zoom: 1 });
   const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
+  const [mapPixelHeight, setMapPixelHeight] = useState(0);
+  const [followShip, setFollowShip] = useState(true);
+  const cameraPlaced = useRef(false);
+  const lastAspectRatio = useRef(aspectRatio);
   const [isMobileViewport, setIsMobileViewport] = useState(getIsMobileViewport);
   const previousMobileViewport = useRef(isMobileViewport);
   const mapRef = useRef<SVGSVGElement>(null);
@@ -163,7 +284,9 @@ export default function BengalMap({
         ),
       )
     : 0;
-  const ship = voyage && route ? pointAlongRiverRoute(route, progress) : null;
+  const shipPoint = voyage && route ? pointAlongRiverRoute(route, progress) : null;
+  const ship = shipPoint ? toMapPoint(shipPoint) : null;
+  const selectedVessel = getSelectedVesselClass(state);
   const routeIsDisplayed =
     Boolean(route) && (state.currentTown !== state.selectedTown || state.voyage !== null);
   const displayedRouteTime = route
@@ -188,7 +311,10 @@ export default function BengalMap({
     if (!map) return;
     const updateAspectRatio = () => {
       const { width, height } = map.getBoundingClientRect();
-      if (width > 0 && height > 0) setAspectRatio(width / height);
+      if (width > 0 && height > 0) {
+        setAspectRatio(width / height);
+        setMapPixelHeight(height);
+      }
     };
     updateAspectRatio();
     if (typeof ResizeObserver === "undefined") return;
@@ -205,16 +331,26 @@ export default function BengalMap({
         getMinimumZoom(aspectRatio),
       );
       const { x: width, y: height } = getCameraSize(zoom, aspectRatio);
-      setCamera(
-        clampCamera(
+      const firstPlacement = !cameraPlaced.current || mapPixelHeight === 0;
+      cameraPlaced.current = mapPixelHeight > 0;
+      const placedAspect = lastAspectRatio.current;
+      lastAspectRatio.current = aspectRatio;
+      // Panels resize the map on phones; keep looking at the same place when they do.
+      setCamera((current) => {
+        const previous = getCameraSize(current.zoom, placedAspect);
+        const home = toMapPoint(getTown(state.currentTown));
+        const focus = firstPlacement
+          ? { x: interactive ? home.x : MOBILE_INITIAL_FOCUS.x, y: MOBILE_INITIAL_FOCUS.y }
+          : { x: current.x + previous.x / 2, y: MOBILE_INITIAL_FOCUS.y };
+        return clampCamera(
           {
             zoom,
-            x: MOBILE_INITIAL_FOCUS.x - width / 2,
-            y: MOBILE_INITIAL_FOCUS.y - height / 2,
+            x: focus.x - width / 2,
+            y: focus.y - height / 2,
           },
           aspectRatio,
-        ),
-      );
+        );
+      });
       return;
     }
 
@@ -249,7 +385,25 @@ export default function BengalMap({
         aspectRatio,
       );
     });
+    // Only the viewport changes this placement; later port changes must not move the camera.
   }, [aspectRatio, isMobileViewport]);
+  // A new voyage starts following the ship; dragging the map hands control back.
+  const voyageStart = voyage?.startedAt;
+  useEffect(() => {
+    if (voyageStart !== undefined) setFollowShip(true);
+  }, [voyageStart]);
+  const shipX = ship?.x;
+  const shipY = ship?.y;
+  useEffect(() => {
+    if (shipX === undefined || shipY === undefined || !followShip) return;
+    setCamera((current) => {
+      const { x: width, y: height } = getCameraSize(current.zoom, aspectRatio);
+      return clampCamera(
+        { ...current, x: shipX - width / 2, y: shipY - height / 2 },
+        aspectRatio,
+      );
+    });
+  }, [shipX, shipY, followShip, aspectRatio]);
   const selectByKeyboard = (
     event: KeyboardEvent<SVGGElement>,
     town: TownId,
@@ -371,6 +525,7 @@ export default function BengalMap({
         : event.clientY - activeGesture.start.y;
       if (Math.hypot(deltaX, deltaY) > 5 && !movedDuringGesture.current) {
         movedDuringGesture.current = true;
+        setFollowShip(false);
         event.currentTarget.setPointerCapture?.(event.pointerId);
       }
       const rect = event.currentTarget.getBoundingClientRect();
@@ -449,12 +604,13 @@ export default function BengalMap({
     );
   };
   const centerOnShip = () => {
-    const location = ship ?? getTown(state.currentTown);
+    const location = ship ?? toMapPoint(getTown(state.currentTown));
     const zoom = Math.max(camera.zoom, 1.35);
     const { x: width, y: height } = getCameraSize(zoom, aspectRatio);
+    setFollowShip(true);
     setCamera(
       clampCamera({
-        x: location.x * NAVIGATION_TO_MAP_SCALE_X - width / 2,
+        x: location.x - width / 2,
         y: location.y - height / 2,
         zoom,
       }, aspectRatio),
@@ -465,61 +621,71 @@ export default function BengalMap({
     aspectRatio,
   );
 
+  const viewBox = `${camera.x} ${camera.y} ${viewWidth} ${viewHeight}`;
+  // Markers keep one on-screen size at every zoom so names stay readable.
+  const pixelsPerUnit = mapPixelHeight > 0 ? mapPixelHeight / viewHeight : 1;
+  const markerScale = Math.max(0.5, Math.min(2.4, 0.88 / pixelsPerUnit));
+  const homePoint = toMapPoint(getTown(state.currentTown));
+  const shipFacing =
+    voyage && route ? getRouteFacing(route, progress) : 1;
+  const fleetShips = state.fleet.filter(
+    (entry) => entry.id !== state.selectedShipId,
+  );
+
   return (
     <section className="map-frame" aria-label="Illustrated map of Bengal and its river towns">
-      <svg
-        ref={mapRef}
-        className="bengal-map"
-        viewBox={`${camera.x} ${camera.y} ${viewWidth} ${viewHeight}`}
-        role="img"
-        aria-labelledby={`map-title-${uniqueId} map-description-${uniqueId}`}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      >
-        <title id={`map-title-${uniqueId}`}>Bengal river-trading map</title>
-        <desc id={`map-description-${uniqueId}`}>
-          The supplied illustrated Bengal map shows all fifteen river and coastal markets.
-          Named merchant boats move along the marked routes as in-game sailing days pass.
-          {isMobileViewport
-            ? " Swipe horizontally to explore, or select a marked port."
-            : " Drag to pan, zoom to look closer, or select a marked port."}
-        </desc>
-        <defs>
-          <filter id={`town-shadow-${uniqueId}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#27443a" floodOpacity=".23" />
-          </filter>
-        </defs>
-        <image
-          href="/images/bengal-world-map.png"
-          x="0"
-          y="0"
-          width={MAP_WIDTH}
-          height={MAP_HEIGHT}
-          preserveAspectRatio="xMidYMid meet"
-        />
+      <div className="map-viewport">
+        <MapPlates viewBox={viewBox} />
+        <MapAtmosphere />
+        <svg
+          ref={mapRef}
+          className="bengal-map"
+          viewBox={viewBox}
+          role="group"
+          aria-labelledby={`map-title-${uniqueId} map-description-${uniqueId}`}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        >
+          <title id={`map-title-${uniqueId}`}>Bengal river-trading map</title>
+          <desc id={`map-description-${uniqueId}`}>
+            An illustrated Bengal map showing all fifteen river and coastal markets.
+            Named merchant boats move along the marked routes as in-game sailing days pass.
+            {isMobileViewport
+              ? " Swipe horizontally to explore, or select a marked port."
+              : " Drag to pan, zoom to look closer, or select a marked port."}
+          </desc>
 
-        <g transform={`scale(${NAVIGATION_TO_MAP_SCALE_X} 1)`}>
-          {routeIsDisplayed && (
-            <g aria-hidden="true">
+          {routeIsDisplayed && route && (
+            <g aria-hidden="true" className={state.voyage ? "route-voyage" : "route-preview"}>
               <path
-                d={riverPointsToSvgPath(route?.points ?? [])}
+                d={toMapPath(route.points)}
                 fill="none"
-                stroke="#fff9e6"
-                strokeWidth="10"
+                stroke="#1c120a"
+                strokeWidth={9 * markerScale}
                 strokeLinecap="round"
-                opacity=".8"
+                strokeLinejoin="round"
+                opacity=".42"
               />
               <path
-                d={riverPointsToSvgPath(route?.points ?? [])}
+                d={toMapPath(route.points)}
                 fill="none"
-                stroke={state.voyage ? "#b9683b" : "#316556"}
-                strokeWidth="3.5"
-                strokeDasharray={state.voyage ? "9 7" : "3 8"}
+                stroke="#fff6dc"
+                strokeWidth={5.4 * markerScale}
                 strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity=".95"
+              />
+              <path
+                d={toMapPath(route.points)}
+                fill="none"
+                stroke={state.voyage ? "#a03a1c" : "#1f4d40"}
+                strokeWidth={3 * markerScale}
+                strokeDasharray={`${10 * markerScale} ${7 * markerScale}`}
+                strokeLinecap="butt"
+                strokeLinejoin="round"
                 className={state.voyage ? "route-moving" : ""}
-                opacity=".92"
               />
             </g>
           )}
@@ -539,28 +705,30 @@ export default function BengalMap({
                   1 - merchant.travelDaysRemaining / merchant.travelDaysTotal,
                 ),
               );
-              const position = pointAlongRiverRoute(merchantRoute, travelProgress);
-              const color = index % 2 === 0 ? "#7a593f" : "#596b47";
+              const position = toMapPoint(
+                pointAlongRiverRoute(merchantRoute, travelProgress),
+              );
+              const color = index % 2 === 0 ? "#f0dfb6" : "#d8e3c4";
               return (
-                <g key={merchant.id} aria-label={`${merchant.name} traveling`}>
+                <g key={merchant.id} role="img" aria-label={`${merchant.name} traveling`} className="npc-traffic">
                   <path
-                    d={riverPointsToSvgPath(merchantRoute.points)}
+                    d={toMapPath(merchantRoute.points)}
                     fill="none"
                     stroke={color}
-                    strokeWidth="2"
-                    strokeDasharray="4 8"
+                    strokeWidth={1.8 * markerScale}
+                    strokeDasharray={`${3 * markerScale} ${8 * markerScale}`}
                     strokeLinecap="round"
-                    opacity=".56"
+                    opacity=".6"
                     aria-hidden="true"
                   />
-                  <circle
-                    cx={position.x}
-                    cy={position.y}
-                    r="7"
-                    fill="#fff5dc"
-                    stroke={color}
-                    strokeWidth="3"
-                  >
+                  <BengalTradingVessel
+                    x={position.x}
+                    y={position.y}
+                    moving
+                    facing={getRouteFacing(merchantRoute, travelProgress)}
+                    size={0.62 * markerScale}
+                  />
+                  <circle cx={position.x} cy={position.y} r={14 * markerScale} fill="transparent">
                     <title>
                       {merchant.name}: {getTown(merchant.currentPort).name} to{" "}
                       {getTown(merchant.destinationPort).name}
@@ -570,11 +738,64 @@ export default function BengalMap({
               );
             })}
 
+          {fleetShips.map((entry, index) => {
+            const trip = getFleetShipRoute(state, entry);
+            const position = trip
+              ? toMapPoint(pointAlongRiverRoute(trip.route, trip.progress))
+              : toMapPoint(getTown(entry.currentPort));
+            return (
+              <g key={entry.id} role="img" className="fleet-traffic" aria-label={`Your ship ${entry.name}`}>
+                <BengalTradingVessel
+                  x={position.x + (trip ? 0 : (-26 - index * 14) * markerScale)}
+                  y={position.y + (trip ? 0 : 10 * markerScale)}
+                  moving={Boolean(trip)}
+                  vesselClass={entry.vesselClass}
+                  facing={trip ? getRouteFacing(trip.route, trip.progress) : 1}
+                  size={0.72 * markerScale}
+                />
+              </g>
+            );
+          })}
+
+          {state.voyage && ship && (
+            <>
+              <circle
+                cx={ship.x}
+                cy={ship.y + 3 * markerScale}
+                r={21 * markerScale}
+                className="ship-wake"
+              />
+              <BengalTradingVessel
+                x={ship.x}
+                y={ship.y}
+                moving
+                vesselClass={selectedVessel.id}
+                facing={shipFacing}
+                size={markerScale}
+              />
+            </>
+          )}
+          {!state.voyage && (
+            <BengalTradingVessel
+              x={homePoint.x + 25 * markerScale}
+              y={homePoint.y + 7 * markerScale}
+              vesselClass={selectedVessel.id}
+              size={markerScale}
+            />
+          )}
+
           {TOWNS.map((town) => {
             const current = town.id === state.currentTown;
             const selected = town.id === state.selectedTown;
             const disabled =
               !interactive || Boolean(state.voyage || state.encounterPending);
+            const point = toMapPoint(town);
+            const placement = LABEL_PLACEMENT[town.id] ?? { dx: 0, dy: -31 };
+            const labelWidth =
+              town.name.length * LABEL_CHARACTER_WIDTH + LABEL_PADDING;
+            // A phone's map shrinks under the voyage log, so only name the trip's ends.
+            const showLabel =
+              !(voyage && isMobileViewport) || current || selected;
 
             return (
               <g
@@ -585,6 +806,7 @@ export default function BengalMap({
                 aria-pressed={interactive ? selected : undefined}
                 aria-disabled={interactive ? disabled : undefined}
                 className={`town-marker${selected ? " town-selected" : ""}${current ? " town-current" : ""}${disabled ? " town-locked" : ""}`}
+                transform={`translate(${point.x} ${point.y}) scale(${markerScale})`}
                 onClick={
                   interactive
                     ? () => {
@@ -602,143 +824,93 @@ export default function BengalMap({
                     : undefined
                 }
               >
-                <circle
-                  cx={town.x}
-                  cy={town.y}
-                  r="68"
+                <title>{town.name}</title>
+                <circle r="26" fill="transparent" pointerEvents="all" />
+                <rect
+                  x={placement.dx - labelWidth / 2 - 4}
+                  y={placement.dy - 15}
+                  width={labelWidth + 8}
+                  height="30"
                   fill="transparent"
                   pointerEvents="all"
                 />
-                <circle
-                  cx={town.x}
-                  cy={town.y}
-                  r="24"
-                  fill="none"
-                  stroke={current ? "#b75b37" : selected ? "#416c53" : "#f7edd1"}
-                  strokeWidth="4"
-                  opacity={current || selected ? ".96" : ".76"}
-                  filter={selected ? `url(#town-shadow-${uniqueId})` : undefined}
-                />
-                <circle
-                  cx={town.x}
-                  cy={town.y}
-                  r="8"
-                  fill={current ? "#c2643b" : selected ? "#416c53" : "#f6eed5"}
-                  stroke="#405547"
-                  strokeWidth="2"
-                />
-                <circle
-                  cx={town.x}
-                  cy={town.y}
-                  r="3"
-                  fill={current || selected ? "#fff0ce" : "#60764f"}
-                />
-                {current && !state.voyage && (
-                  <circle
-                    cx={town.x}
-                    cy={town.y}
-                    r="32"
-                    fill="none"
-                    stroke="#b75b37"
-                    strokeWidth="3"
-                    strokeDasharray="3 4"
-                    className="current-port-ring"
-                  />
-                )}
-                <title>{town.name}</title>
+                {selected && !current && <circle r="17" className="town-selected-ring" />}
+                {current && !state.voyage && <circle r="20" className="current-port-ring" />}
+                <circle r={current || selected ? 10 : 7.5} className="town-pin-disc" />
+                <circle r={current || selected ? 6.5 : 4} className="town-pin-core" />
                 {current && (
-                  <text
-                    x={town.x}
-                    y={town.y + 42}
-                    textAnchor="middle"
-                    fill="#805643"
-                    fontSize="9"
-                    letterSpacing="1.2"
-                    fontWeight="750"
-                    fontFamily="Arial, sans-serif"
-                  >
-                    YOUR SHIP
-                  </text>
+                  <path d="M0-4.5v9m-3.6-6.3h7.2M-4.4 1.2q.6 3.4 4.4 3.4t4.4-3.4" className="town-pin-glyph" />
+                )}
+                {selected && !current && (
+                  <path d="M-2.4 4.5v-9l5.4 2.6-5.4 2.6" className="town-pin-glyph" />
+                )}
+                {showLabel && (
+                  <g transform={`translate(${placement.dx} ${placement.dy})`} className="town-label">
+                    <path
+                      d={`M${-labelWidth / 2} -10.5q-4.5 0-6.5 4l3 6.5-3 6.5q2 4 6.5 4H${labelWidth / 2}q4.5 0 6.5-4l-3-6.5 3-6.5q-2-4-6.5-4Z`}
+                      className="town-label-plate"
+                    />
+                    <text y="5.2" textAnchor="middle" className="town-label-text">{town.name}</text>
+                  </g>
                 )}
               </g>
             );
           })}
-
-          {state.voyage && ship && (
-            <>
-              <circle cx={ship.x} cy={ship.y} r="14" fill="#f5cb91" opacity=".13" className="ship-wake" />
-              <BengalTradingVessel x={ship.x} y={ship.y} moving />
-            </>
-          )}
-          {!state.voyage && (
-            <BengalTradingVessel
-              x={getTown(state.currentTown).x}
-              y={getTown(state.currentTown).y - 2}
-            />
-          )}
-        </g>
-      </svg>
-      <div className="map-stamp" aria-hidden="true">
-        <span className="map-stamp-dot" />
-        BENGAL · c. 1665
+        </svg>
+        <div className="map-vignette" aria-hidden="true" />
       </div>
-      <div className="map-caption">
-        <div>
-          <span className="eyebrow map-eyebrow">YOUR NEXT STOP</span>
-          <strong>          {state.voyage
-            ? "Under sail"
-            : state.currentTown === state.selectedTown
-              ? "Choose your next port"
-              : route
-                ? displayedRouteTime
-                  ? `${TOWNS.find((town) => town.id === state.selectedTown)?.name}, ${formatTravelDuration(displayedRouteTime.durationMs)} away`
-                  : "No open river path"
-                : getShipRoutePreview(state, state.selectedTown).tooLarge
-                  ? "Too large for this ship"
-                  : "No open river path"}</strong>
+      <div className="map-stamp" aria-hidden="true">
+        <span className="map-stamp-kicker">The Rivers of</span>
+        <span className="map-stamp-title">Bengal</span>
+        <span className="map-stamp-year">c. 1665</span>
+      </div>
+      <MapCompass />
+      {!isMobileViewport && (
+        <div className="map-camera-controls" role="group" aria-label="Map controls">
+          <button
+            className="map-camera-button"
+            type="button"
+            aria-label="Zoom out"
+            disabled={camera.zoom <= getMinimumZoom(aspectRatio)}
+            onClick={() => zoomBy(1 / 1.3)}
+          >
+            −
+          </button>
+          <button
+            className="map-camera-button"
+            type="button"
+            aria-label="Zoom in"
+            disabled={camera.zoom >= MAX_ZOOM}
+            onClick={() => zoomBy(1.3)}
+          >
+            +
+          </button>
+          <button
+            className="map-camera-button map-center-button"
+            type="button"
+            aria-label="Center on your ship"
+            onClick={centerOnShip}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="6" />
+              <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
+            </svg>
+          </button>
         </div>
-        <span className="map-caption-pin" aria-hidden="true">
-          {state.voyage
-            ? "Following the waterway"
-            : state.currentTown === state.selectedTown
-              ? "Tap a town"
-              : route
-                ? "Tap a town"
-                : "Route closed"}
-        </span>
-        {!isMobileViewport && (
-            <div className="map-camera-controls" role="group" aria-label="Map controls">
-              <button
-                className="map-camera-button"
-                type="button"
-                aria-label="Zoom out"
-                disabled={camera.zoom <= getMinimumZoom(aspectRatio)}
-                onClick={() => zoomBy(1 / 1.3)}
-              >
-                −
-              </button>
-              <button
-                className="map-camera-button"
-                type="button"
-                aria-label="Zoom in"
-                disabled={camera.zoom >= MAX_ZOOM}
-                onClick={() => zoomBy(1.3)}
-              >
-                +
-              </button>
-              <button
-                className="map-camera-button map-center-button"
-                type="button"
-                aria-label="Center on your ship"
-                onClick={centerOnShip}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="6" />
-                  <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
-                </svg>
-              </button>
-            </div>
-        )}
+      )}
+      <div className="map-caption">
+        <span className="eyebrow map-eyebrow">YOUR NEXT STOP</span>
+        <strong>{state.voyage
+          ? "Under sail"
+          : state.currentTown === state.selectedTown
+            ? "Choose your next port"
+            : route
+              ? displayedRouteTime
+                ? `${TOWNS.find((town) => town.id === state.selectedTown)?.name}, ${formatTravelDuration(displayedRouteTime.durationMs)} away`
+                : "No open river path"
+              : getShipRoutePreview(state, state.selectedTown).tooLarge
+                ? "Too large for this ship"
+                : "No open river path"}</strong>
       </div>
     </section>
   );

@@ -725,7 +725,7 @@ describe("first game screen", () => {
       .getByRole("region", {
         name: "Illustrated map of Bengal and its river towns",
       })
-      .querySelector('image[href="/images/bengal-world-map.png"]');
+      .querySelector('image[href="/images/bengal-world-map.webp"]');
     expect(artwork).toBeInTheDocument();
     expect(artwork).toHaveAttribute("width", "1365");
     expect(artwork).toHaveAttribute("height", "768");
@@ -772,7 +772,7 @@ describe("first game screen", () => {
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /begin your story/i }));
 
-    const map = screen.getByRole("img", { name: /Bengal river-trading map/i });
+    const map = screen.getByRole("group", { name: /Bengal river-trading map/i });
     const visibleWidth = () => Number(map.getAttribute("viewBox")?.split(" ")[2]);
     const startingWidth = visibleWidth();
 

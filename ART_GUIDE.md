@@ -2,7 +2,11 @@
 
 ## Direction
 
-Create an original, premium illustrated river adventure in Bengal around 1665. The world should feel warm, handmade, lived-in and shaped by rivers, wetlands, timber, earth, trade and weather. It should not read as a web dashboard.
+Create an original, premium illustrated merchant strategy game set in Bengal around 1665. The world should feel warm, handmade, lived-in and shaped by rivers, wetlands, timber, earth, trade and weather. It should not read as a web dashboard.
+
+## Interface
+
+The interface is a merchant's working kit: carved dark teak frames, brass fittings and ledger paper. Headings use IM Fell English, a seventeenth-century revival, and all working text and numbers use Alegreya Sans. Use the tokens at the top of `src/styles.css`. Keep working text at 12.5px or larger, and use madder red for the one main action on a screen, jade for secondary confirmations and paper for neutral choices.
 
 ## Palette and materials
 
@@ -19,8 +23,8 @@ Use delicate low-contrast paper texture beneath art, but keep labels, touch targ
 
 - The map is a stylised game abstraction, not a historically surveyed hydrographic chart.
 - The navigable network in `src/game/navigation.ts` is the source for waterways, port-node positions, route highlights, route distance and moving-ship interpolation. Never draw a separate decorative route or animate the vessel away from its displayed channels.
-- The world-map prototype is a naturalistic top-down landscape rather than an isometric board. Build layered floodplain, riverbank, field, woodland and island details from reusable art components in `src/components/map-art/`.
-- The broad painted channels follow the existing graph. Narrow wetland creeks in the prototype are scenic marks only; do not make them look like selectable or navigable routes until navigation data supports them.
+- The world map is one painting, served as a graded WebP baked from `asset-backups/bengal-world-map-master.png` by `tools/art/bake-art.mjs`. Port names are vector labels, not part of the painting. Change colour or remove painted details in the bake, not with live SVG filters.
+- The broad painted channels follow the existing graph. Do not make narrow creeks look like selectable or navigable routes until navigation data supports them.
 - Keep all 15 port labels and hit areas readable in portrait orientation. Use the SVG viewBox camera for drag, pinch, wheel and button zoom; camera movement must not alter game-world coordinates.
 - Blocked channels should be visibly distinct, labeled with their cause and reflected in route availability.
 - Preserve visible room around port names and route overlays. Avoid contextual panels hiding destinations or making selection difficult.
@@ -29,9 +33,9 @@ Use delicate low-contrast paper texture beneath art, but keep labels, touch targ
 
 ## City scene
 
-- The city is a separate, portrait-friendly isometric settlement, not a map pinboard or row of isolated building cards. Compose it as one riverfront environment with a landing, connected lanes, courtyards, gardens and varied clusters of buildings.
+- The city is a separate, portrait-friendly isometric settlement, not a map pinboard or row of isolated building cards. Compose it as one riverfront environment with a landing, connected lanes, courtyards, gardens and varied clusters of buildings. Each port has its own layout and one of four settings: delta, coast, upland or plains.
 - Use the established warm light from the upper left: ochre plaster, weathered timber, fired-clay roof tones, muted brick, bamboo greens, rice-paper highlights and blue-green water. Show roof planes, shaded walls, eaves, doors, windows, awnings, timber framing, steps, yards and cast shadows to establish consistent 3D-like depth.
-- Keep original building art as reusable inline SVG under `src/components/city-art/`. Store building meaning and placement separately so future towns can vary silhouettes, materials and street layouts without changing game logic.
+- Keep original building art as reusable inline SVG under `src/components/city-art/`, drawn with the shared kit in `iso.tsx` so geometry and light stay consistent. Store building meaning and placement separately so towns can vary without changing game logic. Curved roofs echo Bengal's bent-roof huts as a broad visual reference; settings and layouts are game abstractions, not claims about what a given town looked like.
 - The Dhaka scene is a stylised prototype, not an exact reconstruction. *Banglapedia*'s “Dhaka” describes its river-linked Mughal provincial-capital context and records a 1666 observation by Jean-Baptiste Tavernier that residents wanted houses beside the river; it also relates Niccolao Manucci's 1663 description of many houses as straw-built. The scene's arrangement, buildings and boats are original interpretation, not specific documented structures.
 - Keep the mosque modest and generic, with no named monument or claim to reproduce a particular surviving structure. Dhaka's article notes older mosque remains but does not establish this prototype's design.
 - Draw farms and workshops as environments or workplaces, not generic floating icons. Keep planned/locked status clear without covering the city.
@@ -40,7 +44,7 @@ Use delicate low-contrast paper texture beneath art, but keep labels, touch targ
 ## Boats, buildings and interaction
 
 - Give every vessel a distinctive hand-built hull silhouette, joined plank detail, useful rigging and readable sail. The moving boat must remain recognisable at small mobile sizes.
-- The prototype trading vessel is an original reusable SVG asset in `src/components/map-art/`; preserve its wood, cloth and warm-light materials when more classes are added.
+- `src/components/map-art/VesselArt.tsx` holds one original drawing per vessel class. Keep them distinct at small sizes: a River boat with a barrel-vaulted cabin and striped sail, a long low Bora with a row of oars, and a broad planked Patello with a great square sail and cargo on deck.
 - Give towns distinct vernacular layouts and work rhythms; do not make ports identical icon clusters.
 - Building controls must remain accessible with large hit areas, clear labels and selected/focus states. The artwork supports the action; it must not obscure the control.
 - Panels resemble durable travel papers or carved timber labels, not CRM cards. Keep one dominant action and reveal details only when needed.

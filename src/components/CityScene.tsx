@@ -1,15 +1,35 @@
-import { useId, type KeyboardEvent } from "react";
-import CityBuildingArt from "./city-art/CityBuildingArt";
 import {
-  getCityLayout,
+  memo,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
+import CityBuildingArt from "./city-art/CityBuildingArt";
+import { Box, ChalaRoof, Figure, GroundShadow, INK } from "./city-art/iso";
+import {
   getCityBuilding,
+  getCityProfile,
   type CityBuildingDefinition,
   type CityBuildingId,
   type CityBuildingPlacement,
+  type CityProfile,
+  type CitySetting,
 } from "./city-art/city-layout";
+import VesselArt from "./map-art/VesselArt";
 
 export type { CityBuildingId } from "./city-art/city-layout";
 export { CITY_BUILDINGS } from "./city-art/city-layout";
+
+const SCENE_WIDTH = 1600;
+const SCENE_HEIGHT = 1000;
+// Land and water run past the plate so tall screens see scenery, not a gap.
+const SCENE_TOP = -420;
+const SCENE_BOTTOM = 1420;
+const PORTRAIT_WIDTH = 800;
 
 interface CitySceneProps {
   townName: string;
@@ -17,170 +37,293 @@ interface CitySceneProps {
   onSelectBuilding: (building: CityBuildingId) => void;
 }
 
-function Tree({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${scale})`} aria-hidden="true">
-      <ellipse cx="0" cy="12" rx="26" ry="11" fill="#334a38" opacity=".22" />
-      <path d="M-4 5 0-22l6 27" fill="#79563c" stroke="#624633" strokeWidth="2" />
-      <path d="M-23 0q-11-8-4-20 1-15 14-14 8-14 22-4 17-2 17 15 13 9 2 22-3 13-16 12-10 9-21-1-12 5-18-10Z" fill="#536f46" stroke="#3f5b40" strokeWidth="2.2" />
-      <path d="M-17-10q0-14 12-19 10-7 18 2 13-2 14 10-7 10-18 9-11 8-22 0Z" fill="#718452" />
-      <path d="M-12-10q9-12 19-9m-17 16q9-8 20-6M1-23q-4 9 1 17" fill="none" stroke="#a2a16a" strokeWidth="1.7" strokeLinecap="round" opacity=".76" />
-    </g>
-  );
+const SETTING_COLORS: Record<CitySetting, {
+  land: [string, string, string];
+  field: string[];
+  water: [string, string];
+  bank: string;
+  canopy: [string, string, string];
+  roof: "thatch" | "tile";
+}> = {
+  delta: {
+    land: ["#7f9358", "#93a264", "#6f8650"],
+    field: ["#7f9c4e", "#a6ab59", "#8aa650", "#b6ad5d"],
+    water: ["#5f9c94", "#2f6c6c"],
+    bank: "#b79c6c",
+    canopy: ["#2f5a35", "#477a43", "#6f9c52"],
+    roof: "thatch",
+  },
+  coast: {
+    land: ["#90995f", "#a7a86e", "#847f4f"],
+    field: ["#94a457", "#b3ad62", "#88a052", "#c2b36a"],
+    water: ["#4f978f", "#1f5b66"],
+    bank: "#d9c594",
+    canopy: ["#34633a", "#4f8246", "#7ba358"],
+    roof: "thatch",
+  },
+  upland: {
+    land: ["#6f8a50", "#83984f", "#5f7a46"],
+    field: ["#6f9347", "#93a551", "#7a9c49", "#a6a558"],
+    water: ["#6aa49a", "#366f6c"],
+    bank: "#a8926a",
+    canopy: ["#264f30", "#3b6e3c", "#5f9049"],
+    roof: "tile",
+  },
+  plains: {
+    land: ["#a59d67", "#b5a870", "#8e8c59"],
+    field: ["#b3a95c", "#c6b566", "#9fa556", "#d0bc6e"],
+    water: ["#6da097", "#3b7070"],
+    bank: "#c6ad7c",
+    canopy: ["#3f6236", "#5b8043", "#86a052"],
+    roof: "tile",
+  },
+};
+
+function seededRandom(seed: number) {
+  let state = seed * 2654435 + 1;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
 }
 
-function VillageHut({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${scale})`} opacity=".72" aria-hidden="true">
-      <ellipse cx="0" cy="27" rx="43" ry="11" fill="#334b38" opacity=".22" />
-      <path d="M-34-2 0 12v30l-34-15Z" fill="#d9c596" stroke="#75543c" strokeWidth="2" />
-      <path d="M0 12 34-2v29L0 42Z" fill="#bd9869" stroke="#75543c" strokeWidth="2" />
-      <path d="m-40-7 40-27 41 18L0 7Z" fill="#886044" stroke="#674a35" strokeWidth="2.5" />
-      <path d="M-30-10 0-29 31-15M-26-4 0-21 25-10" fill="none" stroke="#bd8a58" strokeWidth="1.6" />
-      <path d="M-13 18v15l13 6V23Z" fill="#74523b" stroke="#e2c99a" strokeWidth="1.5" />
-      <path d="M-33 10 0 26m5-12 24-11" stroke="#ead7ad" strokeWidth="1.4" opacity=".7" />
-    </g>
-  );
-}
-
-function Person({ x, y, delay }: { x: number; y: number; delay: string }) {
-  return (
-    <g transform={`translate(${x} ${y})`} aria-hidden="true">
-      <g className="city-person" transform="scale(2.4)" style={{ animationDelay: delay }}>
-        <ellipse cx="0" cy="8" rx="5" ry="2.3" fill="#394a37" opacity=".25" />
-        <path d="M-3 0q3-4 6 0l4 7q-6 4-14 0Z" fill="#a75e42" stroke="#72513b" strokeWidth="1" />
-        <circle cy="-4" r="2.7" fill="#b9845c" />
-        <path d="M-3 1-7 5m10-4 4 4M-3 7l-2 4m8-4 2 4" fill="none" stroke="#72513b" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M-5-5q5-4 10 0" fill="none" stroke="#e0c591" strokeWidth="2" />
+function Tree({ x, y, scale, canopy, kind }: {
+  x: number;
+  y: number;
+  scale: number;
+  canopy: [string, string, string];
+  kind: number;
+}) {
+  if (kind === 0) {
+    // Palm
+    return (
+      <g transform={`translate(${x} ${y}) scale(${scale})`}>
+        <ellipse cx="14" cy="2" rx="15" ry="5" fill="#16200f" opacity=".28" />
+        <path d="M-2 2q6-26 2-54l5 1q4 28-1 53Z" fill="#7a5a38" stroke={INK} strokeWidth="1.1" />
+        <g fill={canopy[1]} stroke={INK} strokeWidth=".9">
+          <path d="M2-53q-22-12-34 6 18-6 34-6Z" />
+          <path d="M2-53q24-12 35 7-18-7-35-7Z" />
+          <path d="M2-53q-14-20-30-16 16 3 30 16Z" fill={canopy[2]} />
+          <path d="M2-53q14-21 31-15-17 3-31 15Z" fill={canopy[2]} />
+          <path d="M2-53q-6 11-17 18 9-10 17-18Zm0 0q8 11 18 18-10-9-18-18Z" />
+        </g>
       </g>
+    );
+  }
+  if (kind === 1) {
+    // Bamboo clump
+    return (
+      <g transform={`translate(${x} ${y}) scale(${scale})`}>
+        <ellipse cx="9" cy="2" rx="17" ry="5" fill="#16200f" opacity=".26" />
+        <path d="M-7 2q-5-30-13-44M0 2q0-34 2-52M7 2q5-30 15-44" fill="none" stroke="#5f7a3a" strokeWidth="2.6" />
+        <path d="M-20-44q-14 4-14 15 9 1 18-8 5 12 17 4 11 9 20-1 9 6 15-11-7-13-17-8-5-15-20-8-11-3-19 9Z" fill={canopy[1]} stroke={INK} strokeWidth="1" />
+        <path d="M-16-38q6-8 15-7m8 7q6-5 13-2" fill="none" stroke={canopy[2]} strokeWidth="2.4" strokeLinecap="round" />
+      </g>
+    );
+  }
+  // Broad shade tree
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <ellipse cx="16" cy="3" rx="27" ry="8" fill="#16200f" opacity=".3" />
+      <path d="M-5 3 0-24l7 0 3 27Z" fill="#65472c" stroke={INK} strokeWidth="1.1" />
+      <path d="M-28-18q-8-15 7-23 2-16 20-13 13-10 25 3 15 2 13 18 8 13-7 21-8 10-23 3-11 7-21-1-11 2-14-8Z" fill={canopy[0]} stroke={INK} strokeWidth="1.2" />
+      <path d="M-22-24q-3-12 9-17 4-12 18-9 11-5 17 6 10 3 7 13-11 8-20 2-11 8-21 1-5 5-10 4Z" fill={canopy[1]} />
+      <path d="M-14-34q5-8 13-8 5-5 12-1-4 5-11 5-6 5-14 4Z" fill={canopy[2]} />
     </g>
   );
 }
 
-function CityBackdrop({ uniqueId }: { uniqueId: string }) {
+function Hut({ x, y, scale, roof, variant }: {
+  x: number;
+  y: number;
+  scale: number;
+  roof: "thatch" | "tile";
+  variant: number;
+}) {
+  const tile = roof === "tile" || variant % 3 === 0;
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <GroundShadow u={-16} v={-12} w={32} d={24} reach={12} />
+      <Box u={-16} v={-12} w={32} d={24} h={14} lit={variant % 2 ? "#dcc595" : "#c9ae7d"} shade="#a0805a" stroke={1.2} />
+      <ChalaRoof
+        u={-16}
+        v={-12}
+        w={32}
+        d={24}
+        z={14}
+        rise={12}
+        over={4}
+        curve={5}
+        lit={tile ? "#a85a36" : "#b8924f"}
+        shade={tile ? "#723a22" : "#856233"}
+        line={tile ? "#5c2c18" : "#6b4e24"}
+        strokes={4}
+      />
+    </g>
+  );
+}
+
+/** River or sea along the lower edge, and the bank it meets. */
+function shoreY(x: number, setting: CitySetting): number {
+  const base = setting === "coast" ? 815 : 835;
+  return base + Math.sin(x / 190) * 24 + Math.sin(x / 73 + 1) * 7;
+}
+
+const CityBackdrop = memo(function CityBackdrop({
+  profile,
+  uniqueId,
+}: {
+  profile: CityProfile;
+  uniqueId: string;
+}) {
+  const { setting, seed, layout } = profile;
+  const colors = SETTING_COLORS[setting];
+  const scenery = useMemo(() => {
+    const random = seededRandom(seed);
+    const items: { y: number; node: ReactNode }[] = [];
+    const clearOfBuildings = (x: number, y: number, margin: number) =>
+      layout.every(
+        (spot) =>
+          Math.abs(x - spot.x) > margin * spot.scale ||
+          Math.abs(y - spot.y) > (margin * 0.82) * spot.scale,
+      );
+    let placed = 0;
+    for (let attempt = 0; attempt < 1100 && placed < 138; attempt += 1) {
+      const x = random() * SCENE_WIDTH;
+      const y = SCENE_TOP + 40 + random() * (850 - SCENE_TOP);
+      const depth = 0.72 + (Math.max(0, y) / SCENE_HEIGHT) * 0.55;
+      const makeHut = random() < 0.34 && x > 200 && x < 1400;
+      const margin = makeHut ? 118 : 104;
+      if (y > shoreY(x, setting) - 34 || !clearOfBuildings(x, y, margin)) continue;
+      const key = `${attempt}`;
+      if (makeHut) {
+        items.push({
+          y,
+          node: <Hut key={key} x={x} y={y} scale={depth * 1.05} roof={colors.roof} variant={attempt} />,
+        });
+      } else {
+        const roll = random();
+        const kind =
+          setting === "coast"
+            ? roll < 0.55 ? 0 : roll < 0.7 ? 1 : 2
+            : setting === "plains"
+              ? roll < 0.1 ? 0 : roll < 0.25 ? 1 : 2
+              : roll < 0.2 ? 0 : roll < 0.45 ? 1 : 2;
+        items.push({
+          y,
+          node: <Tree key={key} x={x} y={y} scale={depth * (0.85 + random() * 0.45)} canopy={colors.canopy} kind={kind} />,
+        });
+      }
+      placed += 1;
+    }
+    return items.sort((a, b) => a.y - b.y).map((item) => item.node);
+  }, [colors, layout, seed, setting]);
+
+  const fields = useMemo(() => {
+    const random = seededRandom(seed + 5);
+    const patches: ReactNode[] = [];
+    [[70, 230], [1290, 190], [40, 560], [1300, 540]].forEach(([left, top], block) => {
+      for (let row = 0; row < 3; row += 1) {
+        for (let column = 0; column < 3; column += 1) {
+          const x = left + column * 88 - row * 48;
+          const y = top + row * 62 + column * 26;
+          const color = colors.field[Math.floor(random() * colors.field.length)];
+          patches.push(
+            <g key={`${block}-${row}-${column}`}>
+              <path d={`M${x} ${y}l84 34-46 28-84-34Z`} fill={color} stroke="#5e6f37" strokeWidth="1.8" />
+              <path d={`M${x - 16} ${y + 8}l84 34M${x - 32} ${y + 17}l84 34`} stroke="#e0dc98" strokeWidth="1" opacity=".55" />
+            </g>,
+          );
+        }
+      }
+    });
+    return patches;
+  }, [colors, seed]);
+
+  const lanes = useMemo(() => {
+    const docks = layout.find((spot) => spot.id === "docks")!;
+    const market = layout.find((spot) => spot.id === "market")!;
+    const town = layout.find((spot) => spot.id === "town")!;
+    const hub = { x: (market.x + docks.x) / 2, y: (market.y + docks.y) / 2 + 20 };
+    const spoke = (spot: CityBuildingPlacement) =>
+      `M${hub.x} ${hub.y}Q${(hub.x + spot.x) / 2 + (spot.y - hub.y) * 0.16} ${(hub.y + spot.y) / 2 + 24} ${spot.x} ${spot.y + 54 * spot.scale}`;
+    return [
+      `M${docks.x} ${docks.y + 30}Q${(docks.x + hub.x) / 2 + 30} ${(docks.y + hub.y) / 2} ${hub.x} ${hub.y}`,
+      ...layout.filter((spot) => spot.id !== "docks").map(spoke),
+      `M-20 ${town.y + 150}Q${town.x - 300} ${town.y + 20} ${town.x} ${town.y + 68}T1620 ${town.y + 110}`,
+    ].join("");
+  }, [layout]);
+
+  const shorePath = useMemo(() => {
+    const points: string[] = [];
+    for (let x = -20; x <= SCENE_WIDTH + 20; x += 40) {
+      points.push(`${x} ${shoreY(x, setting).toFixed(1)}`);
+    }
+    return `M${points.join("L")}`;
+  }, [setting]);
+
   return (
     <g aria-hidden="true">
       <defs>
-        <linearGradient id={`city-land-${uniqueId}`} x1="0" y1="0" x2=".8" y2="1">
-          <stop offset="0" stopColor="#b5bd91" />
-          <stop offset=".52" stopColor="#d0c293" />
-          <stop offset="1" stopColor="#899975" />
+        <linearGradient id={`city-land-${uniqueId}`} x1="0" y1=".2" x2=".2" y2=".75">
+          <stop offset="0" stopColor={colors.land[0]} />
+          <stop offset=".55" stopColor={colors.land[1]} />
+          <stop offset="1" stopColor={colors.land[2]} />
         </linearGradient>
-        <linearGradient id={`city-river-${uniqueId}`} x1="0" y1="0" x2=".7" y2="1">
-          <stop offset="0" stopColor="#759f96" />
-          <stop offset=".46" stopColor="#a8c6b7" />
-          <stop offset="1" stopColor="#70978c" />
+        <linearGradient id={`city-water-${uniqueId}`} gradientUnits="userSpaceOnUse" x1="0" y1="820" x2="0" y2="1150">
+          <stop offset="0" stopColor={colors.water[0]} />
+          <stop offset="1" stopColor={colors.water[1]} />
         </linearGradient>
-        <linearGradient id={`city-roof-glow-${uniqueId}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#dab17a" />
-          <stop offset="1" stopColor="#976044" />
-        </linearGradient>
-        <pattern id={`city-grain-${uniqueId}`} width="38" height="38" patternUnits="userSpaceOnUse">
-          <path d="M3 9q12 4 22 0m7 23q-8-3-13 0" fill="none" stroke="#53674c" strokeWidth="1" opacity=".13" />
-          <circle cx="18" cy="25" r="1" fill="#fff3d4" opacity=".55" />
+        <pattern id={`city-grass-${uniqueId}`} width="62" height="44" patternUnits="userSpaceOnUse">
+          <path d="M6 12q3-5 6 0m26 18q3-5 6 0M52 8q2-4 5 0M18 36q3-4 5 0" fill="none" stroke="#3f5a2f" strokeWidth="1.2" opacity=".42" />
+          <circle cx="30" cy="10" r="1.2" fill="#f0e6b4" opacity=".4" />
         </pattern>
-        <filter id={`city-shadow-${uniqueId}`} x="-30%" y="-30%" width="170%" height="180%">
-          <feDropShadow dx="0" dy="8" stdDeviation="7" floodColor="#334638" floodOpacity=".25" />
-        </filter>
       </defs>
-      <rect width="960" height="1000" fill={`url(#city-land-${uniqueId})`} />
-      <path d="M0 0h960v195q-103 42-213 5t-219 15q-124 41-246 2T0 235Z" fill="#91a17d" opacity=".42" />
-      <path d="M0 165q105-55 208 3t211-5q113-51 225 3t218-1q55-21 98-5v235q-119-18-213 22t-205-6q-112-46-221 7T0 401Z" fill="#c4b989" opacity=".78" />
-      <path d="M0 350q100-39 195 7t196-7q105-45 215 4t214-4q83-29 140 4v252q-101-34-206 6t-204-8q-109-43-216 8T0 617Z" fill="#9aaa7e" opacity=".64" />
+      <rect y={SCENE_TOP} width={SCENE_WIDTH} height={SCENE_BOTTOM - SCENE_TOP} fill={`url(#city-land-${uniqueId})`} />
+      <rect y={SCENE_TOP} width={SCENE_WIDTH} height={SCENE_BOTTOM - SCENE_TOP} fill={`url(#city-grass-${uniqueId})`} />
 
-      <g fill="none" stroke="#e5d6a8" strokeLinecap="round" opacity=".75">
-        <path d="M-40 220q124-52 237 7t236-8q113-51 231 7t228-3" strokeWidth="5" />
-        <path d="M-20 588q100-37 194 9t198-7q111-44 222 5t211-4" strokeWidth="4" />
-      </g>
-
-      <g className="city-street-network">
-        <path d="M-20 436q95-44 172-77 76-31 137 7t141 47q65 7 125-27 90-52 155-7 85 61 174 19 51-22 98 0" />
-        <path d="M380 395q45 62 4 118-29 44 12 86 43 43 29 105m292-279q-52 54-22 101t-24 91q-31 37 2 92t-18 105" />
-        <path d="M-5 655q83-50 150-18t140 4q74-17 123 26t122 22q73-3 123-43t112-18" />
-      </g>
-      <g className="city-street-inlay">
-        <path d="M-20 436q95-44 172-77 76-31 137 7t141 47q65 7 125-27 90-52 155-7 85 61 174 19 51-22 98 0" />
-        <path d="M380 395q45 62 4 118-29 44 12 86 43 43 29 105m292-279q-52 54-22 101t-24 91q-31 37 2 92t-18 105" />
-        <path d="M-5 655q83-50 150-18t140 4q74-17 123 26t122 22q73-3 123-43t112-18" />
-      </g>
-
-      <g opacity=".86">
-        <path d="M74 695q48-34 95-1t91-2m548 6q42-31 86-1t82-4" fill="none" stroke="#738153" strokeWidth="3" />
-        <path d="M67 704q52-31 97 1t91-1m551 2q45-30 88 1t80-1" fill="none" stroke="#d0c48d" strokeWidth="2" />
-        <path d="M130 729v-27m28 31v-29m638 27v-28m31 29v-29" stroke="#805d40" strokeWidth="3" />
-      </g>
-
-      <g className="city-water">
-        <path d="M-80 684q143-81 278-28t259-12q135-70 267-9t296-16v290H-80Z" fill={`url(#city-river-${uniqueId})`} />
-        <path d="M-80 688q143-81 278-28t259-12q135-70 267-9t296-16" fill="none" stroke="#816d4c" strokeWidth="18" opacity=".63" />
-        <path d="M-80 679q143-81 278-28t259-12q135-70 267-9t296-16" fill="none" stroke="#d3c497" strokeWidth="8" opacity=".9" />
-        <path className="city-river-current" d="M20 902q36-12 73 0m104 41q41-12 78 1m103-72q39-13 75 0m87 75q42-14 82 0m85-101q36-12 69 1m-739 104q33-11 63 0m595 19q39-12 70 0" />
-        <path className="city-river-current city-river-current-soft" d="M95 960q32-11 61 0m152-105q32-10 62 1m178 130q36-12 68 0m135-119q38-11 72 0" />
-      </g>
-
-      <g className="city-gardens" aria-hidden="true">
-        <path d="M60 282q54-28 102-1t-2 49q-50 24-99-2t-1-46Zm685 185q51-31 100-1t-1 48q-49 25-97-2t-2-45Z" fill="#a9ac76" stroke="#788154" strokeWidth="2" />
-        <path d="M76 296q40-23 72-1m-65 18q36-19 67 0m603 172q38-25 71-1m-64 19q36-19 68 1" fill="none" stroke="#d8ca8b" strokeWidth="2" />
-      </g>
-
-      <g className="city-vegetation">
-        <Tree x={77} y={264} scale={1.03} />
-        <Tree x={252} y={233} scale={0.76} />
-        <Tree x={424} y={213} scale={0.91} />
-        <Tree x={130} y={438} scale={0.78} />
-        <Tree x={852} y={294} scale={1.12} />
-        <Tree x={763} y={358} scale={0.72} />
-        <Tree x={817} y={544} scale={0.84} />
-        <Tree x={118} y={581} scale={0.92} />
-        <Tree x={235} y={581} scale={0.64} />
-        <Tree x={773} y={613} scale={0.69} />
-        <Tree x={848} y={680} scale={0.96} />
-        <Tree x={230} y={744} scale={0.76} />
-        <Tree x={770} y={752} scale={0.72} />
-        <path d="M146 736q11-20 23 0m17 6q9-18 19 0m494-10q10-19 21 0m19 4q10-18 20 0" fill="none" stroke="#63804f" strokeWidth="3" strokeLinecap="round" />
-      </g>
-      <g className="city-yard-details" aria-hidden="true">
-        <path d="M253 356q35-25 70-2m-65 9q28-20 56-1m217-37q28-19 57-1m-47 10q22-15 44-1" fill="none" stroke="#8e8057" strokeWidth="2" opacity=".66" />
-        <path d="M247 365v-19m15 17v-22m60 25v-21m401 117v-17m14 19v-22m33 22v-19" stroke="#75593e" strokeWidth="2.4" />
-        <path d="M387 484h34v26h-34Zm8-9h18v9h-18Z" fill="#a3764d" stroke="#694a34" strokeWidth="2" />
-        <path d="M584 589h38m-32-7 6 7m7-7 6 7m7-7 6 7" fill="none" stroke="#74553b" strokeWidth="3" strokeLinecap="round" />
-        <path d="M572 595q17-13 34 0t34 0" fill="none" stroke="#b48b59" strokeWidth="3" />
-        <path d="M605 474q8-11 16 0v11h-16Zm20 2q8-11 16 0v9h-16Z" fill="#bf9666" stroke="#806044" strokeWidth="1.6" />
-      </g>
-
-      <g className="city-people">
-        <path id={`walking-lane-${uniqueId}`} d="M140 421q165-76 304 2t310-8" fill="none" />
-        <Person x={230} y={390} delay="-3s" />
-        <Person x={467} y={431} delay="-8s" />
-        <Person x={700} y={409} delay="-15s" />
-        <Person x={432} y={622} delay="-5s" />
-        <Person x={611} y={641} delay="-12s" />
-      </g>
-
-      <g transform="translate(635 777) rotate(-8)">
-        <g className="city-boat-bob">
-          <path d="M-61 0q48-12 124-3l-12 24q-43 15-91 2Z" fill="#44352c" stroke="#332d26" strokeWidth="3" />
-          <path d="M-50 2q45-8 100-2l-12 15q-35 9-73 1Z" fill="#8f5c3c" stroke="#cf9a60" strokeWidth="2" />
-          <path d="M-39 3 35 13m-66-6 55 14" stroke="#d8ab70" strokeWidth="2" />
-          <path d="M-10 2v-55m-3 10-33 42h32m6-29 30 29h-29Z" fill="#eee2c3" stroke="#967650" strokeWidth="2" />
-          <path d="M-6-44 22-8h-28Z" fill="#c99b5e" stroke="#967650" strokeWidth="1.5" />
+      {setting === "upland" && (
+        <g>
+          <path d="M-20-420h1640V130q-90-58-190-28-110-70-230-12-120-66-250 4-110-52-220-6-130-62-250 2-110-54-200 18-110-26-300-8Z" fill="#3f6b45" stroke={INK} strokeWidth="1.5" />
+          <path d="M-20-420h1640V70q-120-40-240-4-130-44-260 2-150-46-280 6-140-46-290 0-140-36-290 6Z" fill="#6b8c6a" />
+          <path d="M60 110q40-30 70 0m380-20q44-34 90 2m430-4q40-30 84 4m260-10q34-22 66 2" fill="none" stroke="#80a35e" strokeWidth="3" strokeLinecap="round" />
         </g>
-      </g>
-      <g transform="translate(304 743) scale(.58) rotate(9)">
-        <g className="city-boat-bob city-boat-bob-slow">
-          <path d="M-54 0q48-11 112-2l-11 20q-36 11-81 2Z" fill="#49382c" stroke="#372f26" strokeWidth="3" />
-          <path d="M-5 0v-48m-3 8-27 36h27m6-22 25 22H0Z" fill="#f1e4c4" stroke="#92734d" strokeWidth="2" />
-        </g>
-      </g>
+      )}
+      {fields}
 
-      <rect width="960" height="1000" fill={`url(#city-grain-${uniqueId})`} opacity=".55" />
-      <VillageHut x={410} y={350} scale={0.71} />
-      <VillageHut x={612} y={347} scale={0.59} />
-      <VillageHut x={395} y={604} scale={0.58} />
-      <VillageHut x={427} y={715} scale={0.68} />
+      {/* water */}
+      <path d={`${shorePath}V${SCENE_BOTTOM}H-20Z`} fill={`url(#city-water-${uniqueId})`} />
+      <path d={shorePath} transform="translate(0 -9)" fill="none" stroke={colors.bank} strokeWidth="24" strokeLinecap="round" />
+      <path d={shorePath} transform="translate(0 2)" fill="none" stroke="#5c4a2a" strokeWidth="3" opacity=".55" />
+      {setting === "coast" && (
+        <path d={shorePath} transform="translate(0 12)" fill="none" stroke="#f4f0d8" strokeWidth="3" strokeDasharray="60 26" opacity=".7" />
+      )}
+      <path className="city-river-current" d="M60 910q50-14 100 0m140 40q50-14 100 0m160-62q50-14 100 0m170 58q50-14 100 0m140-72q50-14 100 0m130 54q50-14 100 0m-1010 30q44-12 88 0M480 1040q50-14 100 0m120 50q50-14 100 0m-260 70q50-14 100 0m140-20q50-14 100 0" />
+      <path className="city-river-current city-river-current-soft" d="M200 880q40-11 80 0m240 96q40-11 80 0m300-104q40-11 80 0m210 112q40-11 80 0m-1070-32q40-11 80 0" />
+
+      {/* lanes */}
+      <path d={lanes} fill="none" stroke="#6e5a35" strokeWidth="27" strokeLinecap="round" opacity=".55" />
+      <path d={lanes} fill="none" stroke="#d6c08f" strokeWidth="20" strokeLinecap="round" />
+      <path d={lanes} fill="none" stroke="#b7a06e" strokeWidth="1.4" strokeDasharray="4 16" strokeLinecap="round" opacity=".7" />
+
+      {scenery}
+
+      {/* moored and passing boats */}
+      <g transform="translate(240 882) scale(1.12)">
+        <g className="city-boat-bob"><VesselArt vesselClass="river-boat" /></g>
+      </g>
+      <g transform="translate(1350 880) scale(-1.2 1.2)">
+        <g className="city-boat-bob city-boat-bob-slow"><VesselArt vesselClass="patello" /></g>
+      </g>
+      <g transform="translate(570 890) scale(.9)">
+        <g className="city-boat-bob city-boat-bob-slow"><VesselArt vesselClass="bora" /></g>
+      </g>
+      <g transform="translate(930 1040) scale(-1.4 1.4)">
+        <g className="city-boat-bob"><VesselArt vesselClass="river-boat" /></g>
+      </g>
     </g>
   );
-}
+});
 
 function CityBuildingButton({
   building,
@@ -210,13 +353,36 @@ function CityBuildingButton({
       onClick={onSelect}
       onKeyDown={handleKeyDown}
     >
-      <rect x="-84" y="-89" width="168" height="174" rx="20" className="building-hit-area" />
+      <rect x="-104" y="-96" width="208" height="186" className="building-hit-area" />
+      <ellipse cx="0" cy="16" rx="104" ry="62" className="building-ring" />
       <g className="city-building-art">
-        <CityBuildingArt id={building.id} variation={placement.variation} />
+        <CityBuildingArt id={building.id} />
       </g>
-      <g className="city-building-label">
-        <text x="0" y="88" textAnchor="middle">{building.name}</text>
-      </g>
+    </g>
+  );
+}
+
+function CityBuildingLabel({
+  building,
+  placement,
+  selected,
+  size,
+}: {
+  building: CityBuildingDefinition;
+  placement: CityBuildingPlacement;
+  selected: boolean;
+  size: number;
+}) {
+  const labelWidth = building.name.length * 12.4 + 34;
+  const offset = building.id === "docks" ? -66 : 72;
+  return (
+    <g
+      className={`city-building-label${selected ? " city-building-label-selected" : ""}`}
+      transform={`translate(${placement.x} ${placement.y + offset * placement.scale}) scale(${size})`}
+      aria-hidden="true"
+    >
+      <path d={`M${-labelWidth / 2} -18q-7 0-10 6l5 12-5 12q3 6 10 6H${labelWidth / 2}q7 0 10-6l-5-12 5-12q-3-6-10-6Z`} />
+      <text y="9" textAnchor="middle">{building.name}</text>
     </g>
   );
 }
@@ -227,37 +393,67 @@ export default function CityScene({
   onSelectBuilding,
 }: CitySceneProps) {
   const uniqueId = useId().replace(/:/g, "");
-  const placements = getCityLayout(townName);
+  const profile = getCityProfile(townName);
+  const ordered = [...profile.layout].sort((a, b) => a.y - b.y);
+  const sceneRef = useRef<HTMLElement>(null);
+  const [frame, setFrame] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const { width, height } = scene.getBoundingClientRect();
+      setFrame({ width, height });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(scene);
+    return () => observer.disconnect();
+  }, []);
+  // Portrait screens show the town at full width and more land and water above and below.
+  const aspect = frame.height > 0 ? frame.width / frame.height : 1.6;
+  const portrait = aspect < PORTRAIT_WIDTH / SCENE_HEIGHT;
+  const viewBox = portrait
+    ? `${(SCENE_WIDTH - PORTRAIT_WIDTH) / 2} ${SCENE_HEIGHT / 2 - PORTRAIT_WIDTH / aspect / 2} ${PORTRAIT_WIDTH} ${PORTRAIT_WIDTH / aspect}`
+    : `0 0 ${SCENE_WIDTH} ${SCENE_HEIGHT}`;
+  const pixelsPerUnit = portrait && frame.width > 0 ? frame.width / PORTRAIT_WIDTH : 0.75;
+  const labelSize = Math.max(1, Math.min(1.5, 14 / (26 * pixelsPerUnit)));
 
   return (
-    <section className="city-scene" aria-label={`${townName} town scene`}>
-      <div className="city-scene-stamp" aria-hidden="true">
-        <span className="city-scene-mark" />
-        <span>{townName} · ILLUSTRATED TOWN</span>
-      </div>
+    <section ref={sceneRef} className="city-scene" aria-label={`${townName} town scene`}>
       <svg
         className="city-illustration"
-        viewBox="0 0 960 1000"
+        viewBox={viewBox}
         preserveAspectRatio="xMidYMid slice"
         role="group"
         aria-label={`Illustrated riverside town of ${townName}. Choose a building.`}
       >
-        <CityBackdrop uniqueId={uniqueId} />
-        <g filter={`url(#city-shadow-${uniqueId})`}>
-          {placements.map((placement) => {
-            const building = getCityBuilding(placement.id);
-            return (
-              <CityBuildingButton
-                key={placement.id}
-                building={building}
-                placement={placement}
-                selected={selectedBuilding === placement.id}
-                onSelect={() => onSelectBuilding(placement.id)}
-              />
-            );
-          })}
-        </g>
+        <CityBackdrop profile={profile} uniqueId={uniqueId} />
+        <Figure x={720} y={570} cloth="#1f4d40" className="city-person" delay="-2s" />
+        <Figure x={900} y={330} cloth="#efe2c4" carrying className="city-person" delay="-6s" />
+        {ordered.map((placement) => (
+          <CityBuildingButton
+            key={placement.id}
+            building={getCityBuilding(placement.id)}
+            placement={placement}
+            selected={selectedBuilding === placement.id}
+            onSelect={() => onSelectBuilding(placement.id)}
+          />
+        ))}
+        {ordered.map((placement) => (
+          <CityBuildingLabel
+            key={placement.id}
+            building={getCityBuilding(placement.id)}
+            placement={placement}
+            selected={selectedBuilding === placement.id}
+            size={labelSize}
+          />
+        ))}
       </svg>
+      <div className="city-vignette" aria-hidden="true" />
+      <div className="city-scene-stamp" aria-hidden="true">
+        <strong>{townName}</strong>
+        <span>Illustrated town</span>
+      </div>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BengalMap from "./components/BengalMap";
+import { VesselPortrait } from "./components/map-art/VesselArt";
 import CityScene, {
   CITY_BUILDINGS,
   type CityBuildingId,
@@ -167,67 +168,83 @@ function PortIcon({
 }
 
 function GoodIllustration({ good }: { good: GoodId }) {
+  const ink = "#2f1d10";
   return (
     <svg className="good-illustration" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+      <ellipse cx="29" cy="47" rx="19" ry="4" fill="#3a2513" opacity=".22" />
       {good === "rice" && (
         <>
-          <path d="M9 42q19-7 36 0L42 49H14Z" fill="#9b6343" stroke="#744932" strokeWidth="1.5" />
-          <path d="M13 40q15-9 30 0M16 37q12-8 24 0" fill="#e2bb79" stroke="#ab8151" strokeWidth="1.3" />
-          <path d="M26 37q-8-11-3-24m6 24q9-12 5-23m-8 12q-10-6-10-12m12 6q9-4 11-11" stroke="#69784c" strokeWidth="1.8" strokeLinecap="round" />
-          <path d="m17 11 5 2m12-2-5 3m-12-8 4 3m16-2-4 3m-10-10 3 5" stroke="#d7ad68" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M14 46q-5-19 7-26l-3-6q10 3 20 0l-3 6q12 7 7 26-14 5-28 0Z" fill="#cfae76" stroke={ink} strokeWidth="1.5" />
+          <path d="M21 20q7 3 14 0" stroke={ink} strokeWidth="1.5" />
+          <path d="M19 15q9-6 18 0-9 4-18 0Z" fill="#f4ecd3" stroke={ink} strokeWidth="1.2" />
+          <path d="M20 26q-3 9-1 17" stroke="#f0dcae" strokeWidth="2" strokeLinecap="round" />
+          <path d="M27 31q-5 3-5 8 5-1 5-8Zm0 0q5 3 5 8-5-1-5-8Zm0 0v12" fill="#7d8f45" stroke={ink} strokeWidth=".9" />
         </>
       )}
       {good === "muslin" && (
         <>
-          <path d="m12 16 9 2 7-5 8 5-2 19q-9 5-20-1Z" fill="#e5d6b1" stroke="#a9936b" strokeWidth="1.5" />
-          <path d="m12 16 8-7 8 4 8-4 5 8-9 1-4-4-8 5Z" fill="#f3e8cd" stroke="#a9936b" strokeWidth="1.4" strokeLinejoin="round" />
-          <path d="m19 21 5 1m-4 4 13-1m-12 6 12-1" stroke="#d0bc95" strokeWidth="1.4" strokeLinecap="round" />
-          <path d="M17 9q4-6 8 0m3 4q4-5 8 0" stroke="#9d8259" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M9 42q10-7 19-5t19-5v9q-10 5-19 6t-19 3Z" fill="#b9a67e" stroke={ink} strokeWidth="1.4" />
+          <path d="M10 33q9-7 18-5t19-5v9q-10 5-19 5t-18 4Z" fill="#efe4c8" stroke={ink} strokeWidth="1.4" />
+          <path d="M11 24q9-7 17-5t18-5v9q-10 5-18 5t-17 4Z" fill="#a8452a" stroke={ink} strokeWidth="1.4" />
+          <path d="M14 26q7-5 14-3.5t15-4M14 35q7-5 14-3.5t15-4" stroke="#f8efd9" strokeWidth="1.2" opacity=".85" />
+          <ellipse cx="11" cy="28.5" rx="2.5" ry="4.5" fill="#7e2f18" stroke={ink} strokeWidth="1" />
+          <ellipse cx="11.5" cy="37.5" rx="2.5" ry="4.5" fill="#d9caa4" stroke={ink} strokeWidth="1" />
         </>
       )}
       {good === "salt" && (
         <>
-          <path d="m12 38 6-14 8 2 7-13 9 13-3 15-12 3Z" fill="#f2ead8" stroke="#b6ae9b" strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="m19 24 7 2 7-13m-11 20 9 1m-3-7 10 2" stroke="#fffdf3" strokeWidth="2" strokeLinecap="round" />
-          <path d="M15 45h28M20 49h17" stroke="#9d8259" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M11 34q17 6 34 0l-3 12q-14 5-28 0Z" fill="#94643a" stroke={ink} strokeWidth="1.5" />
+          <path d="M14 38q14 4 28 0m-27 4q13 4 26 0M20 36l1 11m7-10v11m7-11-1 11" stroke={ink} strokeWidth=".9" opacity=".7" />
+          <path d="M12 34q5-21 16-23 11 2 16 23-16 6-32 0Z" fill="#f8f4e8" stroke={ink} strokeWidth="1.4" />
+          <path d="M27 14q-6 7-8 19m13-16q3 7 3 13" stroke="#c5c1b0" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M20 22l2 2m8-5 2 2m-9 8 2 2" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
         </>
       )}
       {good === "silk" && (
         <>
-          <path d="M17 16q0-7 11-9 11 2 11 9v20q0 7-11 9-11-2-11-9Z" fill="#d9b36c" stroke="#987548" strokeWidth="1.5" />
-          <path d="M17 17q11 6 22 0m-22 6q11 6 22 0m-22 6q11 6 22 0m-22 6q11 6 22 0m-19 8q8-5 16 0" stroke="#f2dfa9" strokeWidth="1.5" />
+          <path d="M11 22q8-9 15 0v22q-7 6-15 0Z" fill="#e0b24f" stroke={ink} strokeWidth="1.4" />
+          <path d="M30 22q8-9 15 0v22q-7 6-15 0Z" fill="#c4563a" stroke={ink} strokeWidth="1.4" />
+          <path d="M11 28q7 4 15 0m-15 6q7 4 15 0m-15 6q7 4 15 0" stroke="#fff0c0" strokeWidth="1.3" />
+          <path d="M30 28q8 4 15 0m-15 6q8 4 15 0m-15 6q8 4 15 0" stroke="#f3b79a" strokeWidth="1.3" />
+          <path d="M15 17q13-11 26 0" stroke={ink} strokeWidth="1.5" />
         </>
       )}
       {good === "sugar" && (
         <>
-          <path d="M14 44 24 10m8 36 2-36m-12 21 13-7m-17 1 11-8m-8 22 15-8m-10 5 10 5" stroke="#71814d" strokeWidth="3" strokeLinecap="round" />
-          <path d="M12 45h32l-4 5H16Z" fill="#c99558" stroke="#87603f" strokeWidth="1.4" />
-          <path d="M18 44q9-8 20 0" fill="#e1c181" stroke="#b28850" strokeWidth="1.3" />
+          <path d="m18 45 12-34m-4 34 10-36" stroke="#6f8a3f" strokeWidth="5" strokeLinecap="round" />
+          <path d="m18 45 12-34m-4 34 10-36" stroke={ink} strokeWidth=".9" strokeDasharray="9 2 1 2" opacity=".6" />
+          <path d="M31 12q-9-5-14 0 7 3 14 0Zm6-3q8-5 12 1-7 3-12-1Z" fill="#83a04a" stroke={ink} strokeWidth="1" />
+          <path d="M7 46V34q6-6 13-1v13q-6 4-13 0Z" fill="#e8d4a2" stroke={ink} strokeWidth="1.4" />
+          <path d="M9 36q5-3 9 0" stroke={ink} strokeWidth="1" />
+          <path d="M34 46q0-9 7-14 7 5 7 14-7 3-14 0Z" fill="#a8673a" stroke={ink} strokeWidth="1.4" />
         </>
       )}
       {good === "saltpetre" && (
         <>
-          <path d="m11 40 7-14 8 4 5-18 15 24-7 8-14 1Z" fill="#eee7d7" stroke="#9e9c8b" strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="m18 27 8 3 5-18m-8 27 15-2m-5-13 9 10" stroke="#fffdf3" strokeWidth="2" strokeLinecap="round" />
-          <path d="M13 48h32" stroke="#9d8259" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M10 28h36v14q-18 7-36 0Z" fill="#7d5430" stroke={ink} strokeWidth="1.5" />
+          <path d="M10 34q18 6 36 0M19 30v14m9-14v15m9-15v14" stroke={ink} strokeWidth="1" opacity=".75" />
+          <path d="m11 29 6-11 5 4 5-11 7 10 5-5 6 13q-17 6-34 0Z" fill="#eef0ea" stroke={ink} strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="m27 12-1 16m-9-10 3 11m14-18 1 16" stroke="#b5bcb6" strokeWidth="1.1" />
         </>
       )}
       {good === "opium" && (
         <>
-          <path d="M28 43V23m0 8Q18 19 13 27q2 9 15 8m0-4q10-14 17-6-3 9-17 10" fill="none" stroke="#65794d" strokeWidth="2" strokeLinecap="round" />
-          <path d="M28 24q-12-5-8-13 7-1 8 7 2-9 9-7 3 8-9 13Z" fill="#b77c73" stroke="#82584f" strokeWidth="1.4" />
-          <circle cx="28" cy="24" r="3" fill="#d9b466" />
-          <path d="M21 45h14l-2 5h-10Z" fill="#9b6946" stroke="#75513c" strokeWidth="1.2" />
+          <path d="M28 46V24M20 46q-1-12-7-18m23 18q2-13 8-18" stroke="#5f7a3a" strokeWidth="2.4" strokeLinecap="round" />
+          <circle cx="28" cy="17" r="8" fill="#a8b67a" stroke={ink} strokeWidth="1.4" />
+          <path d="M21 11q7-5 14 0-7 3-14 0Z" fill="#6f8a4a" stroke={ink} strokeWidth="1" />
+          <circle cx="12" cy="24" r="6" fill="#b8c288" stroke={ink} strokeWidth="1.3" />
+          <circle cx="45" cy="24" r="6" fill="#98a86c" stroke={ink} strokeWidth="1.3" />
+          <path d="M25 15v6m3-7v8m3-7v6" stroke="#6b7a42" strokeWidth=".9" />
         </>
       )}
       {good === "lac" && (
         <>
-          <path d="M18 18h20l-2 6 5 20q-12 7-26 0l5-20Z" fill="#a84e3e" stroke="#703d34" strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M20 24h16m-14 5q8 4 14 0m-15 7q7 4 15 0" stroke="#d89160" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M20 18q8-5 16 0" stroke="#e4bd7a" strokeWidth="2" strokeLinecap="round" />
+          <path d="M10 44q-1-7 6-9 7-3 12 0 6 2 12-1 7-1 7 6t-7 8H16q-5 0-6-4Z" fill="#7e2316" stroke={ink} strokeWidth="1.4" />
+          <path d="M16 36 28 14l8 3-9 20Zm9 1 7-25 8 2-5 23Z" fill="#b5381f" stroke={ink} strokeWidth="1.3" strokeLinejoin="round" />
+          <path d="m20 33 8-16m8 18 4-19" stroke="#ee9c6a" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M15 41q6-3 12 0" stroke="#d3684a" strokeWidth="1.4" strokeLinecap="round" />
         </>
       )}
-      <path d="M6 48q5-3 9 0m25-3q4-3 9-1" stroke="#68805b" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -274,21 +291,13 @@ function IntroScreen({
           <h1>The<br />Bengal<br /><em>Trader</em></h1>
           <p className="cover-story">Fifteen river towns. One little boat.<br />A big adventure ahead.</p>
         </div>
-        <div className="cover-ship" aria-hidden="true">
-          <svg viewBox="0 0 240 102" fill="none">
-            <path d="M37 69h160l-20 23q-62 13-120 0Z" fill="#543b2c" stroke="#342a25" strokeWidth="3" />
-            <path d="M48 73h134l-12 11H57Z" fill="#ae7149" />
-            <path d="M111 12v59M108 18v41L52 59Zm10 5v37l48 0Z" fill="#f5ead0" stroke="#9b805b" strokeWidth="2" />
-            <path d="M67 68h22m62 0h19" stroke="#f1ddba" strokeWidth="4" strokeLinecap="round" />
-            <path d="M16 96q17-6 31 1t30 0m86 3q25-7 46 0t35-1" stroke="#e8e1c3" strokeWidth="3" strokeLinecap="round" opacity=".8" />
-            <circle cx="43" cy="34" r="3" fill="#eddaa6" />
-            <circle cx="197" cy="42" r="2" fill="#eddaa6" />
-          </svg>
-        </div>
         <div className="cover-side-note" aria-hidden="true">RIVERS OF BENGAL</div>
       </div>
 
       <section className="intro-join">
+        <div className="cover-ship" aria-hidden="true">
+          <VesselPortrait vesselClass="river-boat" />
+        </div>
         <span className="eyebrow">YOUR STORY STARTS IN DHAKA</span>
         <h2>Trade well. Sail far.<br />Make your family proud.</h2>
         <label className="captain-field">
@@ -340,6 +349,29 @@ function getRouteSizeNote(
     return `Longer route: the direct channel is too narrow for your ${vessel.name}. ${formatInGameDays(preview.travelTime.durationDays)} in-game days instead of ${formatInGameDays(preview.standardTravelTime.durationDays)}.${speedNote ? ` ${speedNote}` : ""}`;
   }
   return speedNote;
+}
+
+function RouteEmblem() {
+  return (
+    <div className="route-emblem" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="5" r="2.2" />
+        <path d="M12 7.2V21m-4.5-9.5h9M4 14c.6 4.200 3.8 7 8 7s7.4-2.8 8-7" />
+      </svg>
+    </div>
+  );
+}
+
+function RouteNote({
+  preview,
+  note,
+}: {
+  preview: ShipRoutePreview;
+  note: string | null;
+}) {
+  if (!note) return null;
+  const warning = preview.tooLarge || Boolean(preview.standardTravelTime);
+  return <p className={warning ? "route-size-note" : "route-speed-note"}>{note}</p>;
 }
 
 function VoyagePanel({
@@ -396,12 +428,18 @@ function VoyagePanel({
       {voyage ? (
         <section className="voyage-card underway-card" aria-live="polite">
           <div className="route-heading">
-            <div className="route-emblem">⌁</div>
+            <RouteEmblem />
             <div>
               <span className="eyebrow">RIVER VOYAGE</span>
               <h2>To {getTown(voyage.destination).name}</h2>
             </div>
             <span className="remaining-time">{routeTime}</span>
+          </div>
+          <div className="voyage-track" aria-hidden="true">
+            <span className="voyage-track-waves" />
+            <div className="voyage-track-ship" style={{ left: `calc(42px + (100% - 84px) * ${progress / 100})` }}>
+              <VesselPortrait vesselClass={vessel.id} />
+            </div>
           </div>
           <div className="voyage-progress" role="progressbar" aria-label="Voyage progress" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
             <span style={{ width: `${progress}%` }} />
@@ -458,7 +496,7 @@ function VoyagePanel({
       ) : (
         <section className="voyage-card voyage-ready">
           <div className="route-heading">
-            <div className="route-emblem">⌁</div>
+            <RouteEmblem />
             <div className="destination-copy">
               <span className="eyebrow">YOUR NEXT JOURNEY</span>
               <h2>{selectedIsCurrent ? "Where will you go?" : `Sail to ${nextPort.name}`}</h2>
@@ -478,7 +516,7 @@ function VoyagePanel({
                   ? `This ship cannot reach ${nextPort.name}.`
                   : `The river path to ${nextPort.name} is blocked. Choose another port.`}
           </p>
-          {routeSizeNote && <p className="route-size-note">{routeSizeNote}</p>}
+          <RouteNote preview={selectedPreview} note={routeSizeNote} />
           <button
             className="primary-button sail-button"
             disabled={selectedIsCurrent || !selectedRoute}
@@ -641,7 +679,13 @@ function MarketPanel({
                 <div className="good-info">
                   <h3>{good.name}</h3>
                   <p>{good.description}</p>
-                  <span>Buy {formatGold(buyPrice)} · Sell {formatGold(sellPrice)}</span>
+                  <div className="good-prices">
+                    <span>Buy <b>{formatGold(buyPrice)}</b></span>
+                    <span>Sell <b>{formatGold(sellPrice)}</b></span>
+                  </div>
+                  <span className="stock-meter" aria-hidden="true">
+                    <i style={{ width: `${(marketStock / MARKET_MAX_STOCK) * 100}%` }} />
+                  </span>
                   <span className="market-stock-line">
                     Stall {marketStock} available · You hold {owned}
                   </span>
@@ -788,6 +832,13 @@ function DockPanel({
         <h2>Shipyard repairs & upgrades</h2>
         <p>{vessel.name}: repair for {vessel.repairCostPerHull} gold per missing hull. Upgrade costs and new stats are shown before fitting.</p>
       </div>
+      <div className="ship-hero">
+        <VesselPortrait vesselClass={vessel.id} />
+        <div>
+          <h3>{state.fleet.find((ship) => ship.id === state.selectedShipId)?.name}</h3>
+          <p>{vessel.name} · your selected ship</p>
+        </div>
+      </div>
       <div className="shipyard-stats" aria-label="Current boat upgrades">
         <span>Attack <strong>{stats.attack}</strong></span>
         <span>Defence <strong>{stats.defence}</strong></span>
@@ -909,22 +960,20 @@ function DockPanel({
             const portLimit =
               classId === "patello" ? "Cannot reach Sylhet or Balasore" : "Reaches all 15 ports";
             return (
-              <article
-                className={`ship-class-card${confirmingShipClass === classId ? " ship-class-card-confirming" : ""}`}
-                key={classId}
-              >
+              <article className="ship-class-card" key={classId}>
+                <VesselPortrait vesselClass={classId} />
                 <div className="ship-class-copy">
                   <h3>{shipClass.name}</h3>
                   <p>{shipClass.summary}</p>
-                  <ul>
-                    <li>Hold {shipClass.baseHold}</li>
-                    <li>Hull {shipClass.baseHull}</li>
-                    <li>Speed {getVesselSpeedLabel(shipClass)}</li>
-                    <li>Repair {shipClass.repairCostPerHull}g per hull</li>
-                    <li>Route trade: up to {shipClass.routeUnitsPerGood} per good</li>
-                    <li>{portLimit}</li>
-                  </ul>
                 </div>
+                <ul className="ship-class-stats">
+                  <li>Hold <b>{shipClass.baseHold}</b></li>
+                  <li>Hull <b>{shipClass.baseHull}</b></li>
+                  <li>Speed <b>{getVesselSpeedLabel(shipClass)}</b></li>
+                  <li>Repair <b>{shipClass.repairCostPerHull}g</b> per hull</li>
+                  <li>Route trade <b>{shipClass.routeUnitsPerGood}</b> per good</li>
+                </ul>
+                <p className={`ship-class-reach${classId === "patello" ? " ship-class-reach-limited" : ""}`}>{portLimit}</p>
                 {confirmingShipClass === classId ? (
                   <div
                     className="ship-purchase-confirmation"
@@ -1021,7 +1070,7 @@ function PortContextPanel({
                 ? "This ship cannot reach this port."
                 : "A river section is closed. No safe water route is open right now."}
         </p>
-        {routeSizeNote && <p className="route-size-note">{routeSizeNote}</p>}
+        {preview && <RouteNote preview={preview} note={routeSizeNote} />}
         <p className="npc-port-traffic">
           {dockedMerchants.length
             ? `At this port: ${dockedMerchants.map((merchant) => merchant.name).join(", ")}.`
@@ -1261,7 +1310,7 @@ function AutomatedRoutePanel({
             </select>
           </label>
           {hiddenDestinations.length > 0 && (
-            <p className="route-capital-note">
+            <p className="route-capital-note route-hidden-note">
               Not offered, because this {vessel.name} cannot reach them right
               now: {hiddenDestinations.map((port) => getTown(port).name).join(", ")}.
             </p>
@@ -1454,6 +1503,7 @@ function FutureSystemsPanel({
                 key={ship.id}
               >
                 <div className="fleet-ship-heading">
+                  <VesselPortrait vesselClass={ship.vesselClass} />
                   <div>
                     <h3>{ship.name}</h3>
                     <span>
@@ -2745,11 +2795,11 @@ export default function App() {
           <div className="quick-stats" aria-label={`Gold ${game.gold}; cargo ${cargoUsed} of ${getCargoCapacity(game)}`}>
             <div className="quick-stat gold-stat">
               <GoldCoin />
-              <span>{game.gold}<small>gold</small></span>
+              <span><span className="value-pulse" key={game.gold}>{game.gold}</span><small>gold</small></span>
             </div>
             <div className="quick-stat cargo-stat">
               <CargoMark />
-              <span>{cargoUsed}<small>/{getCargoCapacity(game)}</small></span>
+              <span><span className="value-pulse" key={cargoUsed}>{cargoUsed}</span><small>/{getCargoCapacity(game)}</small></span>
             </div>
             <button
               aria-label={`Open reputation and milestones; ${game.reputation} reputation`}

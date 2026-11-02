@@ -4,7 +4,8 @@
 
 - **React + TypeScript** provide screens and accessible touch/keyboard controls.
 - **Vite 8** serves the mobile/LAN development preview at `http://localhost:5173`, with HMR, and builds the app.
-- **React + inline SVG** render the map and city scenes. The map prototype's reusable original terrain and vessel art lives under `src/components/map-art/`; camera pan and zoom are viewBox state in `BengalMap`, while route, port and ship positions remain in the existing world coordinates. Phaser is not used: this prototype needs layered illustration, camera gestures and accessible controls, not physics or a scene engine.
+- **React + inline SVG** render the map and city scenes. Vessel art lives under `src/components/map-art/`; camera pan and zoom are viewBox state in `BengalMap`, while route, port and ship positions remain in the existing world coordinates. Phaser is not used: this game needs layered illustration, camera gestures and accessible controls, not physics or a scene engine.
+- **Baked art:** `tools/art/bake-art.mjs` turns `asset-backups/bengal-world-map-master.png` into the served map, water and texture WebP files in `public/images/`. It paints out the name plates in the source painting and applies the colour grade. Rerun it to change either.
 - **IndexedDB** stores the offline save. The production PWA build precaches the app shell.
 - **Vitest + Testing Library** cover navigation, gameplay, UI, migration and persistence.
 
@@ -20,11 +21,9 @@ Game rules and data stay separate from rendering. No external image host or onli
 - `buildRiverRoute` assembles an edge sequence into an ordered path. `pointAlongRiverRoute` interpolates by travelled distance along its segments.
 - `riverPointsToSvgPath` serializes those same points for the visible waterway and preview route.
 
-`src/components/map-art/BengalWorldArt.tsx` paints the prototype's top-down floodplain, paddies, woodlands, islands, generalized port clusters and broad river channels. Its navigable channel strokes use the river graph; narrower wetland creeks are illustrative scenery only and do not add routes.
+`src/components/map-art/VesselArt.tsx` draws a distinct boat for each vessel class; `BengalTradingVessel.tsx` places one on the map.
 
-`src/components/map-art/BengalTradingVessel.tsx` draws the original wooden trading boat used by the world view.
-
-`src/components/BengalMap.tsx` draws the selected route and moving vessel, preserves accessible port controls, and supports pointer drag, pinch zoom, mouse-wheel zoom and camera buttons. Camera movement changes only the SVG viewBox; it does not change navigation, voyage timing, saves or other game state.
+`src/components/BengalMap.tsx` stacks separate layers that share one viewBox: the painted map, two cross-fading water plates, drifting cloud layers, and the route, ship and port overlay. Keeping the painted layers apart means the browser animates them without repainting the overlay. Markers keep one on-screen size at every zoom, and the camera follows the ship during a voyage until the player drags the map. It supports pointer drag, mouse-wheel zoom and camera buttons; camera movement changes only the viewBox, not navigation, voyage timing, saves or other game state. Phones use horizontal drag only.
 
 Port marker coordinates derive from the canonical port nodes. Thus the route shown, route planned and route travelled share one source. The graph deliberately describes a navigable game network, not accurate 17th-century hydrographic data. Depth restrictions apply per vessel class; no historical depth survey is implied. A draft above 1.5 would split the network, so `vessel-classes.test.ts` checks that every class has one connected network containing all shipyards.
 
@@ -47,11 +46,11 @@ Implemented integration points are per-town standing, residence and household, w
 ## Interface and scenes
 
 - `src/App.tsx` manages the save lifecycle, main navigation, selected port, contextual panels and current city.
-- `src/components/BengalMap.tsx` is the dominant world scene with selectable accessible ports, a route preview and a visual-only pan/zoom camera. The illustrated terrain and vessel components are kept separate from game rules and organized under `src/components/map-art/`.
-- `src/components/CityScene.tsx` composes the current-port city environment, accessible building targets and selected-building context. Reusable building illustrations live in `src/components/city-art/CityBuildingArt.tsx`; `city-layout.ts` separates building definitions from the Dhaka prototype and a generic port fallback so later towns can use their own placements. Market, Docks, Warehouse, Town centre, Home and Farm open functional panels; the city scene remains visible behind those overlays. Mosque and Workshop explicitly state their current or planned role.
-- The Dhaka city scene is original inline SVG: a connected riverfront settlement with layered streets, paths, vegetation, courtyards, docks, boats and varied building silhouettes. Ambient water, boat, smoke and figure motion is CSS-based and reduced-motion aware. Artwork is illustrative rather than a reconstruction of a documented street plan or named buildings.
+- `src/components/BengalMap.tsx` is the dominant world scene with selectable accessible ports, a route preview and a visual-only pan/zoom camera.
+- `src/components/CityScene.tsx` composes the current-port town, accessible building targets and selected-building context. `city-art/iso.tsx` is a small isometric drawing kit, `CityBuildingArt.tsx` draws the buildings with it, and `city-layout.ts` gives each of the 15 ports a setting (delta, coast, upland or plains), a layout and a seed for its scenery. Market, Docks, Warehouse, Town centre, Home and Farm open the existing functional panels; Mosque and Workshop explicitly state their current or planned role.
+- Town scenes are original inline SVG. Portrait screens show the town at full width with more land and water above and below. Ambient water, boat, smoke and figure motion is CSS-based and reduced-motion aware. Artwork is illustrative rather than a reconstruction of a documented street plan or named buildings.
 - Trade, Docks and Fleet are quick actions. Politics, Family, Properties and Notifications are grouped in More. Drawer close returns to the underlying map or city; Map is always a quick exit.
-- `src/styles.css` defines the portrait-first screen, touch targets, desktop sizing, illustration palette, overlays and reduced-motion behavior.
+- `src/styles.css` defines the carved-teak, brass and ledger-paper interface: design tokens, portrait, landscape-phone and desktop layouts, touch targets, overlays and reduced-motion behavior. Fonts are served locally from `public/fonts/`.
 
 ## Save and offline behavior
 
