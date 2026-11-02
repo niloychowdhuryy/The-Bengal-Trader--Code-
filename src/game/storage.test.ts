@@ -86,7 +86,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionNineState, version: 9 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(250);
     expect(migrated?.reputation).toBe(5);
     expect(migrated?.visitedTowns).toEqual(["dhaka", "patna"]);
@@ -188,7 +188,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(275);
     expect(migrated?.cargo).toEqual(upgraded.cargo);
     expect(migrated?.upgrades.hold).toBe(1);
@@ -220,7 +220,7 @@ describe("IndexedDB offline saves", () => {
     vi.spyOn(Date, "now").mockReturnValue(31_000);
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.missions).toEqual(current.missions);
     expect(migrated?.npcMerchants).toHaveLength(4);
     expect(migrated?.npcMerchants.every((merchant) => merchant.budget === 100))
@@ -263,7 +263,7 @@ describe("IndexedDB offline saves", () => {
     vi.spyOn(Date, "now").mockReturnValue(25_000);
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect("npcEncounter" in (migrated ?? {})).toBe(false);
     expect(migrated?.npcMerchants[0].cargo.rice).toBe(1);
     expect(migrated?.npcMerchants[0].strategy).toBe("specialist");
@@ -296,7 +296,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(70);
     expect(migrated?.voyage?.elapsedMs).toBe(0);
     expect(migrated?.voyage?.travelEvent).toBeNull();
@@ -403,7 +403,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionTenState, version: 10 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(320);
     expect(migrated?.ownedWarehouses).toEqual(["dhaka"]);
     expect(migrated?.residenceTown).toBe("patna");
@@ -428,7 +428,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionElevenState, version: 11 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(215);
     expect(migrated?.ownedFarms).toEqual(["dhaka"]);
     expect(migrated?.farmOutput.dhaka).toBe(4);
@@ -527,7 +527,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.cargo.rice).toBe(4);
     expect(migrated?.averagePurchasePrice.rice).toBe(
       getGoodPrice("patna", "rice", "buy", false, marketStock.rice),
@@ -558,7 +558,7 @@ describe("IndexedDB offline saves", () => {
     const reopenedAt = 86_400_000_000;
     vi.spyOn(Date, "now").mockReturnValue(reopenedAt);
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(147);
     expect(migrated?.cargo).toEqual(game.cargo);
     expect(migrated?.marketStock).toEqual(game.marketStock);
@@ -596,7 +596,7 @@ describe("IndexedDB offline saves", () => {
     const reopenedAt = 10_000_000;
     vi.spyOn(Date, "now").mockReturnValue(reopenedAt);
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(275);
     expect(migrated?.shipHull).toBe(6);
     expect(migrated?.upgrades).toEqual({ cannon: 1, hull: 0, hold: 1 });
@@ -634,7 +634,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionEightState, version: 8 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.gold).toBe(180);
     expect(migrated?.reputation).toBe(4);
     expect(migrated?.visitedTowns).toEqual(["dhaka", "patna"]);
@@ -693,7 +693,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.encounterPending).toBe(true);
     expect(migrated?.chittagongIntroductionSeen).toBe(true);
   });
@@ -719,7 +719,7 @@ describe("IndexedDB offline saves", () => {
     const reopenedAt = 1_000_000_000;
     vi.spyOn(Date, "now").mockReturnValue(reopenedAt);
     const restored = await loadGame();
-    expect(restored?.version).toBe(18);
+    expect(restored?.version).toBe(19);
     expect(restored?.voyage).not.toBeNull();
     if (!restored?.voyage) return;
     expect(restored.voyage.elapsedMs).toBe(elapsedAtSave);
@@ -759,7 +759,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(18);
+    expect(restored?.version).toBe(19);
     expect(restored?.gold).toBe(purchased.gold);
     expect(restored?.fleet).toHaveLength(2);
     expect(restored?.fleet.map((ship) => ship.currentPort)).toEqual(
@@ -792,7 +792,7 @@ describe("IndexedDB offline saves", () => {
 
     vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
     const restored = await loadGame();
-    expect(restored?.version).toBe(18);
+    expect(restored?.version).toBe(19);
     expect(restored?.npcSimulationDay).toBe(traveling.npcSimulationDay);
     expect(restored?.fleet[1]).toEqual(savedShip);
     expect(restored?.marketStock).toEqual(traveling.marketStock);
@@ -1006,7 +1006,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave(legacySave);
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(18);
+    expect(restored?.version).toBe(19);
     expect(restored?.marketStock.dhaka.rice).toBe(20);
     expect(restored?.captainName).toBe("Noor");
     expect(restored?.averagePurchasePrice.rice).toBeGreaterThan(0);
@@ -1037,7 +1037,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(18);
+    expect(restored?.version).toBe(19);
     expect(restored?.voyage).not.toBeNull();
     const restoredVoyage = restored?.voyage;
     if (!restoredVoyage) return;
@@ -1115,7 +1115,7 @@ describe("IndexedDB offline saves", () => {
 
     const newRoute = planRiverRoute("dhaka", "sylhet");
     expect(restoredVoyage.route).toEqual(newRoute);
-    expect(restored?.version).toBe(18);
+    expect(restored?.version).toBe(19);
     expect(restoredVoyage.elapsedMs / restoredVoyage.durationMs).toBeCloseTo(
       elapsedMs / durationMs,
       6,
@@ -1154,7 +1154,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(18);
+    expect(restored?.version).toBe(19);
     expect(restored?.sailingSpeed).toBe(1);
     expect(restored?.voyage?.elapsedMs).toBe(0);
     const migratedVoyage = restored?.voyage;
@@ -1185,7 +1185,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave(legacySave);
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(18);
+    expect(migrated?.version).toBe(19);
     expect(migrated?.cargo.rice).toBe(4);
     expect(migrated?.cargo.muslin).toBe(2);
     expect(migrated?.cargo.salt).toBe(3);

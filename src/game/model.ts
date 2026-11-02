@@ -8,6 +8,7 @@ import {
   getVoyageProgressMs,
   getVoyageRemainingRealTimeMs,
   getRouteTravelTime,
+  type RouteTravelTime,
   type SailingSpeed,
 } from "./travel-time";
 
@@ -100,8 +101,33 @@ export interface PlayerShip {
   cargo: Record<GoodId, number>;
   averagePurchasePrice: Record<GoodId, number>;
   sailingSpeed: SailingSpeed;
+  vesselClass: VesselClassId;
   automatedRoute: AutomatedTradeRoute | null;
   automationLog: AutomatedTradeActivity[];
+  returnOrder: ShipReturnOrder | null;
+}
+
+export type VesselClassId = "river-boat" | "bora" | "patello";
+
+export interface VesselClass {
+  id: VesselClassId;
+  name: string;
+  summary: string;
+  price: number;
+  baseHold: number;
+  holdPerUpgrade: number;
+  baseHull: number;
+  hullPerUpgrade: number;
+  repairCostPerHull: number;
+  travelFactor: number;
+  draft: number;
+  routeUnitsPerGood: number;
+}
+
+export interface ShipReturnOrder {
+  destination: TownId;
+  travelDaysRemaining: number;
+  travelDaysTotal: number;
 }
 
 export interface AutomatedTradeRule {
@@ -206,6 +232,7 @@ export type AutomatedRouteFailure =
   | "port-not-visited"
   | "same-port"
   | "no-route"
+  | "too-large"
   | "invalid-rules"
   | "gold";
 
@@ -220,7 +247,9 @@ export function configureAutomatedTradeRoute(
   const ship = state.fleet.find((entry) => entry.id === shipId);
   if (!ship) return { state, error: "not-owned" };
   if (shipId === state.selectedShipId) return { state, error: "active-ship" };
-  if (ship.automatedRoute?.phase === "traveling") return { state, error: "not-docked" };
+  if (ship.automatedRoute?.phase === "traveling" || ship.returnOrder) {
+    return { state, error: "not-docked" };
+  }
   if (
     !state.visitedTowns.includes(ship.currentPort) ||
     !state.visitedTowns.includes(destination)
@@ -228,8 +257,19 @@ export function configureAutomatedTradeRoute(
     return { state, error: "port-not-visited" };
   }
   if (destination === ship.currentPort) return { state, error: "same-port" };
-  if (!planRiverRoute(ship.currentPort, destination, state.navigationConditions)) {
-    return { state, error: "no-route" };
+  if (
+    !planRiverRoute(
+      ship.currentPort,
+      destination,
+      getShipRouteConditions(state.navigationConditions, ship.vesselClass),
+    )
+  ) {
+    return {
+      state,
+      error: planRiverRoute(ship.currentPort, destination, state.navigationConditions)
+        ? "too-large"
+        : "no-route",
+    };
   }
   const validRules =
     rules.length > 0 &&
@@ -333,7 +373,7 @@ export function cancelAutomatedTradeRoute(
 }
 
 export interface GameState {
-  version: 18;
+  version: 19;
   captainName: string;
   gold: number;
   highestGold: number;
@@ -373,11 +413,222 @@ export interface GameState {
   lastMessage: string;
 }
 
-export const ADDITIONAL_SHIP_PRICE = 500;
+export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
+  "river-boat": {
+    id: "river-boat",
+    name: "River boat",
+    summary: "A steady all-rounder that can reach every port.",
+    price: 500,
+    baseHold: 12,
+    holdPerUpgrade: 6,
+    baseHull: 8,
+    hullPerUpgrade: 3,
+    repairCostPerHull: 2,
+    travelFactor: 1,
+    draft: 1.4,
+    routeUnitsPerGood: 1,
+  },
+  bora: {
+    id: "bora",
+    name: "Bora",
+    summary: "A light, quick boat with a small hold. Cheap to buy and repair.",
+    price: 350,
+    baseHold: 8,
+    holdPerUpgrade: 3,
+    baseHull: 6,
+    hullPerUpgrade: 3,
+    repairCostPerHull: 2,
+    travelFactor: 0.8,
+    draft: 1.2,
+    routeUnitsPerGood: 1,
+  },
+  patello: {
+    id: "patello",
+    name: "Patello",
+    summary: "A strong, slow bulk carrier. Too large for the narrowest channels.",
+    price: 900,
+    baseHold: 30,
+    holdPerUpgrade: 6,
+    baseHull: 14,
+    hullPerUpgrade: 3,
+    repairCostPerHull: 3,
+    travelFactor: 1.25,
+    draft: 1.5,
+    routeUnitsPerGood: 4,
+  },
+};
+export const VESSEL_CLASS_IDS: VesselClassId[] = ["river-boat", "bora", "patello"];
+export const ADDITIONAL_SHIP_PRICE = VESSEL_CLASSES["river-boat"].price;
 export const MAX_PLAYER_SHIPS = 3;
 export const SHIPYARD_PORTS: TownId[] = ["dhaka", "chittagong", "hooghly"];
 export const STARTER_SHIP_ID = "player-ship-1";
 export const MAX_AUTOMATED_ROUTE_CAPITAL = 5000;
+
+export function getVesselCargoCapacity(
+  vesselClass: VesselClassId,
+  upgrades: Upgrades,
+): number {
+  const definition = VESSEL_CLASSES[vesselClass];
+  return definition.baseHold + upgrades.hold * definition.holdPerUpgrade;
+}
+
+export function getVesselMaximumHull(
+  vesselClass: VesselClassId,
+  upgrades: Upgrades,
+): number {
+  const definition = VESSEL_CLASSES[vesselClass];
+  return definition.baseHull + upgrades.hull * definition.hullPerUpgrade;
+}
+
+export function getShipRouteConditions(
+  conditions: RouteConditions,
+  vesselClass: VesselClassId,
+): RouteConditions {
+  return {
+    ...conditions,
+    vesselDraft: Math.max(
+      conditions.vesselDraft ?? 0,
+      VESSEL_CLASSES[vesselClass].draft,
+    ),
+  };
+}
+
+export function getSelectedVesselClass(state: GameState): VesselClass {
+  const ship = state.fleet.find((entry) => entry.id === state.selectedShipId);
+  return VESSEL_CLASSES[ship?.vesselClass ?? "river-boat"];
+}
+
+export interface ShipRoutePreview {
+  route: RiverRoute | null;
+  travelTime: RouteTravelTime | null;
+  tooLarge: boolean;
+  standardTravelTime: RouteTravelTime | null;
+}
+
+// Plans for the selected ship. `standardTravelTime` is set only when the ship's
+// size forces a longer path than the open route other vessels would take.
+export function getShipRoutePreview(
+  state: GameState,
+  destination: TownId,
+): ShipRoutePreview {
+  const vessel = getSelectedVesselClass(state);
+  const route = planRiverRoute(
+    state.currentTown,
+    destination,
+    getShipRouteConditions(state.navigationConditions, vessel.id),
+  );
+  const openRoute = planRiverRoute(
+    state.currentTown,
+    destination,
+    state.navigationConditions,
+  );
+  const routeAlert =
+    destination === "chittagong" && isHistoricalRouteAlertActive(state);
+  return {
+    route,
+    travelTime: route
+      ? getRouteTravelTime(route, routeAlert, vessel.travelFactor)
+      : null,
+    tooLarge: !route && openRoute !== null,
+    standardTravelTime:
+      route && openRoute && route.distance > openRoute.distance + 0.001
+        ? getRouteTravelTime(openRoute, routeAlert, vessel.travelFactor)
+        : null,
+  };
+}
+
+export function canSelectedShipReach(state: GameState, port: TownId): boolean {
+  return (
+    port === state.currentTown ||
+    planRiverRoute(
+      state.currentTown,
+      port,
+      getShipRouteConditions(
+        state.navigationConditions,
+        getSelectedVesselClass(state).id,
+      ),
+    ) !== null
+  );
+}
+
+export function getShipRouteDays(
+  route: RiverRoute,
+  vesselClass: VesselClassId,
+): number {
+  return Math.max(
+    1,
+    Math.ceil(
+      getRouteTravelTime(route, false, VESSEL_CLASSES[vesselClass].travelFactor)
+        .durationDays,
+    ),
+  );
+}
+
+export function isShipOutOfReach(state: GameState, shipId: string): boolean {
+  const ship = state.fleet.find((entry) => entry.id === shipId);
+  return Boolean(
+    ship &&
+      ship.id !== state.selectedShipId &&
+      !ship.automatedRoute &&
+      !ship.returnOrder &&
+      !canSelectedShipReach(state, ship.currentPort),
+  );
+}
+
+export function getShipReturnPlan(
+  state: GameState,
+  shipId: string,
+): { destination: TownId; days: number } | null {
+  const ship = state.fleet.find((entry) => entry.id === shipId);
+  if (!ship || !isShipOutOfReach(state, shipId)) return null;
+  const destination = state.voyage?.destination ?? state.currentTown;
+  const route = planRiverRoute(
+    ship.currentPort,
+    destination,
+    getShipRouteConditions(state.navigationConditions, ship.vesselClass),
+  );
+  return route
+    ? { destination, days: getShipRouteDays(route, ship.vesselClass) }
+    : null;
+}
+
+export function orderShipReturn(
+  state: GameState,
+  shipId: string,
+): {
+  state: GameState;
+  error?: "unavailable" | "not-owned" | "not-needed" | "no-route";
+} {
+  if (state.encounterPending) return { state, error: "unavailable" };
+  const ship = state.fleet.find((entry) => entry.id === shipId);
+  if (!ship) return { state, error: "not-owned" };
+  if (!isShipOutOfReach(state, shipId)) return { state, error: "not-needed" };
+  const plan = getShipReturnPlan(state, shipId);
+  if (!plan) return { state, error: "no-route" };
+  const message = `${ship.name} is returning to ${getTown(plan.destination).name} (${plan.days} in-game day${plan.days === 1 ? "" : "s"}).`;
+  return {
+    state: {
+      ...state,
+      fleet: state.fleet.map((entry) =>
+        entry.id === shipId
+          ? addAutomatedTradeActivity(
+              {
+                ...entry,
+                returnOrder: {
+                  destination: plan.destination,
+                  travelDaysRemaining: plan.days,
+                  travelDaysTotal: plan.days,
+                },
+              },
+              Math.floor(state.sailingDay),
+              message,
+            )
+          : entry,
+      ),
+      lastMessage: message,
+    },
+  };
+}
 
 export function syncSelectedShip(state: GameState): GameState {
   const updatedFleet = state.fleet.map((ship) =>
@@ -387,7 +638,7 @@ export function syncSelectedShip(state: GameState): GameState {
           currentPort: state.voyage ? ship.currentPort : state.currentTown,
           shipHull: state.shipHull,
           upgrades: state.upgrades,
-          cargoCapacity: 12 + state.upgrades.hold * 6,
+          cargoCapacity: getVesselCargoCapacity(ship.vesselClass, state.upgrades),
           cargo: state.cargo,
           averagePurchasePrice: state.averagePurchasePrice,
           sailingSpeed: state.sailingSpeed,
@@ -405,7 +656,7 @@ export function selectPlayerShip(
   shipId: string,
 ): {
   state: GameState;
-  error?: "unavailable" | "not-owned" | "not-here" | "automated";
+  error?: "unavailable" | "not-owned" | "not-here" | "automated" | "returning";
 } {
   if (state.voyage || state.encounterPending) {
     return { state, error: "unavailable" };
@@ -413,6 +664,7 @@ export function selectPlayerShip(
   const ship = state.fleet.find((entry) => entry.id === shipId);
   if (!ship) return { state, error: "not-owned" };
   if (ship.automatedRoute) return { state, error: "automated" };
+  if (ship.returnOrder) return { state, error: "returning" };
   if (ship.currentPort !== state.currentTown) return { state, error: "not-here" };
   if (shipId === state.selectedShipId) return { state };
 
@@ -433,6 +685,7 @@ export function selectPlayerShip(
 
 export function buyPlayerShip(
   state: GameState,
+  vesselClass: VesselClassId = "river-boat",
 ): {
   state: GameState;
   error?: "unavailable" | "not-shipyard" | "fleet-full" | "gold";
@@ -446,7 +699,8 @@ export function buyPlayerShip(
   if (state.fleet.length >= MAX_PLAYER_SHIPS) {
     return { state, error: "fleet-full" };
   }
-  if (state.gold < ADDITIONAL_SHIP_PRICE) {
+  const vessel = VESSEL_CLASSES[vesselClass];
+  if (state.gold < vessel.price) {
     return { state, error: "gold" };
   }
 
@@ -455,11 +709,11 @@ export function buyPlayerShip(
   const romanNumerals = ["I", "II", "III"];
   const ship: PlayerShip = {
     id: `player-ship-${ordinal}`,
-    name: `River Trader ${romanNumerals[ordinal - 1]}`,
+    name: `${vesselClass === "river-boat" ? "River Trader" : vessel.name} ${romanNumerals[ordinal - 1]}`,
     currentPort: state.currentTown,
-    shipHull: 8,
+    shipHull: vessel.baseHull,
     upgrades: { cannon: 0, hull: 0, hold: 0 },
-    cargoCapacity: 12,
+    cargoCapacity: vessel.baseHold,
     cargo: {
       rice: 0,
       salt: 0,
@@ -481,13 +735,15 @@ export function buyPlayerShip(
       lac: 0,
     },
     sailingSpeed: 1,
+    vesselClass,
     automatedRoute: null,
     automationLog: [],
+    returnOrder: null,
   };
   return {
     state: {
       ...current,
-      gold: current.gold - ADDITIONAL_SHIP_PRICE,
+      gold: current.gold - vessel.price,
       fleet: [...current.fleet, ship],
       lastMessage: `${ship.name} has been purchased at ${getTown(state.currentTown).name}.`,
     },
@@ -1320,6 +1576,22 @@ function advanceAutomatedShipDay(
   sailingDay: number,
 ): GameState {
   const ship = state.fleet.find((entry) => entry.id === shipId);
+  if (ship?.returnOrder && ship.id !== state.selectedShipId) {
+    const order = ship.returnOrder;
+    const remaining = order.travelDaysRemaining - 1;
+    const moved =
+      remaining > 0
+        ? { ...ship, returnOrder: { ...order, travelDaysRemaining: remaining } }
+        : addAutomatedTradeActivity(
+            { ...ship, currentPort: order.destination, returnOrder: null },
+            sailingDay,
+            `Returned to ${getTown(order.destination).name}.`,
+          );
+    return {
+      ...state,
+      fleet: state.fleet.map((entry) => (entry.id === shipId ? moved : entry)),
+    };
+  }
   const route = ship?.automatedRoute;
   if (!ship || !route || ship.id === state.selectedShipId) return state;
 
@@ -1366,120 +1638,136 @@ function advanceAutomatedShipDay(
   if (route.status !== "running") return state;
   const atOrigin = ship.currentPort === route.origin;
   const rules = route.rules;
-  let nextShip = ship;
-  let nextMarket = state.marketStock;
-  const quoteState = { ...state, sailingDay };
-
-  for (const rule of rules) {
-    if (atOrigin && rule.buyAtOrigin) {
-      const used = GOODS.reduce(
-        (total, good) => total + nextShip.cargo[good.id],
-        0,
-      );
-      const stock = nextMarket[nextShip.currentPort][rule.good];
-      if (used >= nextShip.cargoCapacity || stock <= 0) continue;
-      const price = getGoodPrice(
-        nextShip.currentPort,
-        rule.good,
-        "buy",
-        isHistoricalRouteAlertActive(quoteState),
-        stock,
-      );
-      if (nextShip.automatedRoute!.capital < price) continue;
-      const quantity = nextShip.cargo[rule.good];
-      nextShip = {
-        ...nextShip,
-        cargo: { ...nextShip.cargo, [rule.good]: quantity + 1 },
-        averagePurchasePrice: {
-          ...nextShip.averagePurchasePrice,
-          [rule.good]:
-            (nextShip.averagePurchasePrice[rule.good] * quantity + price) /
-            (quantity + 1),
-        },
-        automatedRoute: {
-          ...nextShip.automatedRoute!,
-          capital: nextShip.automatedRoute!.capital - price,
-        },
-      };
-      nextMarket = {
-        ...nextMarket,
-        [nextShip.currentPort]: {
-          ...nextMarket[nextShip.currentPort],
-          [rule.good]: stock - 1,
-        },
-      };
-      nextShip = addAutomatedTradeActivity(
-        nextShip,
-        sailingDay,
-        `Bought 1 ${GOODS.find((good) => good.id === rule.good)!.name} for ${price} gold.`,
-      );
-    } else if (!atOrigin && rule.sellAtDestination) {
-      const quantity = nextShip.cargo[rule.good];
-      const stock = nextMarket[nextShip.currentPort][rule.good];
-      if (quantity <= 0 || stock >= MARKET_MAX_STOCK) continue;
-      const price = getGoodPrice(
-        nextShip.currentPort,
-        rule.good,
-        "sell",
-        isHistoricalRouteAlertActive(quoteState),
-        stock,
-      );
-      if (
-        nextShip.automatedRoute!.capital + price >
-        MAX_AUTOMATED_ROUTE_CAPITAL
-      ) {
-        continue;
-      }
-      nextShip = {
-        ...nextShip,
-        cargo: { ...nextShip.cargo, [rule.good]: quantity - 1 },
-        averagePurchasePrice: {
-          ...nextShip.averagePurchasePrice,
-          [rule.good]: quantity > 1 ? nextShip.averagePurchasePrice[rule.good] : 0,
-        },
-        automatedRoute: {
-          ...nextShip.automatedRoute!,
-          capital: nextShip.automatedRoute!.capital + price,
-        },
-      };
-      nextMarket = {
-        ...nextMarket,
-        [nextShip.currentPort]: {
-          ...nextMarket[nextShip.currentPort],
-          [rule.good]: stock + 1,
-        },
-      };
-      nextShip = addAutomatedTradeActivity(
-        nextShip,
-        sailingDay,
-        `Sold 1 ${GOODS.find((good) => good.id === rule.good)!.name} for ${price} gold.`,
-      );
-    }
-  }
-
   const destinationPort = atOrigin ? route.destination : route.origin;
   const riverRoute = planRiverRoute(
-    nextShip.currentPort,
+    ship.currentPort,
     destinationPort,
-    state.navigationConditions,
+    getShipRouteConditions(state.navigationConditions, ship.vesselClass),
   );
   if (!riverRoute) {
-    nextShip = addAutomatedTradeActivity(
-      nextShip,
-      sailingDay,
-      `No open river route to ${getTown(destinationPort).name}; waiting at port.`,
-    );
+    const message = planRiverRoute(
+      ship.currentPort,
+      destinationPort,
+      state.navigationConditions,
+    )
+      ? `Too large for the channels to ${getTown(destinationPort).name}; waiting at port.`
+      : `No open river route to ${getTown(destinationPort).name}; waiting at port.`;
+    if (ship.automationLog.at(-1)?.message === message) return state;
+    const waiting = addAutomatedTradeActivity(ship, sailingDay, message);
     return {
       ...state,
-      marketStock: nextMarket,
-      fleet: state.fleet.map((entry) => (entry.id === shipId ? nextShip : entry)),
+      fleet: state.fleet.map((entry) => (entry.id === shipId ? waiting : entry)),
     };
   }
 
-  const durationDays = Math.max(
-    1,
-    Math.ceil(getRouteTravelTime(riverRoute).durationDays),
-  );
+  let nextShip = ship;
+  let nextMarket = state.marketStock;
+  const quoteState = { ...state, sailingDay };
+  const unitLimit = VESSEL_CLASSES[ship.vesselClass].routeUnitsPerGood;
+
+  for (const rule of rules) {
+    const goodName = GOODS.find((good) => good.id === rule.good)!.name;
+    let units = 0;
+    let total = 0;
+    if (atOrigin && rule.buyAtOrigin) {
+      while (units < unitLimit) {
+        const used = GOODS.reduce(
+          (sum, good) => sum + nextShip.cargo[good.id],
+          0,
+        );
+        const stock = nextMarket[nextShip.currentPort][rule.good];
+        if (used >= nextShip.cargoCapacity || stock <= 0) break;
+        const price = getGoodPrice(
+          nextShip.currentPort,
+          rule.good,
+          "buy",
+          isHistoricalRouteAlertActive(quoteState),
+          stock,
+        );
+        if (nextShip.automatedRoute!.capital < price) break;
+        const quantity = nextShip.cargo[rule.good];
+        nextShip = {
+          ...nextShip,
+          cargo: { ...nextShip.cargo, [rule.good]: quantity + 1 },
+          averagePurchasePrice: {
+            ...nextShip.averagePurchasePrice,
+            [rule.good]:
+              (nextShip.averagePurchasePrice[rule.good] * quantity + price) /
+              (quantity + 1),
+          },
+          automatedRoute: {
+            ...nextShip.automatedRoute!,
+            capital: nextShip.automatedRoute!.capital - price,
+          },
+        };
+        nextMarket = {
+          ...nextMarket,
+          [nextShip.currentPort]: {
+            ...nextMarket[nextShip.currentPort],
+            [rule.good]: stock - 1,
+          },
+        };
+        units += 1;
+        total += price;
+      }
+      if (units > 0) {
+        nextShip = addAutomatedTradeActivity(
+          nextShip,
+          sailingDay,
+          `Bought ${units} ${goodName} for ${total} gold.`,
+        );
+      }
+    } else if (!atOrigin && rule.sellAtDestination) {
+      while (units < unitLimit) {
+        const quantity = nextShip.cargo[rule.good];
+        const stock = nextMarket[nextShip.currentPort][rule.good];
+        if (quantity <= 0 || stock >= MARKET_MAX_STOCK) break;
+        const price = getGoodPrice(
+          nextShip.currentPort,
+          rule.good,
+          "sell",
+          isHistoricalRouteAlertActive(quoteState),
+          stock,
+        );
+        if (
+          nextShip.automatedRoute!.capital + price >
+          MAX_AUTOMATED_ROUTE_CAPITAL
+        ) {
+          break;
+        }
+        nextShip = {
+          ...nextShip,
+          cargo: { ...nextShip.cargo, [rule.good]: quantity - 1 },
+          averagePurchasePrice: {
+            ...nextShip.averagePurchasePrice,
+            [rule.good]: quantity > 1 ? nextShip.averagePurchasePrice[rule.good] : 0,
+          },
+          automatedRoute: {
+            ...nextShip.automatedRoute!,
+            capital: nextShip.automatedRoute!.capital + price,
+          },
+        };
+        nextMarket = {
+          ...nextMarket,
+          [nextShip.currentPort]: {
+            ...nextMarket[nextShip.currentPort],
+            [rule.good]: stock + 1,
+          },
+        };
+        units += 1;
+        total += price;
+      }
+      if (units > 0) {
+        nextShip = addAutomatedTradeActivity(
+          nextShip,
+          sailingDay,
+          `Sold ${units} ${goodName} for ${total} gold.`,
+        );
+      }
+    }
+  }
+
+  const durationDays = getShipRouteDays(riverRoute, ship.vesselClass);
   nextShip = {
     ...nextShip,
     automatedRoute: {
@@ -1689,12 +1977,14 @@ export function createNewGame(captainName: string): GameState {
     cargo,
     averagePurchasePrice,
     sailingSpeed: 1,
+    vesselClass: "river-boat",
     automatedRoute: null,
     automationLog: [],
+    returnOrder: null,
   };
 
   return {
-    version: 18,
+    version: 19,
     captainName: cleanName || "Captain",
     gold: 90,
     highestGold: 90,
@@ -1999,7 +2289,7 @@ export function getCargoUsed(state: GameState): number {
 }
 
 export function getCargoCapacity(state: GameState): number {
-  return 12 + state.upgrades.hold * 6;
+  return getVesselCargoCapacity(getSelectedVesselClass(state).id, state.upgrades);
 }
 
 export function getWarehouseCapacity(state: GameState, port: TownId): number {
@@ -2284,7 +2574,7 @@ export function getShipDefence(state: GameState): number {
 }
 
 export function getShipMaximumHull(state: GameState): number {
-  return 8 + state.upgrades.hull * 3;
+  return getVesselMaximumHull(getSelectedVesselClass(state).id, state.upgrades);
 }
 
 export function getTown(id: TownId): Town {
@@ -2323,22 +2613,26 @@ export function startVoyage(
     return { ...state, lastMessage: "Choose a town on the map first." };
   }
 
+  const vessel = getSelectedVesselClass(state);
+  const openConditions = conditions ?? state.navigationConditions;
   const route = planRiverRoute(
     state.currentTown,
     state.selectedTown,
-    conditions ?? state.navigationConditions,
+    getShipRouteConditions(openConditions, vessel.id),
   );
   if (!route) {
     return {
       ...syncSelectedShip(state),
-      lastMessage: "That river path is closed. Choose another reachable port.",
+      lastMessage: planRiverRoute(state.currentTown, state.selectedTown, openConditions)
+        ? `Your ${vessel.name} is too large for the narrow channels to ${getTown(state.selectedTown).name}. Use a smaller ship.`
+        : "That river path is closed. Choose another reachable port.",
     };
   }
 
   const routeAlert =
     state.selectedTown === "chittagong" &&
     isHistoricalRouteAlertActive(state);
-  const travelTime = getRouteTravelTime(route, routeAlert);
+  const travelTime = getRouteTravelTime(route, routeAlert, vessel.travelFactor);
   const arrivalAt = now + travelTime.durationMs / state.sailingSpeed;
   const voyagesStarted = state.voyagesStarted + 1;
   const travelEvent =
@@ -2775,7 +3069,8 @@ export function repairShip(
   const maximumHull = getShipMaximumHull(state);
   if (state.shipHull >= maximumHull) return { state, error: "full-hull" };
 
-  const cost = (maximumHull - state.shipHull) * 2;
+  const cost =
+    (maximumHull - state.shipHull) * getSelectedVesselClass(state).repairCostPerHull;
   if (state.gold < cost) return { state, error: "gold" };
 
   return {

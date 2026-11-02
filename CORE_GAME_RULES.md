@@ -1,6 +1,6 @@
 # Core Game Rules
 
-**Status:** Overall direction and defaults approved. Time/save, first-arrival, bounded market, Stage 5 reputation/milestone, Stage 11 mission/local-standing, Stage 12A bounded NPC-trading, Stage 12B player-owned ship, and Stage 12C automated-route foundations are implemented. For current playable rules, see [GAME_RULES.md](./GAME_RULES.md).
+**Status:** Overall direction and defaults approved. Time/save, first-arrival, bounded market, Stage 5 reputation/milestone, Stage 11 mission/local-standing, Stage 12A bounded NPC-trading, Stage 12B player-owned ship, Stage 12C automated-route, and Stage 13 vessel-class foundations are implemented. For current playable rules, see [GAME_RULES.md](./GAME_RULES.md).
 
 ## Game structure
 
@@ -53,7 +53,7 @@ The [ROADMAP.md](./ROADMAP.md) uses one numbered sequence and respects these dep
 
 1. Establish time, offline, and save rules before adding simulation.
 2. Design progression before implementing property or dynasty systems.
-3. Define ship classes and route constraints before automated fleets. Stage 12C added a small two-port automation layer first, so Stage 13 vessel classes must stay compatible with it.
+3. Define ship classes and route constraints before automated fleets. Stage 12C added a small two-port automation layer first, and Stage 13 vessel classes were built to stay compatible with it.
 
 The existing implemented prototype remains the starting point. Each later implementation stage still requires the user's approval.
 

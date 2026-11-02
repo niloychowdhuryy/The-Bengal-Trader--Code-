@@ -1,6 +1,10 @@
 # Stage 13 Vessel Classes — Design for Approval
 
-**Status:** Proposed, not implemented. No code changes until approved. All stats are gameplay values and are untested in play.
+**Status:** Approved and implemented in Stage 13. All stats are initial values, to be tuned after playing. Where this proposal and the approved decisions differ, the implementation follows the decisions:
+
+- **Recovery:** a dedicated free return order, offered only for a ship the selected ship cannot reach, replaces the zero-capital route proposed in section 4. The route editor's capital rules are unchanged.
+- **Route trading:** a Patello trades up to four units per good at each port call, instead of the one-unit limit described in section 5. Other classes stay at one.
+- **Map art:** class vessel variants are left to the visual-polish stage.
 
 **Scope:** Three vessel classes, per-ship draft and the version 19 save. Captains, cargo handoffs, shipment loss and complex route orders stay out; none is needed by this design. The fleet limit stays at three ships, all 15 ports and eight goods stay in the game, and ships still cannot be sold.
 

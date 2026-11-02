@@ -19,7 +19,9 @@ import {
   MARRIAGE_HOUSEHOLD_COST,
   getTownRoute,
   GOODS,
+  selectPlayerShip,
   startVoyage,
+  syncSelectedShip,
   TOWNS,
 } from "./game/model";
 import { formatTravelDuration, getRouteTravelTime } from "./game/travel-time";
@@ -399,10 +401,10 @@ describe("first game screen", () => {
 
     await screen.findByRole("heading", { name: "The Bengal Trader" });
     fireEvent.click(screen.getByRole("button", { name: "Open ship dock" }));
-    expect(screen.getByText(/Available here for 500 gold/)).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Buy · 500g" }));
+    expect(screen.getByRole("heading", { name: "River boat" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Buy River boat for 500 gold" }));
     expect(screen.getByRole("group", { name: "Buy ship confirmation" }))
-      .toHaveTextContent(/Buy an empty new boat for 500 gold/);
+      .toHaveTextContent(/Buy an empty River boat for 500 gold/);
     fireEvent.click(screen.getByRole("button", { name: "Confirm · 500g" }));
     expect(await screen.findByText("River Trader II has been purchased at Dhaka."))
       .toBeVisible();
@@ -447,6 +449,110 @@ describe("first game screen", () => {
       .toBeVisible();
     expect(screen.getByText(/Running · docked/)).toBeVisible();
     expect(screen.getByText(/Rules: Rice/)).toBeVisible();
+  });
+
+  it("shows the three classes at the shipyard and states the Patello's limit before buying", async () => {
+    await saveGame({ ...createNewGame("Maya"), gold: 950, highestGold: 950 });
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "The Bengal Trader" });
+    fireEvent.click(screen.getByRole("button", { name: "Open ship dock" }));
+    for (const name of ["River boat", "Bora", "Patello"]) {
+      expect(screen.getByRole("heading", { name })).toBeVisible();
+    }
+    expect(screen.getByText(/stats, prices, shipyards and port limits are game rules/))
+      .toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Buy Patello for 900 gold" }));
+    expect(screen.getByRole("group", { name: "Buy ship confirmation" }))
+      .toHaveTextContent(/900 gold\? It cannot reach Sylhet or Balasore/);
+    fireEvent.click(screen.getByRole("button", { name: "Confirm · 900g" }));
+    expect(await screen.findByText("Patello II has been purchased at Dhaka.")).toBeVisible();
+  });
+
+  it("explains blocked and longer routes on a selected Patello", async () => {
+    const patello = selectPlayerShip(
+      buyPlayerShip(
+        { ...createNewGame("Maya"), gold: 2_000, highestGold: 2_000 },
+        "patello",
+      ).state,
+      "player-ship-2",
+    ).state;
+    await saveGame(patello);
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "The Bengal Trader" });
+    fireEvent.click(getMapPort(/^Sylhet/));
+    const blocked = screen.getByRole("button", { name: /Too large for this ship/ });
+    expect(blocked).toBeDisabled();
+    expect(
+      screen.getByText(/Your Patello is too large for the narrow channels to Sylhet/),
+    ).toBeVisible();
+    expect(screen.queryByText("No open river path")).toBeNull();
+
+    cleanup();
+    await saveGame(
+      syncSelectedShip({
+        ...patello,
+        currentTown: "bakla-chandradwip",
+        selectedTown: "bakla-chandradwip",
+        visitedTowns: ["dhaka", "bakla-chandradwip"],
+      }),
+    );
+    render(<App />);
+    await screen.findByRole("heading", { name: "The Bengal Trader" });
+    fireEvent.click(getMapPort(/^Sandwip/));
+    expect(screen.getByText(/Longer route: the direct channel is too narrow/)).toBeVisible();
+    expect(screen.getByRole("button", { name: /Travel to Sandwip/ })).toBeEnabled();
+  });
+
+  it("leaves unreachable ports out of Patello route setup", async () => {
+    const purchased = buyPlayerShip(
+      {
+        ...createNewGame("Maya"),
+        gold: 2_000,
+        highestGold: 2_000,
+        visitedTowns: ["dhaka", "sonargaon", "sylhet"],
+      },
+      "patello",
+    ).state;
+    await saveGame(purchased);
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "The Bengal Trader" });
+    fireEvent.click(screen.getByRole("button", { name: "Open fleet" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Set up route" }));
+    const ports = screen.getByLabelText("Other visited port");
+    expect(ports).toHaveTextContent("Sonargaon");
+    expect(ports).not.toHaveTextContent("Sylhet");
+    expect(screen.getByText(/Not offered, because this Patello cannot reach them/))
+      .toHaveTextContent("Sylhet");
+    expect(screen.getByText(/trades up to 4 units per selected good/)).toBeVisible();
+  });
+
+  it("offers a return order for a ship the selected ship cannot reach", async () => {
+    const patello = selectPlayerShip(
+      buyPlayerShip(
+        { ...createNewGame("Maya"), gold: 2_000, highestGold: 2_000 },
+        "patello",
+      ).state,
+      "player-ship-2",
+    ).state;
+    await saveGame({
+      ...patello,
+      fleet: patello.fleet.map((ship) =>
+        ship.id === "player-ship-1" ? { ...ship, currentPort: "sylhet" as const } : ship,
+      ),
+    });
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "The Bengal Trader" });
+    fireEvent.click(screen.getByRole("button", { name: "Open fleet" }));
+    expect(await screen.findByText(/cannot reach this ship at Sylhet/)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /Return to Dhaka/ }));
+    expect((await screen.findAllByText(/Returning to Dhaka/)).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /Return to Dhaka/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Set up route" })).toBeNull();
   });
 
   it("manages a docked automated ship's route from Fleet while the player's ship is sailing", async () => {

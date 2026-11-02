@@ -18,6 +18,9 @@ import {
   createEmptyWarehouseStock,
   createEmptyWarehousePurchasePrices,
   STARTER_SHIP_ID,
+  VESSEL_CLASSES,
+  getVesselCargoCapacity,
+  getVesselMaximumHull,
   syncSelectedShip,
   FARM_OUTPUT_CAPACITY,
   MAX_AUTOMATED_ROUTE_CAPITAL,
@@ -33,6 +36,7 @@ import {
   type PlayerShip,
   type TownId,
   type TravelEventId,
+  type VesselClassId,
   type Voyage,
 } from "./model";
 import {
@@ -115,9 +119,14 @@ function isTravelEventId(value: unknown): value is TravelEventId | null {
   return value === null || value === "river-pilot" || value === "rough-water";
 }
 
+function isVesselClassId(value: unknown): value is VesselClassId {
+  return typeof value === "string" && Object.hasOwn(VESSEL_CLASSES, value);
+}
+
 function isValidVoyage(
   value: unknown,
   sailingSpeed: SailingSpeed,
+  travelFactor: number,
 ): value is Voyage | null {
   if (value === null) return true;
   return (
@@ -147,7 +156,7 @@ function isValidVoyage(
     typeof value.routeAlert === "boolean" &&
     isTravelEventId(value.travelEvent) &&
     isValidRiverRoute(value.route, value.origin, value.destination) &&
-    isVoyageTimingConsistent(value, sailingSpeed)
+    isVoyageTimingConsistent(value, sailingSpeed, travelFactor)
   );
 }
 
@@ -168,6 +177,7 @@ function isValidPlayerShip(value: unknown): value is PlayerShip {
     !isRecord(cargo) ||
     !isRecord(averagePurchasePrice) ||
     !isSailingSpeed(value.sailingSpeed) ||
+    !isVesselClassId(value.vesselClass) ||
     !isNonnegativeInteger(value.shipHull)
   ) {
     return false;
@@ -178,7 +188,11 @@ function isValidPlayerShip(value: unknown): value is PlayerShip {
       isNonnegativeInteger(upgrades[upgrade.id]) &&
       Number(upgrades[upgrade.id]) <= upgrade.maxLevel,
   );
-  const cargoCapacity = 12 + Number(upgrades.hold) * 6;
+  if (!validUpgrades) return false;
+  const cargoCapacity = getVesselCargoCapacity(
+    value.vesselClass,
+    upgrades as unknown as PlayerShip["upgrades"],
+  );
   const cargoUsed = GOODS.reduce(
     (total, good) => total + Number(cargo[good.id] ?? 0),
     0,
@@ -197,9 +211,10 @@ function isValidPlayerShip(value: unknown): value is PlayerShip {
         entry.message.length > 0 &&
         entry.message.length <= 180,
     ) &&
-    validUpgrades &&
+    isValidShipReturnOrder(value.returnOrder, value) &&
     value.cargoCapacity === cargoCapacity &&
-    value.shipHull <= 8 + Number(upgrades.hull) * 3 &&
+    value.shipHull <=
+      getVesselMaximumHull(value.vesselClass, upgrades as unknown as PlayerShip["upgrades"]) &&
     cargoUsed <= cargoCapacity &&
     GOODS.every(
       (good) =>
@@ -208,6 +223,25 @@ function isValidPlayerShip(value: unknown): value is PlayerShip {
         (Number(cargo[good.id]) > 0 ||
           Number(averagePurchasePrice[good.id]) === 0),
     )
+  );
+}
+
+function isValidShipReturnOrder(
+  value: unknown,
+  ship: Record<string, unknown>,
+): boolean {
+  if (value === null) return true;
+  return (
+    isRecord(value) &&
+    ship.automatedRoute === null &&
+    isTownId(value.destination) &&
+    value.destination !== ship.currentPort &&
+    isNonnegativeInteger(value.travelDaysTotal) &&
+    value.travelDaysTotal >= 1 &&
+    value.travelDaysTotal <= 30 &&
+    isNonnegativeInteger(value.travelDaysRemaining) &&
+    value.travelDaysRemaining >= 1 &&
+    value.travelDaysRemaining <= value.travelDaysTotal
   );
 }
 
@@ -434,10 +468,12 @@ function isValidNpcActivity(value: unknown, maxDay: number): value is NpcActivit
 function isVoyageTimingConsistent(
   value: Record<string, unknown>,
   sailingSpeed: SailingSpeed,
+  travelFactor: number,
 ): boolean {
   const timing = getRouteTravelTime(
     value.route as RiverRoute,
     value.routeAlert === true,
+    travelFactor,
   );
   const expectedArrivalAt =
     Number(value.progressUpdatedAt) +
@@ -795,6 +831,7 @@ function isValidGameState(value: unknown): value is GameState {
   const validAutomatedAssignments = fleet.every(
     (ship) =>
       isRecord(ship) &&
+      (ship.id !== selectedShipId || ship.returnOrder === null) &&
       (ship.automatedRoute === null ||
         (ship.id !== selectedShipId &&
           isRecord(ship.automatedRoute) &&
@@ -884,7 +921,7 @@ function isValidGameState(value: unknown): value is GameState {
   );
 
   if (
-    value.version !== 18 ||
+    value.version !== 19 ||
     (value.residenceTown !== null && !isTownId(value.residenceTown)) ||
     !isSailingSpeed(value.sailingSpeed) ||
     typeof value.captainName !== "string" ||
@@ -919,12 +956,14 @@ function isValidGameState(value: unknown): value is GameState {
     Number(value.npcSimulationDay) > Math.floor(maximumNpcDay) ||
     !isValidRouteConditions(value.navigationConditions) ||
     !isNonnegativeInteger(value.shipHull) ||
-    value.shipHull >
-      8 + Number(upgrades.hull) * 3 ||
     typeof value.sailingDay !== "number" ||
     !Number.isFinite(value.sailingDay) ||
     value.sailingDay < 0 ||
-    !isValidVoyage(value.voyage, value.sailingSpeed) ||
+    !isValidVoyage(
+      value.voyage,
+      value.sailingSpeed,
+      VESSEL_CLASSES[selectedShip.vesselClass].travelFactor,
+    ) ||
     typeof value.encounterPending !== "boolean" ||
     typeof value.chittagongIntroductionSeen !== "boolean" ||
     typeof value.lastMessage !== "string"
@@ -935,7 +974,11 @@ function isValidGameState(value: unknown): value is GameState {
   if (
     selectedShip.currentPort !== value.currentTown ||
     selectedShip.shipHull !== value.shipHull ||
-    selectedShip.cargoCapacity !== 12 + Number(upgrades.hold) * 6 ||
+    selectedShip.cargoCapacity !==
+      getVesselCargoCapacity(
+        selectedShip.vesselClass,
+        upgrades as unknown as PlayerShip["upgrades"],
+      ) ||
     selectedShip.sailingSpeed !== value.sailingSpeed ||
     selectedShip.upgrades.cannon !== upgrades.cannon ||
     selectedShip.upgrades.hull !== upgrades.hull ||
@@ -972,8 +1015,7 @@ function isValidGameState(value: unknown): value is GameState {
     (total, good) => total + Number(cargo[good.id]),
     0,
   );
-  const cargoLimit = 12 + Number(upgrades.hold) * 6;
-  if (cargoCount > cargoLimit) {
+  if (cargoCount > selectedShip.cargoCapacity) {
     return false;
   }
 
@@ -1334,7 +1376,21 @@ function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     };
   }
 
-  return save.version === 18
+  if (save.version === 18) {
+    save = {
+      ...save,
+      version: 19,
+      fleet: Array.isArray(save.fleet)
+        ? save.fleet.map((ship) =>
+            isRecord(ship)
+              ? { ...ship, vesselClass: "river-boat", returnOrder: null }
+              : ship,
+          )
+        : save.fleet,
+    };
+  }
+
+  return save.version === 19
     ? reanchorPausedVoyage(repairGoldPeak(save), now)
     : save;
 }

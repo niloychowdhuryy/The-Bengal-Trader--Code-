@@ -165,15 +165,19 @@ Stage each system as a small, testable game loop, following the recommended rule
 
 **Exit check:** Setup, connected travel, market transactions, bounded stock/cargo/capital, pause/resume/cancel, deterministic progress, save/load, migration and no closed-app progress are tested. All ports and goods remain available.
 
-## Stage 13 — Expand fleet logistics and vessel classes
+## Stage 13 — Vessel classes: implemented
 
-- Define larger vessels with distinct trade-offs in hold, draft, durability, cost and route access. Use the shared route planner and label unsourced depth and navigability as gameplay abstractions.
-- Design captains, cargo handoffs, production logistics, shipment loss, deadlines, recovery and more complex route orders before implementing those features.
-- Keep the starter vessel and standard river boats viable. Keep contracts optional and explain rewards, risks and penalties before acceptance.
+- Add three classes: River boat (500 gold), Bora (350 gold) and Patello (900 gold), sold at Dhaka, Chittagong and Hooghly. Classes differ in hold, hull, upgrade steps, repair rate, travel time, draft and route trading. See [STAGE_13_VESSEL_CLASS_DESIGN.md](./STAGE_13_VESSEL_CLASS_DESIGN.md).
+- Apply each ship's draft to voyages and automated routes. The Patello reaches 13 ports, not Sylhet or Balasore; route previews show actual travel time and any longer route. The five-minute voyage cap stays. Depths and port limits remain gameplay abstractions.
+- Explain blocked travel, exclude unreachable ports from route setup, and make incompatible saved routes wait safely at port.
+- Add a free return order, offered only for a ship the selected ship cannot reach, so no ship is permanently stranded.
+- Let a Patello on an automated route trade up to four units per good at each port call. Other classes stay at one. Stock, hold, route capital and existing money rules still apply.
+- Migrate version 18 saves to version 19 as River boats with no return order, preserving every ship, route and voyage.
+- Captains, cargo handoffs, shipment loss and complex route orders are not part of v1.
 
 **Dependencies:** Stages 3, 4, 6–12C.
 
-**Exit check:** New ship and logistics rules are bounded, legible and tested with the existing route, time, market and save systems.
+**Exit check:** Class stats, draft-aware planning, connected networks for every class, route compatibility, trading bounds, return orders, migration, save/load and shipyard, fleet and route UI are tested. All 15 ports and eight goods remain in the game.
 
 ## Stage 14 — Add researched historical events and connected systems
 
@@ -207,4 +211,4 @@ Stage each system as a small, testable game loop, following the recommended rule
 
 ## Current next milestone
 
-Stages 12A, 12B and 12C are implemented. Wait for approval before beginning Stage 13.
+Stage 13 is the last planned gameplay stage for v1. Next is visual polish ([VISUAL_POLISH_HANDOFF.md](./VISUAL_POLISH_HANDOFF.md)), then playtesting and release polish. Stages 14–16 are not planned for v1. No new major gameplay stage starts unless testing reveals a genuine blocker.

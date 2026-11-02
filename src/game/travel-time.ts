@@ -67,10 +67,12 @@ export interface RouteTravelTime {
 export function getRouteTravelTime(
   route: RiverRoute,
   chittagongAlert = false,
+  travelFactor = 1,
 ): RouteTravelTime {
   const normalDurationMs =
     (route.distance / getMaximumNavigableRouteDistance()) *
-    MAX_NORMAL_VOYAGE_DURATION_MS;
+    MAX_NORMAL_VOYAGE_DURATION_MS *
+    travelFactor;
   const alertDelayMs = chittagongAlert
     ? CHITTAGONG_ALERT_EXTRA_DAYS * IN_GAME_DAY_DURATION_MS
     : 0;

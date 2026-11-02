@@ -9,6 +9,8 @@ import {
 import {
   TOWNS,
   getTown,
+  getSelectedVesselClass,
+  getShipRoutePreview,
   getTownRoute,
   isHistoricalRouteAlertActive,
   type GameState,
@@ -126,10 +128,7 @@ interface BengalMapProps {
 }
 
 function getDisplayedRoute(state: GameState): RiverRoute | null {
-  return (
-    state.voyage?.route ??
-    getTownRoute(state.currentTown, state.selectedTown, state.navigationConditions)
-  );
+  return state.voyage?.route ?? getShipRoutePreview(state, state.selectedTown).route;
 }
 
 export default function BengalMap({
@@ -173,6 +172,7 @@ export default function BengalMap({
         voyage?.routeAlert ??
           (state.selectedTown === "chittagong" &&
             isHistoricalRouteAlertActive(state)),
+        getSelectedVesselClass(state).travelFactor,
       )
     : null;
   useEffect(() => {
@@ -693,7 +693,9 @@ export default function BengalMap({
                 ? displayedRouteTime
                   ? `${TOWNS.find((town) => town.id === state.selectedTown)?.name}, ${formatTravelDuration(displayedRouteTime.durationMs)} away`
                   : "No open river path"
-                : "No open river path"}</strong>
+                : getShipRoutePreview(state, state.selectedTown).tooLarge
+                  ? "Too large for this ship"
+                  : "No open river path"}</strong>
         </div>
         <span className="map-caption-pin" aria-hidden="true">
           {state.voyage

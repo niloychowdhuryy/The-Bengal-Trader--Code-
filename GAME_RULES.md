@@ -8,7 +8,7 @@ Recommended future design decisions, which are not all implemented, are recorded
 
 - Start in Dhaka with **90 gold**, **2 rice + 1 fine cloth**, a **12-item hold** and a basic wooden vessel.
 - Each good takes one place in the hold.
-- Progress saves to IndexedDB on this device. Version 18 saves also persist each non-selected ship's automated route, route capital and recent activity. Version 17 fleets migrate with no routes assigned and empty activity logs; the selected ship and active voyage remain unchanged. Version 16 saves migrate their current vessel into one named ship without resetting cargo, upgrades, condition, gold or voyage progress. Earlier versions migrate through the existing steps before receiving newer features. Version 15 saves preserve NPC trader state while removing the former voyage encounter; version 14 saves initialize bounded traders. Older voyage formats without a saved progress checkpoint restart the active trip at its route duration rather than using closed-app wall time. Production app files can be cached for offline reopening after first visit.
+- Progress saves to IndexedDB on this device. Version 19 saves add each ship's vessel class and any return order; version 18 ships migrate as River boats with everything else unchanged. Version 18 saves also persist each non-selected ship's automated route, route capital and recent activity. Version 17 fleets migrate with no routes assigned and empty activity logs; the selected ship and active voyage remain unchanged. Version 16 saves migrate their current vessel into one named ship without resetting cargo, upgrades, condition, gold or voyage progress. Earlier versions migrate through the existing steps before receiving newer features. Version 15 saves preserve NPC trader state while removing the former voyage encounter; version 14 saves initialize bounded traders. Older voyage formats without a saved progress checkpoint restart the active trip at its route duration rather than using closed-app wall time. Production app files can be cached for offline reopening after first visit.
 
 ## Map and navigation
 
@@ -24,10 +24,20 @@ Recommended future design decisions, which are not all implemented, are recorded
 ## Player-owned ships
 
 - The starter boat and each purchased boat have their own name, current port, hull, upgrades, cargo capacity, cargo and purchase-cost basis.
-- Buy another standard river boat for **500 gold** at Dhaka, Chittagong or Hooghly. A new boat starts at that port with 8 hull, a 12-item hold, no upgrades and empty cargo. The fleet limit is three ships.
+- Buy another boat at Dhaka, Chittagong or Hooghly. It starts at that port with no upgrades and empty cargo. The fleet limit is three ships.
+
+| Class | Price | Hold (per upgrade) | Hull (per upgrade) | Repair per hull | Travel time | Ports | Route trade per good |
+|---|---:|---|---|---:|---|---|---:|
+| River boat | 500 | 12 (+6) | 8 (+3) | 2 gold | Normal | 15 | 1 |
+| Bora | 350 | 8 (+3) | 6 (+3) | 2 gold | 0.8× | 15 | 1 |
+| Patello | 900 | 30 (+6) | 14 (+3) | 3 gold | 1.25× | 13 | 4 |
+
+- The starter ship is a River boat. Class stats, prices, shipyards and port limits are game rules, including the Patello's access to Chittagong and Sandwip; they are not historical facts.
+- The Patello cannot reach Sylhet or Balasore, and some of its routes are longer. Route previews show the ship's actual path and time. Every class stays under the five-minute voyage cap.
+- If the selected ship cannot reach another of your ships, the Fleet panel offers a free **return order**. That ship sails to the selected ship's port or destination as in-game days pass, keeping its cargo. It cannot be managed or given a route until it arrives. A channel closure can delay the order but does not lose the ship.
 - Only the selected ship can be managed, repaired, upgraded, loaded, traded or sailed. Switching is allowed while docked, only to a ship at the same port. Other ships remain where they were left.
 - The selected ship is locked for the whole player-controlled voyage and is recorded on arrival at its destination. Only non-selected ships assigned an automated route operate independently.
-- Assign a non-selected ship to a two-port automated trade route using only visited ports with an open connected river route. Select one or more goods and at least one buy-at-origin and one sell-at-destination rule. Supply up to 5,000 gold as route capital; buys, sales and cargo use shared market stock, prices and ship capacity. Each route trades at most one unit per selected good per in-game day checkpoint, moves only on connected routes, and retains its own capital up to 5,000 gold. Cancel while docked to return remaining route capital to the purse. Pause, edit and cancel are available only while that ship is docked. They remain available while the selected ship is sailing, but not during an unresolved encounter. Routes progress on active in-game sailing-day checkpoints and never while the game is closed. Automation grants no mission or reputation rewards; it does not operate the selected ship, transfer goods between ships, or sail multiple voyages at once.
+- Assign a non-selected ship to a two-port automated trade route using only visited ports with an open connected river route. Select one or more goods and at least one buy-at-origin and one sell-at-destination rule. Supply up to 5,000 gold as route capital; buys, sales and cargo use shared market stock, prices and ship capacity. Each River boat or Bora route trades at most one unit per selected good per in-game day checkpoint, and each Patello route up to four, each unit priced against current stock. Routes move only on connected routes the ship can use, and retains its own capital up to 5,000 gold. Cancel while docked to return remaining route capital to the purse. Pause, edit and cancel are available only while that ship is docked. They remain available while the selected ship is sailing, but not during an unresolved encounter. Routes progress on active in-game sailing-day checkpoints and never while the game is closed. A route that cannot be sailed waits at port without trading. Automation grants no mission or reputation rewards; it does not operate the selected ship, transfer goods between ships, or sail multiple voyages at once.
 - Event, military and weather restrictions can close channel segments. The current network has no loop or alternate detour when a segment is closed, and no active segment closure in the Chittagong event.
 - The fictional Chittagong alert adds up to one in-game day to the voyage (one real-world minute), capped so no journey exceeds five minutes. It does not assert a documented blockade or port closure.
 
@@ -69,9 +79,9 @@ Recommended future design decisions, which are not all implemented, are recorded
 |---|---:|---|
 | Stronger bow cannon | 35 gold | +1 attack per level (starts at 2). |
 | Reinforced hull | 35 gold | +1 defence and extra hull per level (starts at 1 defence and 8 hull). |
-| Roomier cargo hold | 25 gold | +6 spaces per level (starts at 12). |
+| Roomier cargo hold | 25 gold | More spaces per level, by vessel class (River boat starts at 12, +6). |
 
-Upgrade cost grows with level; maximum levels are 3 cannon, 2 hull and 3 hold. Each shipyard card shows its current level, next cost and resulting stat before fitting. Hold upgrades add six spaces per level; hull upgrades improve defence and maximum hull; cannon upgrades improve attack. Repairs restore all missing hull for **2 gold per hull point**. Repairs and upgrades are unavailable during a voyage or unresolved encounter, and purchases require enough gold.
+Upgrade cost grows with level; maximum levels are 3 cannon, 2 hull and 3 hold. Each shipyard card shows its current level, next cost and resulting stat before fitting. Hold upgrades add the class's spaces per level (six, or three on a Bora); hull upgrades improve defence and maximum hull; cannon upgrades improve attack. Repairs restore all missing hull at the ship's class rate. Repairs and upgrades are unavailable during a voyage or unresolved encounter, and purchases require enough gold.
 
 The fictional Chittagong river encounter has 3 hull and 3 attack. It is a one-time first-arrival introduction; the save records whether it has occurred. Later arrivals do not repeat it. Future Chittagong encounters belong to a separate event system.
 
@@ -93,4 +103,4 @@ The fictional Chittagong river encounter has 3 hull and 3 attack. It is a one-ti
 
 ## Future systems
 
-Town-specific reputation, political permissions, children, aging, succession, inheritance rules, land, workshops, remote property management, fleet logistics beyond two-port automated routes, captains, ship classes, advanced contracts and multiplayer are planned. See [GAME_DESIGN.md](./GAME_DESIGN.md) and [ROADMAP.md](./ROADMAP.md).
+Town-specific reputation, political permissions, children, aging, succession, inheritance rules, land, workshops, remote property management, fleet logistics beyond two-port automated routes, captains, advanced contracts and multiplayer are planned. See [GAME_DESIGN.md](./GAME_DESIGN.md) and [ROADMAP.md](./ROADMAP.md).

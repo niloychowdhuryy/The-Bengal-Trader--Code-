@@ -8,7 +8,8 @@ import {
   CURRENT_MARKET_GOODS,
   MARKET_MAX_STOCK,
   UPGRADES,
-  ADDITIONAL_SHIP_PRICE,
+  VESSEL_CLASSES,
+  VESSEL_CLASS_IDS,
   MAX_AUTOMATED_ROUTE_CAPITAL,
   MAX_PLAYER_SHIPS,
   SHIPYARD_PORTS,
@@ -41,7 +42,15 @@ import {
   getTradeQuote,
   getShipAttack,
   getShipDefence,
+  canSelectedShipReach,
+  getSelectedVesselClass,
   getShipMaximumHull,
+  getShipReturnPlan,
+  getShipRouteConditions,
+  getShipRoutePreview,
+  getVesselMaximumHull,
+  isShipOutOfReach,
+  orderShipReturn,
   getTown,
   getTownRoute,
   getNpcMerchant,
@@ -67,14 +76,16 @@ import {
   type PlayerShip,
   type Screen,
   type TownId,
+  type ShipRoutePreview,
   type UpgradeId,
+  type VesselClass,
+  type VesselClassId,
   type WarehouseTransferError,
 } from "./game/model";
 import { loadGame, saveGame } from "./game/storage";
 import {
   formatInGameDays,
   formatTravelDuration,
-  getRouteTravelTime,
   getVoyageProgressMs,
   getVoyageRemainingRealTimeMs,
   SAILING_SPEEDS,
@@ -311,6 +322,26 @@ function IntroScreen({
   );
 }
 
+function getRouteSizeNote(
+  vessel: VesselClass,
+  destinationName: string,
+  preview: ShipRoutePreview,
+): string | null {
+  if (preview.tooLarge) {
+    return `Your ${vessel.name} is too large for the narrow channels to ${destinationName}. Use a River boat or Bora to go there.`;
+  }
+  const speedNote =
+    vessel.travelFactor > 1
+      ? `Your ${vessel.name} is slow: voyages take longer, up to the five-minute maximum.`
+      : vessel.travelFactor < 1
+        ? `Your ${vessel.name} is quick: voyages take less time.`
+        : null;
+  if (preview.travelTime && preview.standardTravelTime) {
+    return `Longer route: the direct channel is too narrow for your ${vessel.name}. ${formatInGameDays(preview.travelTime.durationDays)} in-game days instead of ${formatInGameDays(preview.standardTravelTime.durationDays)}.${speedNote ? ` ${speedNote}` : ""}`;
+  }
+  return speedNote;
+}
+
 function VoyagePanel({
   state,
   now,
@@ -327,11 +358,9 @@ function VoyagePanel({
   const voyage = state.voyage;
   const currentPort = getTown(state.currentTown);
   const nextPort = getTown(state.selectedTown);
-  const selectedRoute = getTownRoute(
-    state.currentTown,
-    state.selectedTown,
-    state.navigationConditions,
-  );
+  const vessel = getSelectedVesselClass(state);
+  const selectedPreview = getShipRoutePreview(state, state.selectedTown);
+  const selectedRoute = selectedPreview.route;
   const progress = voyage
     ? Math.max(
         0,
@@ -356,14 +385,11 @@ function VoyagePanel({
         ),
       )
     : "";
-  const historicalAlert = isHistoricalRouteAlertActive(state);
   const selectedIsCurrent = currentPort.id === nextPort.id;
-  const selectedRouteTime = selectedRoute
-    ? getRouteTravelTime(
-        selectedRoute,
-        nextPort.id === "chittagong" && historicalAlert,
-      )
-    : null;
+  const selectedRouteTime = selectedPreview.travelTime;
+  const routeSizeNote = selectedIsCurrent
+    ? null
+    : getRouteSizeNote(vessel, nextPort.name, selectedPreview);
 
   return (
     <>
@@ -423,7 +449,7 @@ function VoyagePanel({
           <div className="battle-stats">
             <span>Your attack <strong>{getShipAttack(state)}</strong></span>
             <span>Your defence <strong>{getShipDefence(state)}</strong></span>
-            <span>Ship strength <strong>{state.shipHull}/{8 + state.upgrades.hull * 3}</strong></span>
+            <span>Ship strength <strong>{state.shipHull}/{getShipMaximumHull(state)}</strong></span>
           </div>
           <button className="primary-button fight-button" onClick={onDefend}>
             <span>Protect the cargo</span><span aria-hidden="true">→</span>
@@ -448,20 +474,23 @@ function VoyagePanel({
               ? "Tap one of the towns on the map to plot your river route."
               : selectedRoute
                 ? `${currentPort.name} to ${nextPort.name}, following a direct waterway route.`
-                : `The river path to ${nextPort.name} is blocked. Choose another port.`}
+                : selectedPreview.tooLarge
+                  ? `This ship cannot reach ${nextPort.name}.`
+                  : `The river path to ${nextPort.name} is blocked. Choose another port.`}
           </p>
+          {routeSizeNote && <p className="route-size-note">{routeSizeNote}</p>}
           <button
             className="primary-button sail-button"
             disabled={selectedIsCurrent || !selectedRoute}
             onClick={onSail}
           >
-            <span>{selectedIsCurrent ? "Choose a town on the map" : selectedRoute ? `Travel to ${nextPort.name}` : "No open river path"}</span>
+            <span>{selectedIsCurrent ? "Choose a town on the map" : selectedRoute ? `Travel to ${nextPort.name}` : selectedPreview.tooLarge ? "Too large for this ship" : "No open river path"}</span>
             <span aria-hidden="true">→</span>
           </button>
           {!selectedIsCurrent && (
             <div className="ship-status">
-              <span>Hull strength <strong>{state.shipHull}/{8 + state.upgrades.hull * 3}</strong></span>
-              <span className="ship-status-bar"><i style={{ width: `${Math.min(100, (state.shipHull / (8 + state.upgrades.hull * 3)) * 100)}%` }} /></span>
+              <span>Hull strength <strong>{state.shipHull}/{getShipMaximumHull(state)}</strong></span>
+              <span className="ship-status-bar"><i style={{ width: `${Math.min(100, (state.shipHull / getShipMaximumHull(state)) * 100)}%` }} /></span>
             </div>
           )}
         </section>
@@ -716,6 +745,11 @@ function MarketPanel({
   );
 }
 
+function getVesselSpeedLabel(vessel: VesselClass): string {
+  if (vessel.travelFactor < 1) return "fast";
+  return vessel.travelFactor > 1 ? "slow" : "normal";
+}
+
 function DockPanel({
   state,
   onUpgrade,
@@ -725,9 +759,11 @@ function DockPanel({
   state: GameState;
   onUpgrade: (upgrade: UpgradeId) => void;
   onRepair: () => void;
-  onBuyShip: () => void;
+  onBuyShip: (vesselClass: VesselClassId) => void;
 }) {
-  const [confirmingShipPurchase, setConfirmingShipPurchase] = useState(false);
+  const [confirmingShipClass, setConfirmingShipClass] =
+    useState<VesselClassId | null>(null);
+  const vessel = getSelectedVesselClass(state);
   const stats = useMemo(
     () => ({
       attack: getShipAttack(state),
@@ -738,14 +774,19 @@ function DockPanel({
   );
   const maximumHull = getShipMaximumHull(state);
   const hullToRepair = maximumHull - state.shipHull;
-  const repairCost = hullToRepair * 2;
+  const repairCost = hullToRepair * vessel.repairCostPerHull;
+  const canBuyShipHere =
+    SHIPYARD_PORTS.includes(state.currentTown) &&
+    state.fleet.length < MAX_PLAYER_SHIPS &&
+    !state.voyage &&
+    !state.encounterPending;
 
   return (
     <section className="feature-panel dock-panel" aria-label="Shipyard and dock">
       <div className="feature-heading dock-heading">
         <span className="eyebrow">SHIPYARD · {getTown(state.currentTown).name}</span>
         <h2>Shipyard repairs & upgrades</h2>
-        <p>Repair for 2 gold per missing hull. Upgrade costs and new stats are shown before fitting.</p>
+        <p>{vessel.name}: repair for {vessel.repairCostPerHull} gold per missing hull. Upgrade costs and new stats are shown before fitting.</p>
       </div>
       <div className="shipyard-stats" aria-label="Current boat upgrades">
         <span>Attack <strong>{stats.attack}</strong></span>
@@ -795,8 +836,8 @@ function DockPanel({
                   {upgrade.id === "cannon"
                     ? `Attack ${stats.attack} → ${stats.attack + 1}`
                     : upgrade.id === "hull"
-                      ? `Defence ${stats.defence} → ${stats.defence + 1} · Hull ${state.shipHull}/${maximumHull} → ${state.shipHull + (level === 0 ? 2 : 1)}/${maximumHull + 3}`
-                      : `Hold ${stats.hold} → ${stats.hold + 6} spaces`}
+                      ? `Defence ${stats.defence} → ${stats.defence + 1} · Hull ${state.shipHull}/${maximumHull} → ${state.shipHull + (level === 0 ? 2 : 1)}/${maximumHull + vessel.hullPerUpgrade}`
+                      : `Hold ${stats.hold} → ${stats.hold + vessel.holdPerUpgrade} spaces`}
                 </span>
                 <span className="upgrade-cost">Next fit · {price} gold</span>
               </div>
@@ -826,7 +867,7 @@ function DockPanel({
           <strong>Hull {state.shipHull}/{maximumHull}</strong>
           <p>
             {hullToRepair > 0
-              ? `Restore ${hullToRepair} hull · ${repairCost} gold total (2 per hull).`
+              ? `Restore ${hullToRepair} hull · ${repairCost} gold total (${vessel.repairCostPerHull} per hull).`
               : "Your ship is fully repaired."}
           </p>
         </div>
@@ -853,59 +894,88 @@ function DockPanel({
         </button>
       </div>
       <div className="ship-purchase-panel">
-        <div>
-          <strong>Buy another river boat</strong>
+        <div className="ship-purchase-heading">
+          <strong>Buy another boat</strong>
           <p>
             {SHIPYARD_PORTS.includes(state.currentTown)
-              ? `Available here for ${ADDITIONAL_SHIP_PRICE} gold. Each boat stays at its own port until you sail it.`
+              ? "Each boat stays at its own port until you sail it."
               : `Available at ${SHIPYARD_PORTS.map((port) => getTown(port).name).join(", ")}.`}
           </p>
           <span>{state.fleet.length}/{MAX_PLAYER_SHIPS} ships owned</span>
         </div>
-        {confirmingShipPurchase ? (
-          <div
-            className="ship-purchase-confirmation"
-            role="group"
-            aria-label="Buy ship confirmation"
-          >
-            <p>Buy an empty new boat for {ADDITIONAL_SHIP_PRICE} gold?</p>
-            <div>
-              <button
-                className="ship-buy-button"
-                onClick={() => {
-                  onBuyShip();
-                  setConfirmingShipPurchase(false);
-                }}
+        <div className="ship-class-list">
+          {VESSEL_CLASS_IDS.map((classId) => {
+            const shipClass = VESSEL_CLASSES[classId];
+            const portLimit =
+              classId === "patello" ? "Cannot reach Sylhet or Balasore" : "Reaches all 15 ports";
+            return (
+              <article
+                className={`ship-class-card${confirmingShipClass === classId ? " ship-class-card-confirming" : ""}`}
+                key={classId}
               >
-                Confirm · {ADDITIONAL_SHIP_PRICE}g
-              </button>
-              <button
-                className="ship-cancel-button"
-                onClick={() => setConfirmingShipPurchase(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            className="ship-buy-button"
-            disabled={
-              !SHIPYARD_PORTS.includes(state.currentTown) ||
-              state.fleet.length >= MAX_PLAYER_SHIPS ||
-              state.gold < ADDITIONAL_SHIP_PRICE ||
-              Boolean(state.voyage) ||
-              state.encounterPending
-            }
-            onClick={() => setConfirmingShipPurchase(true)}
-          >
-            {state.fleet.length >= MAX_PLAYER_SHIPS
-              ? "Fleet full"
-              : state.gold < ADDITIONAL_SHIP_PRICE
-                ? `Need ${ADDITIONAL_SHIP_PRICE}g`
-                : `Buy · ${ADDITIONAL_SHIP_PRICE}g`}
-          </button>
-        )}
+                <div className="ship-class-copy">
+                  <h3>{shipClass.name}</h3>
+                  <p>{shipClass.summary}</p>
+                  <ul>
+                    <li>Hold {shipClass.baseHold}</li>
+                    <li>Hull {shipClass.baseHull}</li>
+                    <li>Speed {getVesselSpeedLabel(shipClass)}</li>
+                    <li>Repair {shipClass.repairCostPerHull}g per hull</li>
+                    <li>Route trade: up to {shipClass.routeUnitsPerGood} per good</li>
+                    <li>{portLimit}</li>
+                  </ul>
+                </div>
+                {confirmingShipClass === classId ? (
+                  <div
+                    className="ship-purchase-confirmation"
+                    role="group"
+                    aria-label="Buy ship confirmation"
+                  >
+                    <p>
+                      Buy an empty {shipClass.name} for {shipClass.price} gold?
+                      {classId === "patello" ? " It cannot reach Sylhet or Balasore." : ""}
+                    </p>
+                    <div>
+                      <button
+                        className="ship-buy-button"
+                        onClick={() => {
+                          onBuyShip(classId);
+                          setConfirmingShipClass(null);
+                        }}
+                      >
+                        Confirm · {shipClass.price}g
+                      </button>
+                      <button
+                        className="ship-cancel-button"
+                        onClick={() => setConfirmingShipClass(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    aria-label={`Buy ${shipClass.name} for ${shipClass.price} gold`}
+                    className="ship-buy-button"
+                    disabled={!canBuyShipHere || state.gold < shipClass.price}
+                    onClick={() => setConfirmingShipClass(classId)}
+                  >
+                    {state.fleet.length >= MAX_PLAYER_SHIPS
+                      ? "Fleet full"
+                      : state.gold < shipClass.price
+                        ? `Need ${shipClass.price}g`
+                        : `Buy · ${shipClass.price}g`}
+                  </button>
+                )}
+              </article>
+            );
+          })}
+        </div>
+        <p className="ship-class-note">
+          Bora and Patello are named after boats in 17th-century records of
+          Bengal. Their stats, prices, shipyards and port limits are game rules,
+          not historical facts.
+        </p>
       </div>
     </section>
   );
@@ -922,18 +992,11 @@ function PortContextPanel({
 }) {
   const destination = getTown(state.selectedTown);
   const isHere = state.selectedTown === state.currentTown;
-  const route = isHere
-    ? null
-    : getTownRoute(
-        state.currentTown,
-        state.selectedTown,
-        state.navigationConditions,
-      );
-  const routeTime = route
-    ? getRouteTravelTime(
-        route,
-        state.selectedTown === "chittagong" && isHistoricalRouteAlertActive(state),
-      )
+  const preview = isHere ? null : getShipRoutePreview(state, state.selectedTown);
+  const route = preview?.route ?? null;
+  const routeTime = preview?.travelTime ?? null;
+  const routeSizeNote = preview
+    ? getRouteSizeNote(getSelectedVesselClass(state), destination.name, preview)
     : null;
   const dockedMerchants = state.npcMerchants.filter(
     (merchant) => merchant.phase === "docked" && merchant.currentPort === destination.id,
@@ -954,8 +1017,11 @@ function PortContextPanel({
               ? routeTime
                 ? `Direct waterway route · ${formatTravelDuration(routeTime.durationMs)} · ${formatInGameDays(routeTime.durationDays)} in-game days`
                 : "A river section is closed. No safe water route is open right now."
-              : "A river section is closed. No safe water route is open right now."}
+              : preview?.tooLarge
+                ? "This ship cannot reach this port."
+                : "A river section is closed. No safe water route is open right now."}
         </p>
+        {routeSizeNote && <p className="route-size-note">{routeSizeNote}</p>}
         <p className="npc-port-traffic">
           {dockedMerchants.length
             ? `At this port: ${dockedMerchants.map((merchant) => merchant.name).join(", ")}.`
@@ -970,7 +1036,7 @@ function PortContextPanel({
         disabled={!isHere && !route}
         onClick={isHere ? onEnterCity : onTravel}
       >
-        <span>{isHere ? "Enter city" : route ? `Travel to ${destination.name}` : "Route unavailable"}</span>
+        <span>{isHere ? "Enter city" : route ? `Travel to ${destination.name}` : preview?.tooLarge ? "Too large for this ship" : "Route unavailable"}</span>
         <span aria-hidden="true">→</span>
       </button>
     </section>
@@ -996,8 +1062,20 @@ function AutomatedRoutePanel({
   onCancel: (shipId: string) => void;
 }) {
   const existingRoute = ship.automatedRoute;
-  const availableDestinations = state.visitedTowns.filter(
+  const vessel = VESSEL_CLASSES[ship.vesselClass];
+  const visitedDestinations = state.visitedTowns.filter(
     (port) => port !== ship.currentPort,
+  );
+  const availableDestinations = visitedDestinations.filter(
+    (port) =>
+      getTownRoute(
+        ship.currentPort,
+        port,
+        getShipRouteConditions(state.navigationConditions, ship.vesselClass),
+      ) !== null,
+  );
+  const hiddenDestinations = visitedDestinations.filter(
+    (port) => !availableDestinations.includes(port),
   );
   const [editing, setEditing] = useState(false);
   const [destination, setDestination] = useState<string>(
@@ -1159,9 +1237,14 @@ function AutomatedRoutePanel({
         <div className="automated-route-editor">
           <h4>{existingRoute ? "Edit at this port" : "Set up an automated route"}</h4>
           <p>
-            The ship starts at {getTown(ship.currentPort).name}. It trades one
-            unit per selected good each sailing day and follows connected river
-            routes. Route progress advances only while your voyage is active.
+            The ship starts at {getTown(ship.currentPort).name}. This{" "}
+            {vessel.name} trades{" "}
+            {vessel.routeUnitsPerGood === 1
+              ? "one unit"
+              : `up to ${vessel.routeUnitsPerGood} units`}{" "}
+            per selected good at each port call, within its hold, stall stock
+            and route capital, and follows connected river routes. Route
+            progress advances only while your voyage is active.
           </p>
           <label className="route-destination-field">
             <span>Other visited port</span>
@@ -1177,6 +1260,12 @@ function AutomatedRoutePanel({
               ))}
             </select>
           </label>
+          {hiddenDestinations.length > 0 && (
+            <p className="route-capital-note">
+              Not offered, because this {vessel.name} cannot reach them right
+              now: {hiddenDestinations.map((port) => getTown(port).name).join(", ")}.
+            </p>
+          )}
           <div className="route-goods-list">
             {CURRENT_MARKET_GOODS.map((good) => {
               const rule = rules[good.id];
@@ -1308,6 +1397,7 @@ function FutureSystemsPanel({
   screen,
   state,
   onSelectShip,
+  onReturnShip,
   onConfigureRoute,
   onRouteStatus,
   onCancelRoute,
@@ -1315,6 +1405,7 @@ function FutureSystemsPanel({
   screen: Extract<Screen, "fleet" | "politics" | "family" | "properties" | "notifications">;
   state: GameState;
   onSelectShip: (shipId: string) => void;
+  onReturnShip: (shipId: string) => void;
   onConfigureRoute: (
     shipId: string,
     destination: TownId,
@@ -1348,7 +1439,11 @@ function FutureSystemsPanel({
             const canSwitch =
               !state.voyage &&
               !state.encounterPending &&
+              !ship.returnOrder &&
               ship.currentPort === state.currentTown;
+            const shipClass = VESSEL_CLASSES[ship.vesselClass];
+            const outOfReach = isShipOutOfReach(state, ship.id);
+            const returnPlan = getShipReturnPlan(state, ship.id);
             const cargoUsed = Object.values(ship.cargo).reduce(
               (total, count) => total + count,
               0,
@@ -1362,9 +1457,12 @@ function FutureSystemsPanel({
                   <div>
                     <h3>{ship.name}</h3>
                     <span>
+                      {shipClass.name} ·{" "}
                       {state.voyage?.shipId === ship.id
                         ? `At sea · to ${getTown(state.voyage.destination).name}`
-                        : getTown(ship.currentPort).name}
+                        : ship.returnOrder
+                          ? `Returning to ${getTown(ship.returnOrder.destination).name}`
+                          : getTown(ship.currentPort).name}
                     </span>
                   </div>
                   <strong>
@@ -1374,14 +1472,46 @@ function FutureSystemsPanel({
                         : "Managing"
                       : ship.automatedRoute
                         ? "Automated"
-                        : "Docked"}
+                        : ship.returnOrder
+                          ? "Returning"
+                          : "Docked"}
                   </strong>
                 </div>
                 <div className="fleet-ship-stats">
-                  <span>Hull {ship.shipHull}/{8 + ship.upgrades.hull * 3}</span>
+                  <span>Hull {ship.shipHull}/{getVesselMaximumHull(ship.vesselClass, ship.upgrades)}</span>
                   <span>Cargo {cargoUsed}/{ship.cargoCapacity}</span>
+                  <span>Speed {getVesselSpeedLabel(shipClass)}</span>
+                  {ship.vesselClass === "patello" && <span>Reaches 13 of 15 ports</span>}
                 </div>
-                {!isSelected && !ship.automatedRoute && (
+                {ship.returnOrder && (
+                  <p className="fleet-automation-note">
+                    Returning to {getTown(ship.returnOrder.destination).name} ·{" "}
+                    {ship.returnOrder.travelDaysRemaining} in-game{" "}
+                    {ship.returnOrder.travelDaysRemaining === 1 ? "day" : "days"} left.
+                    It moves only while your voyage is under way.
+                  </p>
+                )}
+                {outOfReach && (
+                  <div className="fleet-return-order">
+                    <p>
+                      Your {getSelectedVesselClass(state).name} cannot reach this
+                      ship at {getTown(ship.currentPort).name}.
+                      {returnPlan
+                        ? " Order it back to where you can meet it."
+                        : " No river route is open for it right now."}
+                    </p>
+                    {returnPlan && (
+                      <button
+                        className="fleet-select-button"
+                        onClick={() => onReturnShip(ship.id)}
+                      >
+                        Return to {getTown(returnPlan.destination).name} · {returnPlan.days}{" "}
+                        {returnPlan.days === 1 ? "day" : "days"}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {!isSelected && !ship.automatedRoute && !ship.returnOrder && !outOfReach && (
                   <button
                     className="fleet-select-button"
                     disabled={!canSwitch}
@@ -1410,7 +1540,7 @@ function FutureSystemsPanel({
                     ))}
                   </div>
                 </details>
-                {!isSelected && (
+                {!isSelected && !ship.returnOrder && (
                   <AutomatedRoutePanel
                     key={`${ship.id}:${ship.automatedRoute ? "assigned" : "none"}`}
                     state={state}
@@ -1595,6 +1725,14 @@ function MissionBoardPanel({
           Reward: {mission.rewardGold} gold · +2 global reputation · +5 local standing in{" "}
           {getTown(mission.origin).name}
         </p>
+        {mission.status !== "completed" &&
+          mission.status !== "expired" &&
+          !canSelectedShipReach(state, mission.destination) && (
+            <p className="route-size-note">
+              Your {getSelectedVesselClass(state).name} cannot reach{" "}
+              {getTown(mission.destination).name}. Use another ship for this contract.
+            </p>
+          )}
       </div>
       {canAccept && (
         <button
@@ -2208,9 +2346,9 @@ export default function App() {
     [updateGame],
   );
 
-  const handleBuyPlayerShip = useCallback(() => {
+  const handleBuyPlayerShip = useCallback((vesselClass: VesselClassId) => {
     updateGame((current) => {
-      const result = buyPlayerShip(current);
+      const result = buyPlayerShip(current, vesselClass);
       if (result.error === "unavailable") {
         setNotice("Ships can only be purchased while docked and clear of an encounter.");
       } else if (result.error === "not-shipyard") {
@@ -2218,7 +2356,7 @@ export default function App() {
       } else if (result.error === "fleet-full") {
         setNotice(`You can own up to ${MAX_PLAYER_SHIPS} ships in this stage.`);
       } else if (result.error === "gold") {
-        setNotice(`A new river boat costs ${ADDITIONAL_SHIP_PRICE} gold.`);
+        setNotice(`A new ${VESSEL_CLASSES[vesselClass].name} costs ${VESSEL_CLASSES[vesselClass].price} gold.`);
       } else {
         setNotice(result.state.lastMessage);
       }
@@ -2238,7 +2376,28 @@ export default function App() {
           setNotice("Sail to that ship's port before managing it.");
         } else if (result.error === "automated") {
           setNotice("Pause or cancel this ship's automated route before managing it directly.");
+        } else if (result.error === "returning") {
+          setNotice("This ship is on its way back. Wait until it arrives.");
         } else if (result.state !== current) {
+          setNotice(result.state.lastMessage);
+        }
+        return result.state;
+      });
+    },
+    [updateGame],
+  );
+
+  const handleReturnShip = useCallback(
+    (shipId: string) => {
+      updateGame((current) => {
+        const result = orderShipReturn(current, shipId);
+        if (result.error === "unavailable") {
+          setNotice("Resolve the current river encounter before ordering this ship back.");
+        } else if (result.error === "no-route") {
+          setNotice("No river route is open for that ship right now. Try again later.");
+        } else if (result.error) {
+          setNotice("That ship does not need a return order.");
+        } else {
           setNotice(result.state.lastMessage);
         }
         return result.state;
@@ -2273,6 +2432,7 @@ export default function App() {
           "port-not-visited": "Automated routes can use only ports you have visited.",
           "same-port": "Choose a different visited port for the other end of the route.",
           "no-route": "There is no open connected river route between those ports.",
+          "too-large": "This ship is too large for the channels to that port.",
           "invalid-rules": "Choose at least one good to buy and one good to sell.",
           gold: "Your purse does not have enough gold for that route capital.",
         };
@@ -2766,6 +2926,7 @@ export default function App() {
                   screen={screen}
                   state={game}
                   onSelectShip={handleSelectPlayerShip}
+                  onReturnShip={handleReturnShip}
                   onConfigureRoute={handleConfigureRoute}
                   onRouteStatus={handleAutomatedRouteStatus}
                   onCancelRoute={handleCancelAutomatedRoute}
