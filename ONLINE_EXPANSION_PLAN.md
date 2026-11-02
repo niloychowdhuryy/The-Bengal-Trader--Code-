@@ -283,13 +283,13 @@ Your order is kept, with these adjustments: the command layer went first because
 | 1 | Command layer, server replay, database schema and rules — **done, `eb28e82`** | Yes |
 | S | Online staging deployment — **live; report link and version added with Stage 2** | Needs your GitHub and Vercel accounts |
 | 2 | Google login and profiles — **implemented; login tested locally against the live project** | Code yes; live login needs your setup |
-| N | Correct water and land navigation, version 20 save | Yes |
+| N | Correct water and land navigation, version 20 save, map fix, collapsible port panel (Part 15) — **implemented and committed** | Yes |
 | 3 | Cloud saves, linking, conflict handling, multi-tab safety | Logic yes; live sync needs your setup |
 | 4 | Coins, version 21 migration, simulation harness | Yes |
-| 5 | Dynamic markets | Yes |
+| 5 | Dynamic markets, and at least 25 active NPC traders (owner's requirement; 4 exist) | Yes |
 | 6 | Farm production orders | Yes |
 | 7 | Warehouse network | Yes |
-| 8 | City unlocks, reputation levels, collapsible map panel (Part 15) | Yes |
+| 8 | City unlocks, reputation levels | Yes |
 | 9 | Buildings, mission engine, journal, and Milestone T town identities | Yes |
 | 10 | Voyage events, vessel checks | Yes |
 | 11 | Leaderboards | Logic yes; live needs your setup |
@@ -338,6 +338,13 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` i
 | 2 Nov 2026 | Profiles change through a database function rather than an Edge Function | It uses the caller's verified identity, and needs no deployment step |
 | 2 Nov 2026 | Public names are chosen by players and never copied from Google; age is a self-declared 13+ check | Privacy, and the plan's age decision. Legal review is still required |
 | 2 Nov 2026 | Added Milestones S, N and T as essential work | Owner's requirement |
+| 2 Nov 2026 | The port panel floats over the map, the camera can move past the south edge, and phones drag in all directions | Stops the panel hiding ports without shrinking the map. Moved up from Stage 8 at the owner's request |
+| 2 Nov 2026 | The map stays mounted but hidden in town, and failed art retries with a message | Rebuilding it lost the camera and could show a broken image |
+| 2 Nov 2026 | Login and cloud-save setup are postponed until the main game is built | Owner's decision. See `PROJECT_STATUS_SUMMARY.md` for the recommended order |
+| 2 Nov 2026 | Water routes are traced automatically from a colour-based water map, with three thin channels added by hand, rather than drawn by hand | Keeps routes on the painting, and is repeatable if it changes. This replaces the earlier decision to trace them deliberately |
+| 2 Nov 2026 | Voyages under way at migration move to the new network keeping their progress, rather than finishing on old routes | Old routes crossed land, and the cost of keeping both networks wasn't justified |
+| 2 Nov 2026 | Carts cost 2.5× a River boat's time per distance, and a transfer costs as much as 15 distance units | First values, to be tuned in simulation |
+| 2 Nov 2026 | Patello reaches Malda by road from a landing north of the town | Its canal is too narrow, and Malda must remain reachable |
 | 2 Nov 2026 | Navigation goes before cloud saves and Coins; it takes save version 20 and Coins version 21 | It changes every journey time, so balance has to be measured on correct travel |
 | 2 Nov 2026 | Hosting is Vercel with a private GitHub repository, replacing Cloudflare Pages | Cloudflare setup failed for the owner. Vercel gives automatic deploys, but its free plan is non-commercial, so it must change before revenue |
 | 2 Nov 2026 | Water routes are traced deliberately and checked against a baked water map rather than generated from colours | A rough test showed colour detection alone breaks around ripples and bridges |

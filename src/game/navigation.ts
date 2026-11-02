@@ -1,29 +1,62 @@
 import type { TownId } from "./model";
+import {
+  PORT_QUAYS,
+  TRANSPORT_EDGES,
+  TRANSPORT_NODES,
+} from "./transport-network.data";
+
+// The map as a transport network. tools/nav/bake-network.mjs generates the real one
+// from the painted water; the planner accepts any network, which is how tests try
+// situations the map doesn't happen to contain.
 
 export interface RiverPoint {
   x: number;
   y: number;
 }
 
-export interface RiverNode {
+export type TransportMode = "water" | "land";
+
+export interface TransportNode {
   id: string;
   point: RiverPoint;
   port?: TownId;
 }
 
-export interface RiverEdge {
+export interface TransportEdge {
   id: string;
   from: string;
   to: string;
+  mode: TransportMode;
   points: RiverPoint[];
+  /** Abstract depth for water edges, compared with a vessel's draft. Unused on land. */
   minimumDepth: number;
 }
+
+export interface TransportNetwork {
+  nodes: readonly TransportNode[];
+  edges: readonly TransportEdge[];
+}
+
+export type RiverNode = TransportNode;
+export type RiverEdge = TransportEdge;
 
 export interface RouteConditions {
   eventBlockages?: readonly string[];
   militaryBlockages?: readonly string[];
   weatherBlockages?: readonly string[];
   vesselDraft?: number;
+  /** Multiplies water time for this vessel, so choices reflect its real speed. */
+  travelFactor?: number;
+  /** Ports this vessel may never travel to, by any combination of water and land. */
+  barredPorts?: readonly TownId[];
+}
+
+/** A stretch of one transport mode, as positions within the route's points. */
+export interface RouteLeg {
+  mode: TransportMode;
+  firstPoint: number;
+  lastPoint: number;
+  distance: number;
 }
 
 export interface RiverRoute {
@@ -32,7 +65,13 @@ export interface RiverRoute {
   edgeIds: string[];
   points: RiverPoint[];
   distance: number;
+  legs: RouteLeg[];
 }
+
+/** Carts cover the same distance in this many times a River boat's time. */
+export const LAND_TIME_FACTOR = 2.5;
+/** Moving cargo between boat and cart takes as long as this much distance by boat. */
+export const TRANSFER_TIME_UNITS = 15;
 
 export const PORT_LOCATIONS: Record<TownId, RiverPoint> = {
   dhaka: { x: 718, y: 320 },
@@ -52,497 +91,18 @@ export const PORT_LOCATIONS: Record<TownId, RiverPoint> = {
   patna: { x: 204, y: 123 },
 };
 
-const UPPER_BEND: RiverPoint = { x: 588, y: 247 };
-const LOWER_BEND: RiverPoint = { x: 911, y: 474 };
 
-const DIRECT_WATERWAY_NODES: RiverNode[] = [
-  { id: "patna-channel", point: { x: 270, y: 128 } },
-  { id: "rajmahal-channel", point: { x: 468, y: 132 } },
-  { id: "tanda-channel", point: { x: 526, y: 177 } },
-  { id: "malda-channel", point: { x: 589, y: 184 } },
-  { id: "kasimbazar-channel", point: { x: 457, y: 260 } },
-  { id: "dhaka-channel", point: { x: 679, y: 306 } },
-  { id: "sylhet-channel", point: { x: 881, y: 192 } },
-  { id: "hooghly-channel", point: { x: 329, y: 311 } },
-  { id: "satgaon-channel", point: { x: 393, y: 362 } },
-  { id: "sonargaon-channel", point: { x: 825, y: 301 } },
-  { id: "chittagong-channel", point: { x: 956, y: 503 } },
-  { id: "jessore-channel", point: { x: 770, y: 380 } },
-  { id: "bakla-channel", point: { x: 570, y: 535 } },
-  { id: "sandwip-channel", point: { x: 754, y: 548 } },
-  { id: "balasore-channel", point: { x: 259, y: 526 } },
-];
+export { PORT_QUAYS };
 
-export const RIVER_NODES: RiverNode[] = [
-  ...Object.entries(PORT_LOCATIONS).map(([id, point]) => ({
-    id,
-    point,
-    port: id as TownId,
-  })),
-  { id: "upper-bend", point: UPPER_BEND },
-  { id: "lower-bend", point: LOWER_BEND },
-  ...DIRECT_WATERWAY_NODES,
-];
-
-const LEGACY_RIVER_EDGES: RiverEdge[] = [
-  {
-    id: "upper-ganges-west",
-    from: "patna",
-    to: "rajmahal",
-    points: [
-      PORT_LOCATIONS.patna,
-      { x: 260, y: 131 },
-      { x: 318, y: 149 },
-      { x: 376, y: 154 },
-      { x: 435, y: 137 },
-      PORT_LOCATIONS.rajmahal,
-    ],
-    minimumDepth: 1.8,
-  },
-  {
-    id: "rajmahal-tanda",
-    from: "rajmahal",
-    to: "tanda",
-    points: [
-      PORT_LOCATIONS.rajmahal,
-      { x: 510, y: 130 },
-      { x: 518, y: 151 },
-      { x: 507, y: 166 },
-      PORT_LOCATIONS.tanda,
-    ],
-    minimumDepth: 1.6,
-  },
-  {
-    id: "tanda-malda",
-    from: "tanda",
-    to: "malda",
-    points: [
-      PORT_LOCATIONS.tanda,
-      { x: 530, y: 193 },
-      { x: 559, y: 188 },
-      { x: 588, y: 176 },
-      PORT_LOCATIONS.malda,
-    ],
-    minimumDepth: 1.5,
-  },
-  {
-    id: "malda-kasimbazar",
-    from: "malda",
-    to: "kasimbazar",
-    points: [
-      PORT_LOCATIONS.malda,
-      { x: 578, y: 199 },
-      { x: 545, y: 225 },
-      { x: 503, y: 244 },
-      { x: 462, y: 251 },
-      PORT_LOCATIONS.kasimbazar,
-    ],
-    minimumDepth: 1.5,
-  },
-  {
-    id: "northwest-channel",
-    from: "kasimbazar",
-    to: "upper-bend",
-    points: [
-      PORT_LOCATIONS.kasimbazar,
-      { x: 455, y: 247 },
-      { x: 494, y: 239 },
-      { x: 535, y: 237 },
-      UPPER_BEND,
-    ],
-    minimumDepth: 1.8,
-  },
-  {
-    id: "upper-river",
-    from: "upper-bend",
-    to: "dhaka",
-    points: [
-      UPPER_BEND,
-      { x: 618, y: 264 },
-      { x: 653, y: 285 },
-      { x: 686, y: 305 },
-      PORT_LOCATIONS.dhaka,
-    ],
-    minimumDepth: 1.6,
-  },
-  {
-    id: "sylhet-branch",
-    from: "upper-bend",
-    to: "sylhet",
-    points: [
-      UPPER_BEND,
-      { x: 660, y: 221 },
-      { x: 735, y: 203 },
-      { x: 811, y: 192 },
-      { x: 878, y: 186 },
-      PORT_LOCATIONS.sylhet,
-    ],
-    minimumDepth: 1.4,
-  },
-  {
-    id: "kasimbazar-hooghly",
-    from: "kasimbazar",
-    to: "hooghly",
-    points: [
-      PORT_LOCATIONS.kasimbazar,
-      { x: 384, y: 271 },
-      { x: 357, y: 293 },
-      { x: 333, y: 313 },
-      PORT_LOCATIONS.hooghly,
-    ],
-    minimumDepth: 1.6,
-  },
-  {
-    id: "hooghly-satgaon",
-    from: "hooghly",
-    to: "satgaon",
-    points: [
-      PORT_LOCATIONS.hooghly,
-      { x: 331, y: 342 },
-      { x: 362, y: 362 },
-      { x: 392, y: 371 },
-      PORT_LOCATIONS.satgaon,
-    ],
-    minimumDepth: 1.5,
-  },
-  {
-    id: "eastern-river",
-    from: "dhaka",
-    to: "sonargaon",
-    points: [
-      PORT_LOCATIONS.dhaka,
-      { x: 754, y: 313 },
-      { x: 790, y: 305 },
-      { x: 825, y: 300 },
-      PORT_LOCATIONS.sonargaon,
-    ],
-    minimumDepth: 1.5,
-  },
-  {
-    id: "southern-channel",
-    from: "sonargaon",
-    to: "lower-bend",
-    points: [
-      PORT_LOCATIONS.sonargaon,
-      { x: 879, y: 324 },
-      { x: 899, y: 359 },
-      { x: 914, y: 406 },
-      LOWER_BEND,
-    ],
-    minimumDepth: 1.7,
-  },
-  {
-    id: "coastal-channel",
-    from: "lower-bend",
-    to: "chittagong",
-    points: [
-      LOWER_BEND,
-      { x: 938, y: 484 },
-      { x: 959, y: 500 },
-      PORT_LOCATIONS.chittagong,
-    ],
-    minimumDepth: 2.2,
-  },
-  {
-    id: "dhaka-jessore",
-    from: "dhaka",
-    to: "jessore",
-    points: [
-      PORT_LOCATIONS.dhaka,
-      { x: 746, y: 346 },
-      { x: 768, y: 373 },
-      PORT_LOCATIONS.jessore,
-    ],
-    minimumDepth: 1.5,
-  },
-  {
-    id: "jessore-bakla",
-    from: "jessore",
-    to: "bakla-chandradwip",
-    points: [
-      PORT_LOCATIONS.jessore,
-      { x: 759, y: 432 },
-      { x: 710, y: 465 },
-      { x: 650, y: 503 },
-      { x: 581, y: 531 },
-      PORT_LOCATIONS["bakla-chandradwip"],
-    ],
-    minimumDepth: 1.5,
-  },
-  {
-    id: "bakla-sandwip",
-    from: "bakla-chandradwip",
-    to: "sandwip",
-    points: [
-      PORT_LOCATIONS["bakla-chandradwip"],
-      { x: 567, y: 564 },
-      { x: 642, y: 566 },
-      { x: 716, y: 556 },
-      { x: 760, y: 547 },
-      PORT_LOCATIONS.sandwip,
-    ],
-    minimumDepth: 1.4,
-  },
-  {
-    id: "sandwip-chittagong",
-    from: "sandwip",
-    to: "chittagong",
-    points: [
-      PORT_LOCATIONS.sandwip,
-      { x: 842, y: 559 },
-      { x: 894, y: 561 },
-      { x: 942, y: 546 },
-      PORT_LOCATIONS.chittagong,
-    ],
-    minimumDepth: 1.6,
-  },
-  {
-    id: "bakla-balasore",
-    from: "bakla-chandradwip",
-    to: "balasore",
-    points: [
-      PORT_LOCATIONS["bakla-chandradwip"],
-      { x: 444, y: 563 },
-      { x: 389, y: 559 },
-      { x: 330, y: 545 },
-      { x: 264, y: 530 },
-      PORT_LOCATIONS.balasore,
-    ],
-    minimumDepth: 1.4,
-  },
-];
-
-function waterwayEdge(
-  id: string,
-  from: string,
-  to: string,
-  points: RiverPoint[],
-  minimumDepth = 1.5,
-): RiverEdge {
-  return { id, from, to, points, minimumDepth };
-}
-
-const DIRECT_WATERWAY_EDGES: RiverEdge[] = [
-  waterwayEdge("direct-access-patna", "patna", "patna-channel", [
-    PORT_LOCATIONS.patna,
-    { x: 232, y: 124 },
-    { x: 252, y: 126 },
-    { x: 270, y: 128 },
-  ]),
-  waterwayEdge("direct-access-rajmahal", "rajmahal", "rajmahal-channel", [
-    PORT_LOCATIONS.rajmahal,
-    { x: 489, y: 117 },
-    { x: 480, y: 127 },
-    { x: 468, y: 132 },
-  ]),
-  waterwayEdge("direct-access-tanda", "tanda", "tanda-channel", [
-    PORT_LOCATIONS.tanda,
-    { x: 503, y: 183 },
-    { x: 515, y: 181 },
-    { x: 526, y: 177 },
-  ]),
-  waterwayEdge("direct-access-malda", "malda", "malda-channel", [
-    PORT_LOCATIONS.malda,
-    { x: 611, y: 177 },
-    { x: 600, y: 181 },
-    { x: 589, y: 184 },
-  ]),
-  waterwayEdge("direct-access-kasimbazar", "kasimbazar", "kasimbazar-channel", [
-    PORT_LOCATIONS.kasimbazar,
-    { x: 431, y: 251 },
-    { x: 445, y: 256 },
-    { x: 457, y: 260 },
-  ]),
-  waterwayEdge("direct-access-dhaka", "dhaka", "dhaka-channel", [
-    PORT_LOCATIONS.dhaka,
-    { x: 708, y: 314 },
-    { x: 694, y: 310 },
-    { x: 679, y: 306 },
-  ]),
-  waterwayEdge("direct-access-sylhet", "sylhet", "sylhet-channel", [
-    PORT_LOCATIONS.sylhet,
-    { x: 924, y: 186 },
-    { x: 901, y: 189 },
-    { x: 881, y: 192 },
-  ]),
-  waterwayEdge("direct-access-hooghly", "hooghly", "hooghly-channel", [
-    PORT_LOCATIONS.hooghly,
-    { x: 311, y: 319 },
-    { x: 321, y: 314 },
-    { x: 329, y: 311 },
-  ]),
-  waterwayEdge("direct-access-satgaon", "satgaon", "satgaon-channel", [
-    PORT_LOCATIONS.satgaon,
-    { x: 412, y: 374 },
-    { x: 404, y: 368 },
-    { x: 393, y: 362 },
-  ]),
-  waterwayEdge("direct-access-sonargaon", "sonargaon", "sonargaon-channel", [
-    PORT_LOCATIONS.sonargaon,
-    { x: 847, y: 299 },
-    { x: 836, y: 300 },
-    { x: 825, y: 301 },
-  ]),
-  waterwayEdge("direct-access-chittagong", "chittagong", "chittagong-channel", [
-    PORT_LOCATIONS.chittagong,
-    { x: 977, y: 514 },
-    { x: 966, y: 508 },
-    { x: 956, y: 503 },
-  ]),
-  waterwayEdge("direct-access-jessore", "jessore", "jessore-channel", [
-    PORT_LOCATIONS.jessore,
-    { x: 787, y: 397 },
-    { x: 778, y: 388 },
-    { x: 770, y: 380 },
-  ]),
-  waterwayEdge("direct-access-bakla", "bakla-chandradwip", "bakla-channel", [
-    PORT_LOCATIONS["bakla-chandradwip"],
-    { x: 522, y: 544 },
-    { x: 547, y: 539 },
-    { x: 570, y: 535 },
-  ]),
-  waterwayEdge("direct-access-sandwip", "sandwip", "sandwip-channel", [
-    PORT_LOCATIONS.sandwip,
-    { x: 783, y: 543 },
-    { x: 768, y: 546 },
-    { x: 754, y: 548 },
-  ]),
-  waterwayEdge("direct-access-balasore", "balasore", "balasore-channel", [
-    PORT_LOCATIONS.balasore,
-    { x: 198, y: 522 },
-    { x: 230, y: 524 },
-    { x: 259, y: 526 },
-  ]),
-  waterwayEdge("direct-upper-patna-rajmahal", "patna-channel", "rajmahal-channel", [
-    { x: 270, y: 128 },
-    { x: 312, y: 144 },
-    { x: 356, y: 151 },
-    { x: 407, y: 145 },
-    { x: 444, y: 136 },
-    { x: 468, y: 132 },
-  ], 1.8),
-  waterwayEdge("direct-upper-rajmahal-tanda", "rajmahal-channel", "tanda-channel", [
-    { x: 468, y: 132 },
-    { x: 493, y: 142 },
-    { x: 512, y: 160 },
-    { x: 526, y: 177 },
-  ], 1.6),
-  waterwayEdge("direct-upper-tanda-malda", "tanda-channel", "malda-channel", [
-    { x: 526, y: 177 },
-    { x: 546, y: 190 },
-    { x: 570, y: 188 },
-    { x: 589, y: 184 },
-  ], 1.5),
-  waterwayEdge("direct-upper-malda-kasimbazar", "malda-channel", "kasimbazar-channel", [
-    { x: 589, y: 184 },
-    { x: 569, y: 208 },
-    { x: 536, y: 233 },
-    { x: 497, y: 250 },
-    { x: 457, y: 260 },
-  ], 1.5),
-  waterwayEdge("direct-upper-kasimbazar-junction", "kasimbazar-channel", "upper-bend", [
-    { x: 457, y: 260 },
-    { x: 497, y: 250 },
-    { x: 540, y: 245 },
-    UPPER_BEND,
-  ], 1.8),
-  waterwayEdge("direct-upper-dhaka", "upper-bend", "dhaka-channel", [
-    UPPER_BEND,
-    { x: 616, y: 263 },
-    { x: 649, y: 284 },
-    { x: 679, y: 306 },
-  ], 1.6),
-  waterwayEdge("direct-upper-sylhet", "upper-bend", "sylhet-channel", [
-    UPPER_BEND,
-    { x: 658, y: 222 },
-    { x: 731, y: 205 },
-    { x: 805, y: 196 },
-    { x: 881, y: 192 },
-  ], 1.4),
-  waterwayEdge("direct-west-kasimbazar-hooghly", "kasimbazar-channel", "hooghly-channel", [
-    { x: 457, y: 260 },
-    { x: 443, y: 280 },
-    { x: 416, y: 291 },
-    { x: 380, y: 299 },
-    { x: 350, y: 304 },
-    { x: 329, y: 311 },
-  ], 1.6),
-  waterwayEdge("direct-west-hooghly-satgaon", "hooghly-channel", "satgaon-channel", [
-    { x: 329, y: 311 },
-    { x: 333, y: 337 },
-    { x: 358, y: 353 },
-    { x: 393, y: 362 },
-  ], 1.5),
-  waterwayEdge("direct-delta-dhaka-sonargaon", "dhaka-channel", "sonargaon-channel", [
-    { x: 679, y: 306 },
-    { x: 700, y: 275 },
-    { x: 744, y: 266 },
-    { x: 786, y: 277 },
-    { x: 807, y: 290 },
-    { x: 825, y: 301 },
-  ], 1.5),
-  waterwayEdge("direct-delta-sonargaon-lower", "sonargaon-channel", "lower-bend", [
-    { x: 825, y: 301 },
-    { x: 840, y: 339 },
-    { x: 865, y: 377 },
-    { x: 895, y: 422 },
-    LOWER_BEND,
-  ], 1.7),
-  waterwayEdge("direct-coast-lower-chittagong", "lower-bend", "chittagong-channel", [
-    LOWER_BEND,
-    { x: 930, y: 482 },
-    { x: 946, y: 494 },
-    { x: 956, y: 503 },
-  ], 2.2),
-  waterwayEdge("direct-delta-dhaka-jessore", "dhaka-channel", "jessore-channel", [
-    { x: 679, y: 306 },
-    { x: 681, y: 348 },
-    { x: 718, y: 367 },
-    { x: 751, y: 377 },
-    { x: 770, y: 380 },
-  ], 1.5),
-  waterwayEdge("direct-delta-jessore-bakla", "jessore-channel", "bakla-channel", [
-    { x: 770, y: 380 },
-    { x: 751, y: 425 },
-    { x: 704, y: 461 },
-    { x: 647, y: 496 },
-    { x: 570, y: 535 },
-  ], 1.5),
-  waterwayEdge("direct-delta-bakla-sandwip", "bakla-channel", "sandwip-channel", [
-    { x: 570, y: 535 },
-    { x: 598, y: 551 },
-    { x: 650, y: 557 },
-    { x: 708, y: 554 },
-    { x: 754, y: 548 },
-  ], 1.4),
-  waterwayEdge("direct-coast-sandwip-chittagong", "sandwip-channel", "chittagong-channel", [
-    { x: 754, y: 548 },
-    { x: 780, y: 590 },
-    { x: 840, y: 596 },
-    { x: 900, y: 570 },
-    { x: 930, y: 535 },
-    { x: 956, y: 503 },
-  ], 1.6),
-  waterwayEdge("direct-coast-bakla-balasore", "bakla-channel", "balasore-channel", [
-    { x: 570, y: 535 },
-    { x: 540, y: 600 },
-    { x: 470, y: 610 },
-    { x: 390, y: 600 },
-    { x: 320, y: 570 },
-    { x: 259, y: 526 },
-  ], 1.4),
-];
-
-export const RIVER_EDGES: RiverEdge[] = [
-  ...LEGACY_RIVER_EDGES,
-  ...DIRECT_WATERWAY_EDGES,
-];
+export const RIVER_NODES: TransportNode[] = TRANSPORT_NODES;
+export const RIVER_EDGES: TransportEdge[] = TRANSPORT_EDGES;
+const REAL_NETWORK: TransportNetwork = { nodes: RIVER_NODES, edges: RIVER_EDGES };
 
 function distanceBetween(a: RiverPoint, b: RiverPoint): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
-function routeLength(points: RiverPoint[]): number {
+function routeLength(points: readonly RiverPoint[]): number {
   return points.slice(1).reduce(
     (total, point, index) => total + distanceBetween(points[index], point),
     0,
@@ -557,85 +117,192 @@ function blockedEdgeIds(conditions: RouteConditions): Set<string> {
   ]);
 }
 
-function orientedPoints(edge: RiverEdge, from: string): RiverPoint[] {
+function orientedPoints(edge: TransportEdge, from: string): RiverPoint[] {
   return edge.from === from ? edge.points : [...edge.points].reverse();
 }
+
+/** Finds the quickest allowed journey, or null if there's none. */
+export function planRoute(
+  network: TransportNetwork,
+  origin: TownId,
+  destination: TownId,
+  conditions: RouteConditions = {},
+): RiverRoute | null {
+  if (origin === destination) return null;
+  if (conditions.barredPorts?.includes(destination)) return null;
+  const start = network.nodes.find((node) => node.port === origin);
+  const finish = network.nodes.find((node) => node.port === destination);
+  if (!start || !finish) return null;
+
+  const closed = blockedEdgeIds(conditions);
+  const draft = conditions.vesselDraft ?? 0;
+  const waterFactor = conditions.travelFactor ?? 1;
+  const portNodes = new Set(
+    network.nodes.filter((node) => node.port !== undefined).map((node) => node.id),
+  );
+  const links = new Map<string, TransportEdge[]>();
+  for (const edge of network.edges) {
+    for (const nodeId of [edge.from, edge.to]) {
+      if (!links.has(nodeId)) links.set(nodeId, []);
+      links.get(nodeId)!.push(edge);
+    }
+  }
+
+  // A state is a place plus how the journey arrived, because changing mode costs time.
+  type State = { node: string; mode: TransportMode | null; cost: number };
+  const key = (node: string, mode: TransportMode | null) => `${node}|${mode}`;
+  const best = new Map<string, number>([[key(start.id, null), 0]]);
+  const cameBy = new Map<string, { from: string; edge: TransportEdge }>();
+  const queue: State[] = [{ node: start.id, mode: null, cost: 0 }];
+  let arrival: string | null = null;
+
+  while (queue.length > 0) {
+    let lowest = 0;
+    for (let i = 1; i < queue.length; i += 1) {
+      if (queue[i].cost < queue[lowest].cost) lowest = i;
+    }
+    const state = queue.splice(lowest, 1)[0];
+    const stateKey = key(state.node, state.mode);
+    if (state.cost > (best.get(stateKey) ?? Infinity)) continue;
+    if (state.node === finish.id) {
+      arrival = stateKey;
+      break;
+    }
+    for (const edge of links.get(state.node) ?? []) {
+      const next = edge.from === state.node ? edge.to : edge.from;
+      // Ports are ends of journeys, never places to pass through.
+      if (next !== finish.id && portNodes.has(next)) continue;
+      if (closed.has(edge.id)) continue;
+      if (edge.mode === "water" && edge.minimumDepth < draft) continue;
+      const cost =
+        state.cost +
+        routeLength(edge.points) * (edge.mode === "land" ? LAND_TIME_FACTOR : waterFactor) +
+        (state.mode && state.mode !== edge.mode ? TRANSFER_TIME_UNITS : 0);
+      const nextKey = key(next, edge.mode);
+      if (cost < (best.get(nextKey) ?? Infinity)) {
+        best.set(nextKey, cost);
+        cameBy.set(nextKey, { from: stateKey, edge });
+        queue.push({ node: next, mode: edge.mode, cost });
+      }
+    }
+  }
+  if (arrival === null) return null;
+
+  const edgeIds: string[] = [];
+  for (let cursor = arrival; cameBy.has(cursor); cursor = cameBy.get(cursor)!.from) {
+    edgeIds.unshift(cameBy.get(cursor)!.edge.id);
+  }
+  return buildRoute(network, origin, destination, edgeIds);
+}
+
+const HAIRPIN_COSINE = -0.3;
+/** A turn-back this short is a tracing artefact at a junction, not a real manoeuvre. */
+const MAX_HOOK_LENGTH = 40;
+
+function turnCosine(a: RiverPoint, b: RiverPoint, c: RiverPoint): number {
+  const [ux, uy, vx, vy] = [b.x - a.x, b.y - a.y, c.x - b.x, c.y - b.y];
+  const lengths = Math.hypot(ux, uy) * Math.hypot(vx, vy);
+  return lengths === 0 ? 1 : (ux * vx + uy * vy) / lengths;
+}
+
+/** Removes the small hooks left where traced channels meet, and rounds off corners. */
+export function smoothRoutePoints(points: readonly RiverPoint[]): RiverPoint[] {
+  const clean = [...points];
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (let i = 1; i < clean.length - 1; i += 1) {
+      if (distanceBetween(clean[i], clean[i + 1]) < 0.01) {
+        clean.splice(i, 1);
+        changed = true;
+        break;
+      }
+      const short =
+        Math.min(distanceBetween(clean[i - 1], clean[i]), distanceBetween(clean[i], clean[i + 1])) <
+        MAX_HOOK_LENGTH;
+      if (short && turnCosine(clean[i - 1], clean[i], clean[i + 1]) < HAIRPIN_COSINE) {
+        clean.splice(i, 1);
+        changed = true;
+        break;
+      }
+    }
+  }
+  if (clean.length < 3) return clean;
+  const smooth: RiverPoint[] = [clean[0]];
+  for (let i = 1; i < clean.length - 1; i += 1) {
+    const [before, here, after] = [clean[i - 1], clean[i], clean[i + 1]];
+    smooth.push(
+      { x: here.x + (before.x - here.x) * 0.25, y: here.y + (before.y - here.y) * 0.25 },
+      { x: here.x + (after.x - here.x) * 0.25, y: here.y + (after.y - here.y) * 0.25 },
+    );
+  }
+  smooth.push(clean[clean.length - 1]);
+  return smooth.map((point) => ({
+    x: Math.round(point.x * 100) / 100,
+    y: Math.round(point.y * 100) / 100,
+  }));
+}
+
+export function buildRoute(
+  network: TransportNetwork,
+  origin: TownId,
+  destination: TownId,
+  edgeIds: string[],
+): RiverRoute | null {
+  const start = network.nodes.find((node) => node.port === origin);
+  const finish = network.nodes.find((node) => node.port === destination);
+  if (!start || !finish || edgeIds.length === 0) return null;
+
+  // Group the edges into one stretch per transport mode.
+  const stretches: { mode: TransportMode; points: RiverPoint[] }[] = [];
+  let cursorNode = start.id;
+  for (const edgeId of edgeIds) {
+    const edge = network.edges.find((candidate) => candidate.id === edgeId);
+    if (!edge || (edge.from !== cursorNode && edge.to !== cursorNode)) return null;
+    const edgePoints = orientedPoints(edge, cursorNode);
+    const current = stretches[stretches.length - 1];
+    if (current?.mode === edge.mode) current.points.push(...edgePoints.slice(1));
+    else stretches.push({ mode: edge.mode, points: [...edgePoints] });
+    cursorNode = edge.from === cursorNode ? edge.to : edge.from;
+  }
+  if (cursorNode !== finish.id) return null;
+
+  const points: RiverPoint[] = [];
+  const legs: RouteLeg[] = [];
+  for (const stretch of stretches) {
+    const smooth = smoothRoutePoints(stretch.points);
+    const firstPoint = Math.max(0, points.length - 1);
+    points.push(...(points.length > 0 ? smooth.slice(1) : smooth));
+    legs.push({
+      mode: stretch.mode,
+      firstPoint,
+      lastPoint: points.length - 1,
+      distance: routeLength(smooth),
+    });
+  }
+
+  return {
+    origin,
+    destination,
+    edgeIds,
+    points,
+    distance: routeLength(points),
+    legs,
+  };
+}
+
+// Routes are drawn many times a second, and the real network never changes.
+const plannedRoutes = new Map<string, RiverRoute | null>();
 
 export function planRiverRoute(
   origin: TownId,
   destination: TownId,
   conditions: RouteConditions = {},
 ): RiverRoute | null {
-  if (origin === destination) return null;
-
-  const start = RIVER_NODES.find((node) => node.port === origin);
-  const finish = RIVER_NODES.find((node) => node.port === destination);
-  if (!start || !finish) return null;
-
-  const closed = blockedEdgeIds(conditions);
-  const distances = new Map<string, number>([[start.id, 0]]);
-  const previous = new Map<string, { node: string; edge: RiverEdge }>();
-  const remaining = new Set(RIVER_NODES.map((node) => node.id));
-  const portNodeIds = new Set(
-    RIVER_NODES.filter((node) => node.port !== undefined).map((node) => node.id),
-  );
-
-  while (remaining.size > 0) {
-    let current: string | undefined;
-    let bestDistance = Number.POSITIVE_INFINITY;
-    for (const nodeId of remaining) {
-      const candidate = distances.get(nodeId) ?? Number.POSITIVE_INFINITY;
-      if (candidate < bestDistance) {
-        current = nodeId;
-        bestDistance = candidate;
-      }
-    }
-
-    if (current === undefined || !Number.isFinite(bestDistance)) break;
-    if (current === finish.id) break;
-    remaining.delete(current);
-
-    for (const edge of RIVER_EDGES) {
-      const next = edge.from === current
-        ? edge.to
-        : edge.to === current
-          ? edge.from
-          : null;
-      if (
-        next === null ||
-        !remaining.has(next) ||
-        (next !== finish.id && portNodeIds.has(next)) ||
-        closed.has(edge.id) ||
-        edge.minimumDepth < (conditions.vesselDraft ?? 0)
-      ) {
-        continue;
-      }
-
-      const points = orientedPoints(edge, current);
-      const candidate = bestDistance + routeLength(points);
-      if (candidate < (distances.get(next) ?? Number.POSITIVE_INFINITY)) {
-        distances.set(next, candidate);
-        previous.set(next, { node: current, edge });
-      }
-    }
-  }
-
-  if (!distances.has(finish.id)) return null;
-
-  const routeEdges: RiverEdge[] = [];
-  let cursor = finish.id;
-  while (cursor !== start.id) {
-    const step = previous.get(cursor);
-    if (!step) return null;
-    routeEdges.unshift(step.edge);
-    cursor = step.node;
-  }
-
-  return buildRiverRoute(
-    origin,
-    destination,
-    routeEdges.map((edge) => edge.id),
-  );
+  const key = `${origin}|${destination}|${JSON.stringify(conditions)}`;
+  if (plannedRoutes.has(key)) return plannedRoutes.get(key)!;
+  const route = planRoute(REAL_NETWORK, origin, destination, conditions);
+  plannedRoutes.set(key, route);
+  return route;
 }
 
 export function buildRiverRoute(
@@ -643,56 +310,91 @@ export function buildRiverRoute(
   destination: TownId,
   edgeIds: string[],
 ): RiverRoute | null {
-  const start = RIVER_NODES.find((node) => node.port === origin);
-  const finish = RIVER_NODES.find((node) => node.port === destination);
-  if (!start || !finish || edgeIds.length === 0) return null;
-
-  const points: RiverPoint[] = [];
-  let cursorNode = start.id;
-  for (const edgeId of edgeIds) {
-    const edge = RIVER_EDGES.find((candidate) => candidate.id === edgeId);
-    if (!edge || (edge.from !== cursorNode && edge.to !== cursorNode)) return null;
-    const edgePoints = orientedPoints(edge, cursorNode);
-    points.push(...(points.length > 0 ? edgePoints.slice(1) : edgePoints));
-    cursorNode = edge.from === cursorNode ? edge.to : edge.from;
-  }
-  if (cursorNode !== finish.id) return null;
-
-  const distance = routeLength(points);
-  return {
-    origin,
-    destination,
-    edgeIds,
-    points,
-    distance,
-  };
+  return buildRoute(REAL_NETWORK, origin, destination, edgeIds);
 }
 
-export function pointAlongRiverRoute(route: RiverRoute, progress: number): RiverPoint {
-  const clampedProgress = Math.max(0, Math.min(1, progress));
-  const remainingDistance = route.distance * clampedProgress;
-  let covered = 0;
+/** Journey length in time units: boat distance × vessel factor, carts and transfers. */
+export function getRouteTimeUnits(route: RiverRoute, travelFactor = 1): number {
+  return route.legs.reduce(
+    (total, leg, index) =>
+      total +
+      leg.distance * (leg.mode === "land" ? LAND_TIME_FACTOR : travelFactor) +
+      (index > 0 ? TRANSFER_TIME_UNITS : 0),
+    0,
+  );
+}
 
-  for (let index = 1; index < route.points.length; index += 1) {
-    const from = route.points[index - 1];
-    const to = route.points[index];
-    const segmentLength = distanceBetween(from, to);
-    if (covered + segmentLength >= remainingDistance) {
-      const segmentProgress =
-        segmentLength === 0 ? 0 : (remainingDistance - covered) / segmentLength;
+export interface RouteState {
+  point: RiverPoint;
+  /** The vehicle to show. */
+  mode: TransportMode;
+  /** True while cargo is moving between boat and cart at a landing. */
+  transferring: boolean;
+}
+
+function pointAlong(points: readonly RiverPoint[], distance: number): RiverPoint {
+  let remaining = distance;
+  for (let index = 1; index < points.length; index += 1) {
+    const start = points[index - 1];
+    const end = points[index];
+    const length = distanceBetween(start, end);
+    if (remaining <= length && length > 0) {
+      const fraction = remaining / length;
       return {
-        x: from.x + (to.x - from.x) * segmentProgress,
-        y: from.y + (to.y - from.y) * segmentProgress,
+        x: start.x + (end.x - start.x) * fraction,
+        y: start.y + (end.y - start.y) * fraction,
       };
     }
-    covered += segmentLength;
+    remaining -= length;
   }
-
-  return route.points.at(-1) ?? { x: 0, y: 0 };
+  return points[points.length - 1];
 }
 
-export function riverPointsToSvgPath(points: RiverPoint[]): string {
+/** Where the journey is at a fraction of its time. Drawing and timing both use this. */
+export function getRouteStateAt(
+  route: RiverRoute,
+  progress: number,
+  travelFactor = 1,
+): RouteState {
+  const clamped = Math.max(0, Math.min(1, progress));
+  if (clamped === 1) {
+    const last = route.legs[route.legs.length - 1];
+    return { point: route.points[route.points.length - 1], mode: last.mode, transferring: false };
+  }
+  let remaining = clamped * getRouteTimeUnits(route, travelFactor);
+  for (let index = 0; index < route.legs.length; index += 1) {
+    const leg = route.legs[index];
+    const points = route.points.slice(leg.firstPoint, leg.lastPoint + 1);
+    if (index > 0) {
+      if (remaining < TRANSFER_TIME_UNITS) {
+        return { point: points[0], mode: leg.mode, transferring: true };
+      }
+      remaining -= TRANSFER_TIME_UNITS;
+    }
+    const speed = leg.mode === "land" ? LAND_TIME_FACTOR : travelFactor;
+    const legUnits = leg.distance * speed;
+    if (remaining <= legUnits || index === route.legs.length - 1) {
+      return {
+        point: pointAlong(points, Math.min(leg.distance, remaining / speed)),
+        mode: leg.mode,
+        transferring: false,
+      };
+    }
+    remaining -= legUnits;
+  }
+  return { point: route.points[route.points.length - 1], mode: "water", transferring: false };
+}
+
+export function pointAlongRiverRoute(
+  route: RiverRoute,
+  progress: number,
+  travelFactor = 1,
+): RiverPoint {
+  return getRouteStateAt(route, progress, travelFactor).point;
+}
+
+export function riverPointsToSvgPath(points: readonly RiverPoint[]): string {
   return points
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`)
     .join(" ");
 }

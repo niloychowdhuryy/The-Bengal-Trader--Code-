@@ -25,6 +25,8 @@ import {
   FARM_OUTPUT_CAPACITY,
   MAX_AUTOMATED_ROUTE_CAPITAL,
   getGoodPrice,
+  getShipRouteConditions,
+  getShipRouteDays,
   type GameState,
   type AutomatedTradeRoute,
   type AutomatedTradeRule,
@@ -501,6 +503,7 @@ function isValidRiverRoute(
   return Boolean(
     expectedRoute &&
       JSON.stringify(value.points) === JSON.stringify(expectedRoute.points) &&
+      JSON.stringify(value.legs) === JSON.stringify(expectedRoute.legs) &&
       value.distance === expectedRoute.distance,
   );
 }
@@ -895,7 +898,7 @@ export function isValidGameState(value: unknown): value is GameState {
   );
 
   if (
-    value.version !== 19 ||
+    value.version !== 20 ||
     (value.residenceTown !== null && !isTownId(value.residenceTown)) ||
     !isSailingSpeed(value.sailingSpeed) ||
     typeof value.captainName !== "string" ||
@@ -994,6 +997,138 @@ export function isValidGameState(value: unknown): value is GameState {
   }
 
   return true;
+}
+
+// Journeys under way move onto the rebuilt network, keeping how far along they were.
+function migrateToTransportNetwork(
+  save: Record<string, unknown>,
+  now: number,
+): Record<string, unknown> {
+  const selected = Array.isArray(save.fleet)
+    ? save.fleet.find((ship) => isRecord(ship) && ship.id === save.selectedShipId)
+    : undefined;
+  const vesselClass: VesselClassId =
+    isRecord(selected) && isVesselClassId(selected.vesselClass)
+      ? selected.vesselClass
+      : "river-boat";
+  const sailingSpeed = isSailingSpeed(save.sailingSpeed) ? save.sailingSpeed : 1;
+
+  let voyage = save.voyage;
+  if (isRecord(voyage) && isTownId(voyage.origin) && isTownId(voyage.destination)) {
+    const route = planRiverRoute(
+      voyage.origin,
+      voyage.destination,
+      getShipRouteConditions({}, vesselClass),
+    );
+    if (route) {
+      const routeAlert = voyage.routeAlert === true;
+      const timing = getRouteTravelTime(
+        route,
+        routeAlert,
+        VESSEL_CLASSES[vesselClass].travelFactor,
+      );
+      const oldDuration = Number(voyage.durationMs);
+      const oldElapsed = Number(voyage.elapsedMs);
+      const progress =
+        Number.isFinite(oldDuration) && oldDuration > 0 && Number.isFinite(oldElapsed)
+          ? Math.max(0, Math.min(1, oldElapsed / oldDuration))
+          : 0;
+      const elapsedMs = timing.durationMs * progress;
+      const arrivalAt = now + (timing.durationMs - elapsedMs) / sailingSpeed;
+      voyage = {
+        ...voyage,
+        route,
+        startedAt: Math.min(now - elapsedMs / sailingSpeed, arrivalAt - 1),
+        arrivalAt,
+        durationMs: timing.durationMs,
+        elapsedMs,
+        progressUpdatedAt: now,
+        durationDays: timing.durationDays,
+      };
+    }
+  }
+
+  const rescale = (remaining: unknown, total: unknown, newTotal: number) =>
+    Math.max(
+      1,
+      Math.min(newTotal, Math.ceil((Number(remaining) / Math.max(1, Number(total))) * newTotal - 1e-9)),
+    );
+
+  const npcMerchants = Array.isArray(save.npcMerchants)
+    ? save.npcMerchants.map((merchant) => {
+        if (
+          !isRecord(merchant) ||
+          merchant.phase !== "traveling" ||
+          !isTownId(merchant.currentPort) ||
+          !isTownId(merchant.destinationPort)
+        ) {
+          return merchant;
+        }
+        const route = planRiverRoute(merchant.currentPort, merchant.destinationPort);
+        if (!route) return merchant;
+        const total = Math.max(1, Math.ceil(getRouteTravelTime(route).durationDays));
+        return {
+          ...merchant,
+          travelDaysTotal: total,
+          travelDaysRemaining: rescale(merchant.travelDaysRemaining, merchant.travelDaysTotal, total),
+        };
+      })
+    : save.npcMerchants;
+
+  const fleet = Array.isArray(save.fleet)
+    ? save.fleet.map((ship) => {
+        if (!isRecord(ship) || !isTownId(ship.currentPort) || !isVesselClassId(ship.vesselClass)) {
+          return ship;
+        }
+        const conditions = getShipRouteConditions({}, ship.vesselClass);
+        const daysTo = (destination: unknown) => {
+          if (!isTownId(destination)) return null;
+          const route = planRiverRoute(ship.currentPort as TownId, destination, conditions);
+          return route ? getShipRouteDays(route, ship.vesselClass as VesselClassId) : null;
+        };
+        const automated = ship.automatedRoute;
+        if (isRecord(automated) && automated.phase === "traveling") {
+          const total = daysTo(automated.destinationPort);
+          if (total !== null) {
+            return {
+              ...ship,
+              automatedRoute: {
+                ...automated,
+                travelDaysTotal: total,
+                travelDaysRemaining: rescale(automated.travelDaysRemaining, automated.travelDaysTotal, total),
+              },
+            };
+          }
+        }
+        const order = ship.returnOrder;
+        if (isRecord(order)) {
+          const total = daysTo(order.destination);
+          if (total !== null) {
+            return {
+              ...ship,
+              returnOrder: {
+                ...order,
+                travelDaysTotal: total,
+                travelDaysRemaining: rescale(order.travelDaysRemaining, order.travelDaysTotal, total),
+              },
+            };
+          }
+        }
+        return ship;
+      })
+    : save.fleet;
+
+  // Any closures in old saves named channels that no longer exist.
+  const known = new Set(RIVER_EDGES.map((edge) => edge.id));
+  const conditions = isRecord(save.navigationConditions) ? save.navigationConditions : {};
+  const navigationConditions = Object.fromEntries(
+    Object.entries(conditions).map(([name, value]) => [
+      name,
+      Array.isArray(value) ? value.filter((id) => known.has(id)) : value,
+    ]),
+  );
+
+  return { ...save, version: 20, voyage, npcMerchants, fleet, navigationConditions };
 }
 
 export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
@@ -1364,7 +1499,11 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     };
   }
 
-  return save.version === 19
+  if (save.version === 19) {
+    save = migrateToTransportNetwork(save, now);
+  }
+
+  return save.version === 20
     ? reanchorPausedVoyage(repairGoldPeak(save), now)
     : save;
 }

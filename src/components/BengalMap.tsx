@@ -4,6 +4,7 @@ import {
   useId,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -15,12 +16,15 @@ import {
   getShipRoutePreview,
   getTownRoute,
   isHistoricalRouteAlertActive,
+  VESSEL_CLASSES,
   type GameState,
   type PlayerShip,
   type TownId,
+  type VesselClassId,
 } from "../game/model";
 import {
-  pointAlongRiverRoute,
+  PORT_QUAYS,
+  getRouteStateAt,
   riverPointsToSvgPath,
   type RiverPoint,
   type RiverRoute,
@@ -31,6 +35,7 @@ import {
   getVoyageProgressMs,
 } from "../game/travel-time";
 import BengalTradingVessel from "./map-art/BengalTradingVessel";
+import LandCart from "./map-art/LandCart";
 
 const NAVIGATION_MAP_WIDTH = 1152;
 const MAP_HEIGHT = 768;
@@ -41,6 +46,23 @@ const MAX_ZOOM = 2.7;
 const DEFAULT_ASPECT_RATIO = MAP_WIDTH / MAP_HEIGHT;
 const MOBILE_BREAKPOINT = "(max-width: 759px)";
 const MOBILE_INITIAL_ZOOM = 1.5;
+/** Phones keep one on-screen map scale, however tall the map area is. */
+const MOBILE_PIXELS_PER_UNIT = 0.94;
+/** Just below the labels of the southernmost ports. */
+const SOUTHERN_PORTS_LINE = 610;
+/** Room kept around a selected port for its marker and name, in screen pixels. */
+const PORT_CLEARANCE_PIXELS = 58;
+/** A panel growing by more than this is being opened, not just re-measured. */
+const PANEL_OPENED_PIXELS = 40;
+
+function getMobileZoom(pixelHeight: number, aspectRatio: number): number {
+  if (pixelHeight <= 0) return MOBILE_INITIAL_ZOOM;
+  const baseHeight = Math.min(MAP_HEIGHT, MAP_WIDTH / aspectRatio);
+  return Math.max(
+    MIN_ZOOM,
+    Math.min(MAX_ZOOM, baseHeight / (pixelHeight / MOBILE_PIXELS_PER_UNIT)),
+  );
+}
 const MOBILE_INITIAL_FOCUS = {
   x: ((718 + 858) / 2) * NAVIGATION_TO_MAP_SCALE_X,
   y: (320 + 296) / 2,
@@ -102,16 +124,25 @@ function getMinimumZoom(_aspectRatio: number): number {
   return MIN_ZOOM;
 }
 
-function clampCamera(camera: MapCamera, aspectRatio: number): MapCamera {
+/**
+ * Keeps the view on the painting. `bottomSpace`, in map units, is how far the view may
+ * move past the south edge, so the south can always be brought above a panel.
+ */
+export function clampCamera(
+  camera: MapCamera,
+  aspectRatio: number,
+  bottomSpace = 0,
+): MapCamera {
   const { x: width, y: height } = getCameraSize(camera.zoom, aspectRatio);
-  const clampAxis = (position: number, size: number, mapSize: number) =>
-    size >= mapSize
-      ? (mapSize - size) / 2
-      : Math.max(0, Math.min(mapSize - size, position));
+  const clampAxis = (position: number, size: number, mapSize: number, extra: number) => {
+    const least = size >= mapSize ? (mapSize - size) / 2 : 0;
+    const most = (size >= mapSize ? (mapSize - size) / 2 : mapSize - size) + extra;
+    return Math.max(least, Math.min(most, position));
+  };
   return {
     ...camera,
-    x: clampAxis(camera.x, width, MAP_WIDTH),
-    y: clampAxis(camera.y, height, MAP_HEIGHT),
+    x: clampAxis(camera.x, width, MAP_WIDTH, 0),
+    y: clampAxis(camera.y, height, MAP_HEIGHT, bottomSpace),
   };
 }
 
@@ -120,13 +151,14 @@ function cameraAtZoom(
   focus: MapPointer,
   focusFraction: MapPointer,
   aspectRatio: number,
+  clamp: (camera: MapCamera, aspectRatio: number) => MapCamera = clampCamera,
 ): MapCamera {
   const nextZoom = Math.max(
     getMinimumZoom(aspectRatio),
     Math.min(MAX_ZOOM, zoom),
   );
   const { x: width, y: height } = getCameraSize(nextZoom, aspectRatio);
-  return clampCamera({
+  return clamp({
     zoom: nextZoom,
     x: focus.x - focusFraction.x * width,
     y: focus.y - focusFraction.y * height,
@@ -150,6 +182,10 @@ interface BengalMapProps {
   now: number;
   onSelectTown: (town: TownId) => void;
   interactive?: boolean;
+  /** Hidden rather than removed, so it keeps its camera and loaded art. */
+  hidden?: boolean;
+  /** Screen pixels of the map covered by a panel along its bottom edge. */
+  bottomInset?: number;
 }
 
 function getDisplayedRoute(state: GameState): RiverRoute | null {
@@ -164,10 +200,90 @@ function toMapPath(points: RiverPoint[]): string {
   return riverPointsToSvgPath(points.map(toMapPoint));
 }
 
-function getRouteFacing(route: RiverRoute, progress: number): 1 | -1 {
-  const ahead = pointAlongRiverRoute(route, Math.min(1, progress + 0.02));
-  const behind = pointAlongRiverRoute(route, Math.max(0, progress - 0.02));
+function getRouteFacing(route: RiverRoute, progress: number, travelFactor = 1): 1 | -1 {
+  const ahead = getRouteStateAt(route, Math.min(1, progress + 0.02), travelFactor).point;
+  const behind = getRouteStateAt(route, Math.max(0, progress - 0.02), travelFactor).point;
   return ahead.x >= behind.x ? 1 : -1;
+}
+
+/** A boat on water and a cart on land, always from the same journey state. */
+function JourneyVehicle({
+  route,
+  progress,
+  travelFactor = 1,
+  vesselClass,
+  size,
+}: {
+  route: RiverRoute;
+  progress: number;
+  travelFactor?: number;
+  vesselClass?: VesselClassId;
+  size: number;
+}) {
+  const state = getRouteStateAt(route, progress, travelFactor);
+  const point = toMapPoint(state.point);
+  const facing = getRouteFacing(route, progress, travelFactor);
+  if (state.transferring) {
+    // Cargo moving between them at the landing: the boat moors while the cart waits.
+    return (
+      <g className="journey-transfer">
+        <BengalTradingVessel x={point.x} y={point.y} vesselClass={vesselClass} facing={facing} size={size} />
+        <LandCart x={point.x - 20 * size} y={point.y - 13 * size} facing={facing} size={size * 0.85} />
+      </g>
+    );
+  }
+  return state.mode === "land" ? (
+    <LandCart x={point.x} y={point.y} moving facing={facing} size={size} />
+  ) : (
+    <BengalTradingVessel x={point.x} y={point.y} moving vesselClass={vesselClass} facing={facing} size={size} />
+  );
+}
+
+function RouteLine({
+  route,
+  sailing,
+  scale,
+}: {
+  route: RiverRoute;
+  sailing: boolean;
+  scale: number;
+}) {
+  return (
+    <g aria-hidden="true" className={sailing ? "route-voyage" : "route-preview"}>
+      {route.legs.map((leg) => {
+        const path = toMapPath(route.points.slice(leg.firstPoint, leg.lastPoint + 1));
+        const land = leg.mode === "land";
+        return (
+          <g key={leg.firstPoint} className={land ? "route-leg-land" : "route-leg-water"}>
+            <path d={path} fill="none" stroke="#1c120a" strokeWidth={9 * scale} strokeLinecap="round" strokeLinejoin="round" opacity=".42" />
+            <path d={path} fill="none" stroke={land ? "#f0d9a8" : "#fff6dc"} strokeWidth={5.4 * scale} strokeLinecap="round" strokeLinejoin="round" opacity=".95" />
+            <path
+              d={path}
+              fill="none"
+              stroke={land ? "#6b3f1c" : sailing ? "#a03a1c" : "#1f4d40"}
+              strokeWidth={3 * scale}
+              strokeDasharray={land ? `${2 * scale} ${6 * scale}` : `${10 * scale} ${7 * scale}`}
+              strokeLinecap={land ? "round" : "butt"}
+              strokeLinejoin="round"
+              className={sailing && !land ? "route-moving" : ""}
+            />
+          </g>
+        );
+      })}
+      {route.legs.slice(1).map((leg) => {
+        const point = toMapPoint(route.points[leg.firstPoint]);
+        return (
+          <circle
+            key={leg.firstPoint}
+            className="route-transfer-point"
+            cx={point.x}
+            cy={point.y}
+            r={5 * scale}
+          />
+        );
+      })}
+    </g>
+  );
 }
 
 function getFleetShipRoute(
@@ -198,26 +314,94 @@ function getFleetShipRoute(
     : null;
 }
 
-// Painted layers are separate elements so the browser can animate them without
-// repainting the markers and routes that sit above them.
-const MapPlates = memo(function MapPlates({ viewBox }: { viewBox: string }) {
-  const plate = (href: string, className: string) => (
+const MAP_ART = [
+  { href: "/images/bengal-world-map.webp", className: "map-plate-base" },
+  { href: "/images/water-shimmer-a.webp", className: "map-plate-shimmer-a" },
+  { href: "/images/water-shimmer-b.webp", className: "map-plate-shimmer-b" },
+];
+const ART_RETRY_MS = 4_000;
+
+// Holding these keeps the art in the browser's memory, so the map doesn't depend on
+// the network again after its first load.
+const heldArt = new Map<string, HTMLImageElement>();
+function holdArt(href: string) {
+  if (heldArt.has(href) || typeof Image === "undefined") return;
+  const image = new Image();
+  image.src = href;
+  heldArt.set(href, image);
+}
+
+/**
+ * One painted layer. If the art can't load it shows nothing rather than the browser's
+ * stretched broken-image icon, and tries again, including when the connection returns.
+ */
+function MapPlate({
+  href,
+  className,
+  viewBox,
+  onFailureChange,
+}: {
+  href: string;
+  className: string;
+  viewBox: string;
+  onFailureChange?: (failed: boolean) => void;
+}) {
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    holdArt(href);
+  }, [href]);
+  useEffect(() => {
+    onFailureChange?.(failed);
+    if (!failed) return;
+    const retry = () => {
+      setFailed(false);
+      setAttempt((current) => current + 1);
+    };
+    const timer = window.setTimeout(retry, ART_RETRY_MS);
+    window.addEventListener("online", retry);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("online", retry);
+    };
+  }, [failed, onFailureChange]);
+  return (
     <svg className={`map-plate ${className}`} viewBox={viewBox} aria-hidden="true">
-      <image
-        href={href}
-        x="0"
-        y="0"
-        width={MAP_WIDTH}
-        height={MAP_HEIGHT}
-        preserveAspectRatio="xMidYMid meet"
-      />
+      {!failed && (
+        <image
+          key={attempt}
+          href={href}
+          x="0"
+          y="0"
+          width={MAP_WIDTH}
+          height={MAP_HEIGHT}
+          preserveAspectRatio="xMidYMid meet"
+          onError={() => setFailed(true)}
+        />
+      )}
     </svg>
   );
+}
+
+// Painted layers are separate elements so the browser can animate them without
+// repainting the markers and routes that sit above them.
+const MapPlates = memo(function MapPlates({
+  viewBox,
+  onBaseFailureChange,
+}: {
+  viewBox: string;
+  onBaseFailureChange: (failed: boolean) => void;
+}) {
   return (
     <>
-      {plate("/images/bengal-world-map.webp", "map-plate-base")}
-      {plate("/images/water-shimmer-a.webp", "map-plate-shimmer-a")}
-      {plate("/images/water-shimmer-b.webp", "map-plate-shimmer-b")}
+      {MAP_ART.map((art, index) => (
+        <MapPlate
+          key={art.href}
+          {...art}
+          viewBox={viewBox}
+          onFailureChange={index === 0 ? onBaseFailureChange : undefined}
+        />
+      ))}
     </>
   );
 });
@@ -253,13 +437,25 @@ export default function BengalMap({
   now,
   onSelectTown,
   interactive = true,
+  hidden = false,
+  bottomInset = 0,
 }: BengalMapProps) {
+  const [artMissing, setArtMissing] = useState(false);
   const uniqueId = useId().replace(/:/g, "");
   const [camera, setCamera] = useState<MapCamera>({ x: 0, y: 0, zoom: 1 });
   const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
   const [mapPixelHeight, setMapPixelHeight] = useState(0);
   const [followShip, setFollowShip] = useState(true);
   const cameraPlaced = useRef(false);
+  const insetRef = useRef(bottomInset);
+  insetRef.current = bottomInset;
+  const pixelHeightRef = useRef(0);
+  const clampView = (next: MapCamera, aspect: number) => {
+    const units = getCameraSize(next.zoom, aspect).y;
+    const space =
+      pixelHeightRef.current > 0 ? (insetRef.current / pixelHeightRef.current) * units : 0;
+    return clampCamera(next, aspect, space);
+  };
   const lastAspectRatio = useRef(aspectRatio);
   const [isMobileViewport, setIsMobileViewport] = useState(getIsMobileViewport);
   const previousMobileViewport = useRef(isMobileViewport);
@@ -284,9 +480,12 @@ export default function BengalMap({
         ),
       )
     : 0;
-  const shipPoint = voyage && route ? pointAlongRiverRoute(route, progress) : null;
-  const ship = shipPoint ? toMapPoint(shipPoint) : null;
   const selectedVessel = getSelectedVesselClass(state);
+  const shipPoint =
+    voyage && route
+      ? getRouteStateAt(route, progress, selectedVessel.travelFactor).point
+      : null;
+  const ship = shipPoint ? toMapPoint(shipPoint) : null;
   const routeIsDisplayed =
     Boolean(route) && (state.currentTown !== state.selectedTown || state.voyage !== null);
   const displayedRouteTime = route
@@ -313,6 +512,7 @@ export default function BengalMap({
       const { width, height } = map.getBoundingClientRect();
       if (width > 0 && height > 0) {
         setAspectRatio(width / height);
+        pixelHeightRef.current = height;
         setMapPixelHeight(height);
       }
     };
@@ -326,10 +526,7 @@ export default function BengalMap({
     const enteredDesktop = previousMobileViewport.current && !isMobileViewport;
     previousMobileViewport.current = isMobileViewport;
     if (isMobileViewport) {
-      const zoom = Math.max(
-        MOBILE_INITIAL_ZOOM,
-        getMinimumZoom(aspectRatio),
-      );
+      const zoom = getMobileZoom(pixelHeightRef.current, aspectRatio);
       const { x: width, y: height } = getCameraSize(zoom, aspectRatio);
       const firstPlacement = !cameraPlaced.current || mapPixelHeight === 0;
       cameraPlaced.current = mapPixelHeight > 0;
@@ -340,9 +537,11 @@ export default function BengalMap({
         const previous = getCameraSize(current.zoom, placedAspect);
         const home = toMapPoint(getTown(state.currentTown));
         const focus = firstPlacement
-          ? { x: interactive ? home.x : MOBILE_INITIAL_FOCUS.x, y: MOBILE_INITIAL_FOCUS.y }
-          : { x: current.x + previous.x / 2, y: MOBILE_INITIAL_FOCUS.y };
-        return clampCamera(
+          ? interactive
+            ? home
+            : MOBILE_INITIAL_FOCUS
+          : { x: current.x + previous.x / 2, y: current.y + previous.y / 2 };
+        return clampView(
           {
             zoom,
             x: focus.x - width / 2,
@@ -358,7 +557,7 @@ export default function BengalMap({
       const zoom = getMinimumZoom(aspectRatio);
       const { x: width, y: height } = getCameraSize(zoom, aspectRatio);
       setCamera(
-        clampCamera(
+        clampView(
           {
             zoom,
             x: (MAP_WIDTH - width) / 2,
@@ -375,7 +574,7 @@ export default function BengalMap({
         ? getMinimumZoom(aspectRatio)
         : Math.max(current.zoom, getMinimumZoom(aspectRatio));
       const { x: width, y: height } = getCameraSize(zoom, aspectRatio);
-      return clampCamera(
+      return clampView(
         {
           ...current,
           zoom,
@@ -387,6 +586,41 @@ export default function BengalMap({
     });
     // Only the viewport changes this placement; later port changes must not move the camera.
   }, [aspectRatio, isMobileViewport]);
+  // Moves the view clear of the panel: the selected port always, and when the panel opens
+  // the southern ports too, if there's room for both. Closing it puts the view back.
+  const savedCameraY = useRef<number | null>(null);
+  const previousInset = useRef(bottomInset);
+  const selectedTown = state.selectedTown;
+  useEffect(() => {
+    // Going from or to no panel at all means changing screen, not opening or closing it,
+    // and returning to the map must leave the view exactly where the player had it.
+    const change =
+      bottomInset > 0 && previousInset.current > 0 ? bottomInset - previousInset.current : 0;
+    previousInset.current = bottomInset;
+    if (!interactive || hidden || voyage || mapPixelHeight <= 0) return;
+    setCamera((current) => {
+      const { x: width, y: height } = getCameraSize(current.zoom, aspectRatio);
+      const scale = mapPixelHeight / height;
+      const visible = height - bottomInset / scale;
+      const clearance = PORT_CLEARANCE_PIXELS / scale;
+      const port = toMapPoint(getTown(selectedTown));
+      let x = current.x;
+      let y = current.y;
+      if (change > PANEL_OPENED_PIXELS) {
+        savedCameraY.current = current.y;
+        y = Math.max(y, SOUTHERN_PORTS_LINE - visible);
+      } else if (change < -PANEL_OPENED_PIXELS && savedCameraY.current !== null) {
+        y = savedCameraY.current;
+        savedCameraY.current = null;
+      }
+      if (port.y + clearance > y + visible) y = port.y + clearance - visible;
+      if (port.y - clearance < y) y = port.y - clearance;
+      if (port.x - clearance < x) x = port.x - clearance;
+      if (port.x + clearance > x + width) x = port.x + clearance - width;
+      if (x === current.x && y === current.y) return current;
+      return clampView({ ...current, x, y }, aspectRatio);
+    });
+  }, [selectedTown, bottomInset, mapPixelHeight, aspectRatio, hidden, interactive, Boolean(voyage)]);
   // A new voyage starts following the ship; dragging the map hands control back.
   const voyageStart = voyage?.startedAt;
   useEffect(() => {
@@ -398,7 +632,7 @@ export default function BengalMap({
     if (shipX === undefined || shipY === undefined || !followShip) return;
     setCamera((current) => {
       const { x: width, y: height } = getCameraSize(current.zoom, aspectRatio);
-      return clampCamera(
+      return clampView(
         { ...current, x: shipX - width / 2, y: shipY - height / 2 },
         aspectRatio,
       );
@@ -506,7 +740,7 @@ export default function BengalMap({
         y: Math.max(0, Math.min(1, (midpoint.y - rect.top) / rect.height)),
       };
       setCamera(
-        clampCamera(
+        clampView(
           {
             zoom: nextZoom,
             x: activeGesture.anchor.x - fraction.x * width,
@@ -520,12 +754,11 @@ export default function BengalMap({
 
     if (activeGesture.kind === "drag" && activeGesture.pointerId === event.pointerId) {
       const deltaX = event.clientX - activeGesture.start.x;
-      const deltaY = isMobileViewport
-        ? 0
-        : event.clientY - activeGesture.start.y;
+      const deltaY = event.clientY - activeGesture.start.y;
       if (Math.hypot(deltaX, deltaY) > 5 && !movedDuringGesture.current) {
         movedDuringGesture.current = true;
         setFollowShip(false);
+        savedCameraY.current = null;
         event.currentTarget.setPointerCapture?.(event.pointerId);
       }
       const rect = event.currentTarget.getBoundingClientRect();
@@ -534,13 +767,11 @@ export default function BengalMap({
         aspectRatio,
       );
       setCamera(
-        clampCamera(
+        clampView(
           {
             ...activeGesture.camera,
             x: activeGesture.camera.x - (deltaX / rect.width) * width,
-            y: isMobileViewport
-              ? activeGesture.camera.y
-              : activeGesture.camera.y - (deltaY / rect.height) * height,
+            y: activeGesture.camera.y - (deltaY / rect.height) * height,
           },
           aspectRatio,
         ),
@@ -609,7 +840,7 @@ export default function BengalMap({
     const { x: width, y: height } = getCameraSize(zoom, aspectRatio);
     setFollowShip(true);
     setCamera(
-      clampCamera({
+      clampView({
         x: location.x - width / 2,
         y: location.y - height / 2,
         zoom,
@@ -625,17 +856,25 @@ export default function BengalMap({
   // Markers keep one on-screen size at every zoom so names stay readable.
   const pixelsPerUnit = mapPixelHeight > 0 ? mapPixelHeight / viewHeight : 1;
   const markerScale = Math.max(0.5, Math.min(2.4, 0.88 / pixelsPerUnit));
-  const homePoint = toMapPoint(getTown(state.currentTown));
-  const shipFacing =
-    voyage && route ? getRouteFacing(route, progress) : 1;
+  const homePoint = toMapPoint(PORT_QUAYS[state.currentTown]);
   const fleetShips = state.fleet.filter(
     (entry) => entry.id !== state.selectedShipId,
   );
 
   return (
-    <section className="map-frame" aria-label="Illustrated map of Bengal and its river towns">
+    <section
+      className="map-frame"
+      hidden={hidden}
+      aria-label="Illustrated map of Bengal and its river towns"
+      style={{ "--map-bottom-inset": `${bottomInset}px` } as CSSProperties}
+    >
       <div className="map-viewport">
-        <MapPlates viewBox={viewBox} />
+        <MapPlates viewBox={viewBox} onBaseFailureChange={setArtMissing} />
+        {artMissing && (
+          <p className="map-art-missing" role="status">
+            The map painting couldn't load. Trying again... You can still choose ports.
+          </p>
+        )}
         <MapAtmosphere />
         <svg
           ref={mapRef}
@@ -653,41 +892,12 @@ export default function BengalMap({
             An illustrated Bengal map showing all fifteen river and coastal markets.
             Named merchant boats move along the marked routes as in-game sailing days pass.
             {isMobileViewport
-              ? " Swipe horizontally to explore, or select a marked port."
+              ? " Drag to explore, or select a marked port."
               : " Drag to pan, zoom to look closer, or select a marked port."}
           </desc>
 
           {routeIsDisplayed && route && (
-            <g aria-hidden="true" className={state.voyage ? "route-voyage" : "route-preview"}>
-              <path
-                d={toMapPath(route.points)}
-                fill="none"
-                stroke="#1c120a"
-                strokeWidth={9 * markerScale}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity=".42"
-              />
-              <path
-                d={toMapPath(route.points)}
-                fill="none"
-                stroke="#fff6dc"
-                strokeWidth={5.4 * markerScale}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity=".95"
-              />
-              <path
-                d={toMapPath(route.points)}
-                fill="none"
-                stroke={state.voyage ? "#a03a1c" : "#1f4d40"}
-                strokeWidth={3 * markerScale}
-                strokeDasharray={`${10 * markerScale} ${7 * markerScale}`}
-                strokeLinecap="butt"
-                strokeLinejoin="round"
-                className={state.voyage ? "route-moving" : ""}
-              />
-            </g>
+            <RouteLine route={route} sailing={Boolean(state.voyage)} scale={markerScale} />
           )}
 
           {state.npcMerchants
@@ -706,7 +916,7 @@ export default function BengalMap({
                 ),
               );
               const position = toMapPoint(
-                pointAlongRiverRoute(merchantRoute, travelProgress),
+                getRouteStateAt(merchantRoute, travelProgress).point,
               );
               const color = index % 2 === 0 ? "#f0dfb6" : "#d8e3c4";
               return (
@@ -721,11 +931,9 @@ export default function BengalMap({
                     opacity=".6"
                     aria-hidden="true"
                   />
-                  <BengalTradingVessel
-                    x={position.x}
-                    y={position.y}
-                    moving
-                    facing={getRouteFacing(merchantRoute, travelProgress)}
+                  <JourneyVehicle
+                    route={merchantRoute}
+                    progress={travelProgress}
                     size={0.62 * markerScale}
                   />
                   <circle cx={position.x} cy={position.y} r={14 * markerScale} fill="transparent">
@@ -740,19 +948,25 @@ export default function BengalMap({
 
           {fleetShips.map((entry, index) => {
             const trip = getFleetShipRoute(state, entry);
-            const position = trip
-              ? toMapPoint(pointAlongRiverRoute(trip.route, trip.progress))
-              : toMapPoint(getTown(entry.currentPort));
+            const position = toMapPoint(PORT_QUAYS[entry.currentPort]);
             return (
               <g key={entry.id} role="img" className="fleet-traffic" aria-label={`Your ship ${entry.name}`}>
-                <BengalTradingVessel
-                  x={position.x + (trip ? 0 : (-26 - index * 14) * markerScale)}
-                  y={position.y + (trip ? 0 : 10 * markerScale)}
-                  moving={Boolean(trip)}
-                  vesselClass={entry.vesselClass}
-                  facing={trip ? getRouteFacing(trip.route, trip.progress) : 1}
-                  size={0.72 * markerScale}
-                />
+                {trip ? (
+                  <JourneyVehicle
+                    route={trip.route}
+                    progress={trip.progress}
+                    travelFactor={VESSEL_CLASSES[entry.vesselClass].travelFactor}
+                    vesselClass={entry.vesselClass}
+                    size={0.72 * markerScale}
+                  />
+                ) : (
+                  <BengalTradingVessel
+                    x={position.x + (-26 - index * 14) * markerScale}
+                    y={position.y + 10 * markerScale}
+                    vesselClass={entry.vesselClass}
+                    size={0.72 * markerScale}
+                  />
+                )}
               </g>
             );
           })}
@@ -765,20 +979,21 @@ export default function BengalMap({
                 r={21 * markerScale}
                 className="ship-wake"
               />
-              <BengalTradingVessel
-                x={ship.x}
-                y={ship.y}
-                moving
-                vesselClass={selectedVessel.id}
-                facing={shipFacing}
-                size={markerScale}
-              />
+              {route && (
+                <JourneyVehicle
+                  route={route}
+                  progress={progress}
+                  travelFactor={selectedVessel.travelFactor}
+                  vesselClass={selectedVessel.id}
+                  size={markerScale}
+                />
+              )}
             </>
           )}
           {!state.voyage && (
             <BengalTradingVessel
-              x={homePoint.x + 25 * markerScale}
-              y={homePoint.y + 7 * markerScale}
+              x={homePoint.x}
+              y={homePoint.y}
               vesselClass={selectedVessel.id}
               size={markerScale}
             />

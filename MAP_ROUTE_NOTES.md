@@ -1,3 +1,5 @@
+**Superseded in part:** routes are now generated from the painted water by `tools/nav/bake-network.mjs`, not the hand-traced links below. The notes on historical uncertainty still apply: routes, depths, roads and landings are game abstractions, not surveyed or historical channels, and the bullock cart is broad regional context rather than documented 1660s practice on these roads.
+
 # Stage 3C — Supplied Map and Route Notes
 
 ## Artwork and port locations

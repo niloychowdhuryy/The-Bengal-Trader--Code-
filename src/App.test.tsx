@@ -21,7 +21,6 @@ import {
   GOODS,
   selectPlayerShip,
   startVoyage,
-  syncSelectedShip,
   TOWNS,
 } from "./game/model";
 import { formatTravelDuration, getRouteTravelTime } from "./game/travel-time";
@@ -116,6 +115,7 @@ describe("first game screen", () => {
     };
     await saveGame(game);
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "Show port details" }));
     expect(await screen.findByText("At this port: Mariam Banu.")).toBeVisible();
     fireEvent.click(getMapPort(/^Dhaka/));
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
@@ -489,25 +489,21 @@ describe("first game screen", () => {
     fireEvent.click(getMapPort(/^Sylhet/));
     const blocked = screen.getByRole("button", { name: /Too large for this ship/ });
     expect(blocked).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Show port details" }));
     expect(
       screen.getByText(/Your Patello is too large for the narrow channels to Sylhet/),
     ).toBeVisible();
     expect(screen.queryByText("No open river path")).toBeNull();
 
     cleanup();
-    await saveGame(
-      syncSelectedShip({
-        ...patello,
-        currentTown: "bakla-chandradwip",
-        selectedTown: "bakla-chandradwip",
-        visitedTowns: ["dhaka", "bakla-chandradwip"],
-      }),
-    );
+    await saveGame(patello);
     render(<App />);
     await screen.findByRole("heading", { name: "The Bengal Trader" });
-    fireEvent.click(getMapPort(/^Sandwip/));
+    fireEvent.click(getMapPort(/^Malda/));
+    expect(screen.getByText(/longer route/)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Show port details" }));
     expect(screen.getByText(/Longer route: the direct channel is too narrow/)).toBeVisible();
-    expect(screen.getByRole("button", { name: /Travel to Sandwip/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Travel to Malda/ })).toBeEnabled();
   });
 
   it("leaves unreachable ports out of Patello route setup", async () => {
@@ -651,6 +647,7 @@ describe("first game screen", () => {
     fireEvent.click(await screen.findByRole("button", { name: /begin your story/i }));
     fireEvent.click(getMapPort(/^Sylhet/));
 
+    fireEvent.click(screen.getByRole("button", { name: "Show port details" }));
     expect(screen.getByText(/Direct waterway route/)).toBeVisible();
     const route = getTownRoute("dhaka", "sylhet");
     expect(route).not.toBeNull();
@@ -786,13 +783,17 @@ describe("first game screen", () => {
     expect(visibleWidth()).toBeCloseTo(startingWidth);
 
     fireEvent.click(getMapPort(/^Chittagong/));
+    fireEvent.click(screen.getByRole("button", { name: "Show port details" }));
     expect(screen.getByText(/Direct waterway route/)).toBeVisible();
     expect(screen.getByLabelText("Gold 90; cargo 3 of 12")).toBeInTheDocument();
   });
 
   it("moves the vessel only during a voyage and leaves it still after arrival", () => {
     const startedAt = 1_000;
-    const sailingState = startVoyage(createNewGame("Maya"), startedAt);
+    const sailingState = startVoyage(
+      { ...createNewGame("Maya"), selectedTown: "hooghly" },
+      startedAt,
+    );
     const voyage = sailingState.voyage;
     expect(voyage).not.toBeNull();
     if (!voyage) return;

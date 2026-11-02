@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { TOWNS } from "./model";
-import { planRiverRoute } from "./navigation";
+import { planRiverRoute,
+  getRouteTimeUnits,
+} from "./navigation";
 import {
   CHITTAGONG_ALERT_EXTRA_DAYS,
-  getMaximumNavigableRouteDistance,
+  getMaximumRouteTimeUnits,
   getRouteTravelTime,
   IN_GAME_DAY_DURATION_MS,
   MAX_NORMAL_VOYAGE_DURATION_MS,
@@ -20,15 +22,12 @@ describe("river travel time", () => {
         return route ? [route] : [];
       }),
     );
-    const shortest = routes.reduce((best, route) =>
-      route.distance < best.distance ? route : best,
-    );
-    const longest = routes.reduce((best, route) =>
-      route.distance > best.distance ? route : best,
-    );
-    const maximumDistance = getMaximumNavigableRouteDistance();
+    const units = (route: (typeof routes)[number]) => getRouteTimeUnits(route);
+    const shortest = routes.reduce((best, route) => (units(route) < units(best) ? route : best));
+    const longest = routes.reduce((best, route) => (units(route) > units(best) ? route : best));
+    const maximum = getMaximumRouteTimeUnits();
 
-    expect(longest.distance).toBe(maximumDistance);
+    expect(units(longest)).toBe(maximum);
     expect(getRouteTravelTime(longest).durationMs).toBe(
       MAX_NORMAL_VOYAGE_DURATION_MS,
     );
@@ -40,7 +39,7 @@ describe("river travel time", () => {
     for (const route of routes) {
       const timing = getRouteTravelTime(route);
       expect(timing.durationMs).toBeCloseTo(
-        (route.distance / maximumDistance) * MAX_NORMAL_VOYAGE_DURATION_MS,
+        (units(route) / maximum) * MAX_NORMAL_VOYAGE_DURATION_MS,
         8,
       );
       expect(timing.durationDays).toBe(

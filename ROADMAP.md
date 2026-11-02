@@ -219,7 +219,10 @@ Visual polish is committed. The owner has approved a larger online expansion, wh
 
 - **Milestone S, online staging deployment: live** at https://bengal-trader-staging.vercel.app. It updates automatically after tests pass, and shows its version with a problem-report link.
 - **Online Stage 2, Google login and profiles: implemented.** Sign-in, merchant names and a 13+ check were tested by the owner on a local copy against the real project. Saves stay on the device until Stage 3.
-- **Milestone N, correct water and land navigation: next after Stage 2.** It comes before cloud saves, Coins, markets and voyage events. The route network doesn't match the painted map and needs retracing, with land legs and boat-to-cart transitions where the map needs them.
+- **Milestone N, correct water and land navigation: implemented and committed, phone testing still to come.** Routes are traced from the painted water, journeys can change between boat and cart, and saves are version 20. The map now stays alive when leaving and returning, fixing a broken-map bug, and the port panel is compact and collapsible so it can't permanently hide the south. It comes before cloud saves, Coins, markets and voyage events. The route network doesn't match the painted map and needs retracing, with land legs and boat-to-cart transitions where the map needs them.
 - **Milestone T, individual town identities:** every town gets its own look, layout and landmarks, with every important building functional. Built with Stage 9; see [TOWN_IDENTITY_PLAN.md](./TOWN_IDENTITY_PLAN.md).
 
-Exit checks are in the plan. Each stage gets its own commit, passing tests and build, and a report. Physical mobile testing is a later dedicated phase.
+- **At least 25 active NPC traders: planned, owner's requirement.** Four exist today. Recommended alongside dynamic markets.
+- **Login and cloud-save setup: postponed by the owner** until the main game is built.
+
+Current status of everything is in [PROJECT_STATUS_SUMMARY.md](./PROJECT_STATUS_SUMMARY.md). Exit checks are in the plan. Each stage gets its own commit, passing tests and build, and a report. Physical mobile testing is a later dedicated phase.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PORT_QUAYS, RIVER_EDGES } from "./navigation";
 import {
   GOODS,
   CURRENT_MARKET_GOODS,
@@ -452,8 +453,8 @@ describe("first playable journey", () => {
     expect(route).not.toBeNull();
     if (!route) return;
 
-    expect(route.points[0]).toEqual({ x: 718, y: 320 });
-    expect(route.points.at(-1)).toEqual({ x: 204, y: 123 });
+    expect(route.points[0]).toEqual(PORT_QUAYS.dhaka);
+    expect(route.points.at(-1)).toEqual(PORT_QUAYS.patna);
     expect(route.edgeIds.length).toBeGreaterThan(1);
 
     const voyage = startVoyage(game, 1000);
@@ -1387,8 +1388,8 @@ describe("first playable journey", () => {
     const voyage = startVoyage(game, 1000);
     expect(voyage.voyage?.route.origin).toBe("dhaka");
     expect(voyage.voyage?.route.destination).toBe("kasimbazar");
-    expect(voyage.voyage?.route.points[0]).toEqual({ x: 718, y: 320 });
-    expect(voyage.voyage?.route.points.at(-1)).toEqual({ x: 415, y: 252 });
+    expect(voyage.voyage?.route.points[0]).toEqual(PORT_QUAYS.dhaka);
+    expect(voyage.voyage?.route.points.at(-1)).toEqual(PORT_QUAYS.kasimbazar);
   });
 
   it("does not begin a voyage when active event conditions close every river path", () => {
@@ -1396,12 +1397,7 @@ describe("first playable journey", () => {
       ...createNewGame("Maya"),
       selectedTown: "kasimbazar" as const,
       navigationConditions: {
-        eventBlockages: [
-          "direct-upper-dhaka",
-          "upper-river",
-          "direct-upper-kasimbazar-junction",
-          "northwest-channel",
-        ],
+        eventBlockages: RIVER_EDGES.filter((edge) => edge.to === "kasimbazar" || edge.from === "kasimbazar").map((edge) => edge.id),
       },
     };
     const result = startVoyage(game, 1000);
@@ -1726,12 +1722,7 @@ describe("first playable journey", () => {
       ...purchased,
       visitedTowns: ["dhaka", "kasimbazar"] as TownId[],
       navigationConditions: {
-        eventBlockages: [
-          "direct-upper-dhaka",
-          "upper-river",
-          "direct-upper-kasimbazar-junction",
-          "northwest-channel",
-        ],
+        eventBlockages: RIVER_EDGES.filter((edge) => edge.to === "kasimbazar" || edge.from === "kasimbazar").map((edge) => edge.id),
       },
     };
     expect(

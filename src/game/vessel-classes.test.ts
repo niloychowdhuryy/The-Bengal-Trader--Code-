@@ -34,7 +34,8 @@ import {
   type TownId,
   type VesselClassId,
 } from "./model";
-import { planRiverRoute } from "./navigation";
+import {
+  RIVER_EDGES, planRiverRoute } from "./navigation";
 import { loadGame, saveGame } from "./storage";
 import {
   MAX_NORMAL_VOYAGE_DURATION_MS,
@@ -117,7 +118,7 @@ describe("vessel classes", () => {
 
   it("starts new games with an unchanged River boat", () => {
     const game = createNewGame("Maya");
-    expect(game.version).toBe(19);
+    expect(game.version).toBe(20);
     expect(game.fleet[0].vesselClass).toBe("river-boat");
     expect(getCargoCapacity(game)).toBe(12);
     expect(getShipMaximumHull(game)).toBe(8);
@@ -240,11 +241,10 @@ describe("draft and port access", () => {
   it("previews and sails the longer Patello route", () => {
     const patello = syncSelectedShip({
       ...sailing("patello"),
-      currentTown: "bakla-chandradwip",
-      selectedTown: "sandwip",
+      selectedTown: "malda",
     });
-    const preview = getShipRoutePreview(patello, "sandwip");
-    const direct = planRiverRoute("bakla-chandradwip", "sandwip")!;
+    const preview = getShipRoutePreview(patello, "malda");
+    const direct = planRiverRoute("dhaka", "malda")!;
     expect(preview.route!.distance).toBeGreaterThan(direct.distance);
     expect(preview.standardTravelTime!.durationDays).toBeLessThan(
       preview.travelTime!.durationDays,
@@ -253,22 +253,20 @@ describe("draft and port access", () => {
     expect(voyage.route.edgeIds).toEqual(preview.route!.edgeIds);
     expect(voyage.durationMs).toBe(preview.travelTime!.durationMs);
 
-    const river = syncSelectedShip({
-      ...createNewGame("Maya"),
-      currentTown: "bakla-chandradwip",
-      selectedTown: "sandwip",
-    });
-    expect(getShipRoutePreview(river, "sandwip").standardTravelTime).toBeNull();
+    const river = { ...createNewGame("Maya"), selectedTown: "malda" as const };
+    expect(getShipRoutePreview(river, "malda").standardTravelTime).toBeNull();
   });
 
   it("applies class travel time, the Chittagong alert and the five-minute cap", () => {
-    const route = planRiverRoute("dhaka", "sonargaon")!;
+    // Dhaka to Hooghly is all water, so the whole journey scales with the vessel.
+    const route = planRiverRoute("dhaka", "hooghly")!;
+    expect(route.legs.map((leg) => leg.mode)).toEqual(["water"]);
     const base = getRouteTravelTime(route).durationMs;
-    expect(startVoyage({ ...sailing("bora"), selectedTown: "sonargaon" }, 1_000).voyage!.durationMs)
+    expect(startVoyage({ ...sailing("bora"), selectedTown: "hooghly" }, 1_000).voyage!.durationMs)
       .toBeCloseTo(base * 0.8);
-    expect(startVoyage({ ...sailing("patello"), selectedTown: "sonargaon" }, 1_000).voyage!.durationMs)
+    expect(startVoyage({ ...sailing("patello"), selectedTown: "hooghly" }, 1_000).voyage!.durationMs)
       .toBeCloseTo(base * 1.25);
-    expect(startVoyage({ ...withShip("bora"), selectedTown: "sonargaon" }, 1_000).voyage!.durationMs)
+    expect(startVoyage({ ...withShip("bora"), selectedTown: "hooghly" }, 1_000).voyage!.durationMs)
       .toBe(base);
 
     const chittagong = planRiverRoute("dhaka", "chittagong")!;
@@ -618,7 +616,7 @@ describe("return orders", () => {
     const closed = {
       ...strandedRiverBoat(),
       navigationConditions: {
-        eventBlockages: ["sylhet-branch", "direct-upper-sylhet"],
+        eventBlockages: RIVER_EDGES.filter((edge) => edge.from === "sylhet" || edge.to === "sylhet").map((edge) => edge.id),
       },
     };
     expect(isShipOutOfReach(closed, "player-ship-1")).toBe(true);
@@ -671,7 +669,7 @@ describe("version 19 saves", () => {
 
     vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(19);
+    expect(restored.version).toBe(20);
     expect(restored.gold).toBe(voyage.gold);
     expect(restored.highestGold).toBe(voyage.highestGold);
     restored.fleet.forEach((ship, index) => {
@@ -813,7 +811,7 @@ describe("version 19 saves", () => {
       }),
     );
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(19);
+    expect(restored.version).toBe(20);
     expect(restored.highestGold).toBe(280);
     expect(restored.completedMilestones).toContain("prosperous_merchant");
   });

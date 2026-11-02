@@ -1,5 +1,6 @@
 import {
   RIVER_NODES,
+  getRouteTimeUnits,
   planRiverRoute,
   type RiverRoute,
 } from "./navigation";
@@ -37,26 +38,27 @@ export function getVoyageRemainingRealTimeMs(
   );
 }
 
-let maximumRouteDistance: number | null = null;
+let maximumRouteUnits: number | null = null;
 
-export function getMaximumNavigableRouteDistance(): number {
-  if (maximumRouteDistance !== null) return maximumRouteDistance;
+/** The longest journey between any two ports, for a River boat, in time units. */
+export function getMaximumRouteTimeUnits(): number {
+  if (maximumRouteUnits !== null) return maximumRouteUnits;
 
   const ports = RIVER_NODES.flatMap((node) => node.port ? [node.port] : []);
-  let longestDistance = 0;
+  let longest = 0;
   for (const origin of ports) {
     for (const destination of ports) {
       if (origin === destination) continue;
       const route = planRiverRoute(origin, destination);
-      if (route) longestDistance = Math.max(longestDistance, route.distance);
+      if (route) longest = Math.max(longest, getRouteTimeUnits(route));
     }
   }
 
-  if (longestDistance <= 0) {
+  if (longest <= 0) {
     throw new Error("Cannot calculate travel time without a navigable route.");
   }
-  maximumRouteDistance = longestDistance;
-  return longestDistance;
+  maximumRouteUnits = longest;
+  return longest;
 }
 
 export interface RouteTravelTime {
@@ -70,9 +72,8 @@ export function getRouteTravelTime(
   travelFactor = 1,
 ): RouteTravelTime {
   const normalDurationMs =
-    (route.distance / getMaximumNavigableRouteDistance()) *
-    MAX_NORMAL_VOYAGE_DURATION_MS *
-    travelFactor;
+    (getRouteTimeUnits(route, travelFactor) / getMaximumRouteTimeUnits()) *
+    MAX_NORMAL_VOYAGE_DURATION_MS;
   const alertDelayMs = chittagongAlert
     ? CHITTAGONG_ALERT_EXTRA_DAYS * IN_GAME_DAY_DURATION_MS
     : 0;

@@ -123,6 +123,8 @@ export interface VesselClass {
   travelFactor: number;
   draft: number;
   routeUnitsPerGood: number;
+  /** Never reachable by this vessel, whatever the route. */
+  barredPorts: TownId[];
 }
 
 export interface ShipReturnOrder {
@@ -374,7 +376,7 @@ export function cancelAutomatedTradeRoute(
 }
 
 export interface GameState {
-  version: 19;
+  version: 20;
   captainName: string;
   gold: number;
   highestGold: number;
@@ -428,6 +430,7 @@ export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
     travelFactor: 1,
     draft: 1.4,
     routeUnitsPerGood: 1,
+    barredPorts: [],
   },
   bora: {
     id: "bora",
@@ -442,6 +445,7 @@ export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
     travelFactor: 0.8,
     draft: 1.2,
     routeUnitsPerGood: 1,
+    barredPorts: [],
   },
   patello: {
     id: "patello",
@@ -456,6 +460,7 @@ export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
     travelFactor: 1.25,
     draft: 1.5,
     routeUnitsPerGood: 4,
+    barredPorts: ["sylhet", "balasore"],
   },
 };
 export const VESSEL_CLASS_IDS: VesselClassId[] = ["river-boat", "bora", "patello"];
@@ -491,6 +496,8 @@ export function getShipRouteConditions(
       conditions.vesselDraft ?? 0,
       VESSEL_CLASSES[vesselClass].draft,
     ),
+    travelFactor: VESSEL_CLASSES[vesselClass].travelFactor,
+    barredPorts: VESSEL_CLASSES[vesselClass].barredPorts,
   };
 }
 
@@ -1985,7 +1992,7 @@ export function createNewGame(captainName: string): GameState {
   };
 
   return {
-    version: 19,
+    version: 20,
     captainName: cleanName || "Captain",
     gold: 90,
     highestGold: 90,

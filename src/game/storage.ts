@@ -154,7 +154,10 @@ export async function openGameSession(now = Date.now()): Promise<GameSession> {
         const meta = metaRequest.result as CommandLogMeta | undefined;
         const at = Math.max(now, meta?.lastAt ?? 0);
         const game = validateSave(saveRequest.result, at);
-        if (meta) {
+        // Replaying old commands under changed rules wouldn't rebuild this game, so a
+        // migrated save starts a new history from where it is now.
+        const migrated = saveRequest.result.version !== game.version;
+        if (meta && !migrated) {
           session = {
             game,
             log: meta,
@@ -163,13 +166,16 @@ export async function openGameSession(now = Date.now()): Promise<GameSession> {
               : null,
           };
         } else {
+          const lastSeq = meta ? meta.nextSeq - 1 : 0;
           const log: CommandLogMeta = {
             formatVersion: 1,
             provenance: "imported",
-            baseSeq: 0,
-            nextSeq: 1,
+            baseSeq: lastSeq,
+            nextSeq: lastSeq + 1,
             lastAt: at,
           };
+          store.delete(ALL_LOG_ENTRIES());
+          store.put(syncSelectedShip(game), SAVE_KEY);
           store.put(syncSelectedShip(game), LOG_BASE_KEY);
           store.put(log, LOG_META_KEY);
           session = { game, log, resumedVoyage: null };

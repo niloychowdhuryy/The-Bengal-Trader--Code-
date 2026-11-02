@@ -147,7 +147,7 @@ describe("version 19 saves", () => {
     await writeRaw("captain", fixture);
     const session = await openGameSession(T0);
     const game = session.game!;
-    expect(game.version).toBe(19);
+    expect(game.version).toBe(20);
     expect(isValidGameState(game)).toBe(true);
     const saved = fixture as unknown as GameState;
     expect(game.gold).toBe(saved.gold);
@@ -158,7 +158,12 @@ describe("version 19 saves", () => {
     expect(game.missions).toEqual(saved.missions);
     expect(game.household).toEqual(saved.household);
     expect(game.ownedWarehouses).toEqual(saved.ownedWarehouses);
-    expect(game.voyage?.elapsedMs).toBe(saved.voyage?.elapsedMs);
+    // The journey moved onto the rebuilt network, keeping how far along it was.
+    expect(game.version).toBe(20);
+    expect(game.voyage?.destination).toBe(saved.voyage?.destination);
+    expect(game.voyage!.elapsedMs / game.voyage!.durationMs).toBeCloseTo(
+      saved.voyage!.elapsedMs / saved.voyage!.durationMs,
+    );
   });
 
   it("marks it as imported, because its history before commands can't be proved", async () => {
@@ -168,6 +173,21 @@ describe("version 19 saves", () => {
     expect(session.resumedVoyage).toBeNull();
     const log = await readCommandLog();
     expect(log?.base.gold).toBe(session.game?.gold);
+  });
+
+  it("starts a new history after migrating, since old commands used the old rules", async () => {
+    const start = createNewGame("Maya");
+    await startCommandLog(start);
+    const { state, entries } = play(start, [{ type: "buyGood", good: "rice", quantity: 1 }]);
+    await commitGame(state, entries);
+    await writeRaw("captain", { ...state, version: 19 });
+    const session = await openGameSession(T0 + 60_000);
+    expect(session.game?.version).toBe(20);
+    expect(session.log).toMatchObject({ provenance: "imported", baseSeq: 1, nextSeq: 2 });
+    const log = await readCommandLog();
+    expect(log?.commands).toEqual([]);
+    expect(log?.base.gold).toBe(state.gold);
+    expect((await loadGame())?.version).toBe(20);
   });
 
   it("can be played on and verified after loading", async () => {

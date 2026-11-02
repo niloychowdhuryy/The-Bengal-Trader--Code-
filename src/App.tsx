@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AccountPanel from "./components/AccountPanel";
 import BengalMap from "./components/BengalMap";
+import { CartPortrait } from "./components/map-art/LandCart";
 import { VesselPortrait } from "./components/map-art/VesselArt";
+import { getRouteStateAt, type RiverRoute } from "./game/navigation";
 import CityScene, {
   CITY_BUILDINGS,
   type CityBuildingId,
@@ -310,6 +312,16 @@ function IntroScreen({
   );
 }
 
+function getRouteModeNote(route: RiverRoute | null): string | null {
+  if (!route || route.legs.every((leg) => leg.mode === "water")) return null;
+  const first = route.legs[0].mode;
+  const last = route.legs[route.legs.length - 1].mode;
+  if (first === "land" && last === "land") return "By cart to the landing, by boat, then by cart into town.";
+  return first === "land"
+    ? "By cart to the landing, then by boat. Your cargo stays with you."
+    : "By boat to the landing, then by cart into town. Your cargo stays with you.";
+}
+
 function getRouteSizeNote(
   vessel: VesselClass,
   destinationName: string,
@@ -396,6 +408,9 @@ function VoyagePanel({
         ),
       )
     : "";
+  const journeyState = voyage
+    ? getRouteStateAt(voyage.route, progress / 100, vessel.travelFactor)
+    : null;
   const selectedIsCurrent = currentPort.id === nextPort.id;
   const selectedRouteTime = selectedPreview.travelTime;
   const routeSizeNote = selectedIsCurrent
@@ -409,17 +424,26 @@ function VoyagePanel({
           <div className="route-heading">
             <RouteEmblem />
             <div>
-              <span className="eyebrow">RIVER VOYAGE</span>
+              <span className="eyebrow">{voyage.route.legs.length > 1 ? "BOAT AND CART JOURNEY" : "RIVER VOYAGE"}</span>
               <h2>To {getTown(voyage.destination).name}</h2>
             </div>
             <span className="remaining-time">{routeTime}</span>
           </div>
-          <div className="voyage-track" aria-hidden="true">
+          <div className={`voyage-track${journeyState?.mode === "land" ? " voyage-track-land" : ""}`} aria-hidden="true">
             <span className="voyage-track-waves" />
             <div className="voyage-track-ship" style={{ left: `calc(42px + (100% - 84px) * ${progress / 100})` }}>
-              <VesselPortrait vesselClass={vessel.id} />
+              {journeyState?.mode === "land" ? <CartPortrait /> : <VesselPortrait vesselClass={vessel.id} />}
             </div>
           </div>
+          {journeyState && voyage.route.legs.length > 1 && (
+            <p className="voyage-mode" role="status">
+              {journeyState.transferring
+                ? "Moving your cargo between boat and cart..."
+                : journeyState.mode === "land"
+                  ? "Travelling by cart"
+                  : "Travelling by boat"}
+            </p>
+          )}
           <div className="voyage-progress" role="progressbar" aria-label="Voyage progress" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
             <span style={{ width: `${progress}%` }} />
           </div>
@@ -449,7 +473,11 @@ function VoyagePanel({
               })}
             </div>
           </div>
-          <p className="voyage-note">Keep an eye on the river. You'll dock there soon.</p>
+          <p className="voyage-note">
+            {journeyState?.mode === "land"
+              ? "The cart keeps to the road. You'll reach town soon."
+              : "Keep an eye on the river. You'll dock there soon."}
+          </p>
           {voyage.travelEvent && (
             <p className="travel-event-note" role="status">
               {voyage.travelEvent === "river-pilot"
@@ -490,12 +518,15 @@ function VoyagePanel({
             {selectedIsCurrent
               ? "Tap one of the towns on the map to plot your river route."
               : selectedRoute
-                ? `${currentPort.name} to ${nextPort.name}, following a direct waterway route.`
+                ? `${currentPort.name} to ${nextPort.name}, ${selectedRoute.legs.length > 1 ? "by boat and cart" : "following a direct waterway route"}.`
                 : selectedPreview.tooLarge
                   ? `This ship cannot reach ${nextPort.name}.`
                   : `The river path to ${nextPort.name} is blocked. Choose another port.`}
           </p>
           <RouteNote preview={selectedPreview} note={routeSizeNote} />
+          {!selectedIsCurrent && getRouteModeNote(selectedRoute) && (
+            <p className="route-speed-note">{getRouteModeNote(selectedRoute)}</p>
+          )}
           <button
             className="primary-button sail-button"
             disabled={selectedIsCurrent || !selectedRoute}
@@ -1011,10 +1042,17 @@ function DockPanel({
 
 function PortContextPanel({
   state,
+  expanded,
+  onToggle,
+  onHeightChange,
   onTravel,
   onEnterCity,
 }: {
   state: GameState;
+  expanded: boolean;
+  onToggle: () => void;
+  /** How much of the map this panel covers, so the map can move clear of it. */
+  onHeightChange: (height: number) => void;
   onTravel: () => void;
   onEnterCity: () => void;
 }) {
@@ -1032,41 +1070,111 @@ function PortContextPanel({
   const recentPortActivity = state.npcActivity
     .filter((activity) => activity.town === destination.id)
     .at(-1);
+  const summary = isHere
+    ? "Your ship is here"
+    : route && routeTime
+      ? `${formatTravelDuration(routeTime.durationMs)} · ${route.legs.length > 1 ? "boat and cart" : "by water"}${preview?.standardTravelTime ? " · longer route" : ""}`
+      : preview?.tooLarge
+        ? "Too large for this ship"
+        : "Route closed";
+  const actionName = isHere
+    ? "Enter city"
+    : route
+      ? `Travel to ${destination.name}`
+      : preview?.tooLarge
+        ? "Too large for this ship"
+        : "Route unavailable";
+  const shortActionName = isHere
+    ? "Enter city"
+    : route
+      ? "Travel"
+      : preview?.tooLarge
+        ? "Too large"
+        : "Closed";
+
+  const panelRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const measure = () => {
+      // A panel docked beside the map, as on landscape phones, covers none of it.
+      const overlays = getComputedStyle(panel).position === "absolute";
+      const bottomGap = overlays
+        ? (panel.offsetParent?.getBoundingClientRect().bottom ?? 0) -
+          panel.getBoundingClientRect().bottom
+        : 0;
+      onHeightChange(overlays ? panel.getBoundingClientRect().height + bottomGap : 0);
+    };
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(panel);
+    return () => {
+      observer?.disconnect();
+      onHeightChange(0);
+    };
+  }, [onHeightChange]);
 
   return (
-    <section className="port-context-panel" aria-live="polite">
-      <div className="port-context-copy">
-        <span className="eyebrow">{isHere ? "YOUR CURRENT PORT" : "RIVER ROUTE"}</span>
-        <h2>{destination.name}</h2>
-        <p>
-          {isHere
-            ? "You are safely docked. Visit the town or get ready for your next voyage."
-            : route
-              ? routeTime
-                ? `Direct waterway route · ${formatTravelDuration(routeTime.durationMs)} · ${formatInGameDays(routeTime.durationDays)} in-game days`
-                : "A river section is closed. No safe water route is open right now."
-              : preview?.tooLarge
-                ? "This ship cannot reach this port."
-                : "A river section is closed. No safe water route is open right now."}
-        </p>
-        {preview && <RouteNote preview={preview} note={routeSizeNote} />}
-        <p className="npc-port-traffic">
-          {dockedMerchants.length
-            ? `At this port: ${dockedMerchants.map((merchant) => merchant.name).join(", ")}.`
-            : "No NPC merchants are docked here right now."}
-          {recentPortActivity
-            ? ` Latest: ${getNpcMerchant(state, recentPortActivity.merchantId)?.name ?? "A merchant"} ${recentPortActivity.message}.`
-            : ""}
-        </p>
+    <section
+      ref={panelRef}
+      className={`port-context-panel${expanded ? " port-context-expanded" : ""}`}
+      aria-live="polite"
+    >
+      <div className="port-panel-bar">
+        <div className="port-panel-title">
+          <h2>{destination.name}</h2>
+          <p>{summary}</p>
+        </div>
+        <button
+          type="button"
+          className="port-panel-toggle"
+          aria-expanded={expanded}
+          aria-controls="port-panel-details"
+          aria-label={expanded ? "Hide port details" : "Show port details"}
+          onClick={onToggle}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d={expanded ? "m6 9 6 6 6-6" : "m6 15 6-6 6 6"} />
+          </svg>
+          <span>{expanded ? "Less" : "Details"}</span>
+        </button>
+        <button
+          className="primary-button port-context-action"
+          aria-label={actionName}
+          disabled={!isHere && !route}
+          onClick={isHere ? onEnterCity : onTravel}
+        >
+          <span className="port-action-long">{actionName}</span>
+          <span className="port-action-short">{shortActionName}</span>
+          <span aria-hidden="true">→</span>
+        </button>
       </div>
-      <button
-        className="primary-button port-context-action"
-        disabled={!isHere && !route}
-        onClick={isHere ? onEnterCity : onTravel}
-      >
-        <span>{isHere ? "Enter city" : route ? `Travel to ${destination.name}` : preview?.tooLarge ? "Too large for this ship" : "Route unavailable"}</span>
-        <span aria-hidden="true">→</span>
-      </button>
+      {expanded && (
+        <div className="port-context-copy" id="port-panel-details">
+          <span className="eyebrow">{isHere ? "YOUR CURRENT PORT" : "RIVER ROUTE"}</span>
+          <p>
+            {isHere
+              ? "You are safely docked. Visit the town or get ready for your next voyage."
+              : route
+                ? routeTime
+                  ? `${route.legs.length > 1 ? "Boat and cart route" : "Direct waterway route"} · ${formatTravelDuration(routeTime.durationMs)} · ${formatInGameDays(routeTime.durationDays)} in-game days`
+                  : "A river section is closed. No safe water route is open right now."
+                : preview?.tooLarge
+                  ? "This ship cannot reach this port."
+                  : "A river section is closed. No safe water route is open right now."}
+          </p>
+          {preview && <RouteNote preview={preview} note={routeSizeNote} />}
+          {getRouteModeNote(route) && <p className="route-speed-note">{getRouteModeNote(route)}</p>}
+          <p className="npc-port-traffic">
+            {dockedMerchants.length
+              ? `At this port: ${dockedMerchants.map((merchant) => merchant.name).join(", ")}.`
+              : "No NPC merchants are docked here right now."}
+            {recentPortActivity
+              ? ` Latest: ${getNpcMerchant(state, recentPortActivity.merchantId)?.name ?? "A merchant"} ${recentPortActivity.message}.`
+              : ""}
+          </p>
+        </div>
+      )}
     </section>
   );
 }
@@ -2217,6 +2325,8 @@ export default function App() {
   const [cityEntered, setCityEntered] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState<CityBuildingId | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [portPanelExpanded, setPortPanelExpanded] = useState(false);
+  const [portPanelHeight, setPortPanelHeight] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -2743,7 +2853,7 @@ export default function App() {
           <span className="captain-port-dot" aria-hidden="true" />
           <span>
             {game.voyage
-              ? `At sea · heading to ${getTown(game.voyage.destination).name}`
+              ? `${game.voyage.route.legs.length > 1 ? "Under way" : "At sea"} · heading to ${getTown(game.voyage.destination).name}`
               : game.encounterPending
                 ? `Chittagong waters · ${game.fleet.find((ship) => ship.id === game.selectedShipId)?.name}`
                 : `${town.name} · ${game.fleet.find((ship) => ship.id === game.selectedShipId)?.name}`}
@@ -2780,7 +2890,7 @@ export default function App() {
         )}
 
         <section className="game-world" aria-label={cityEntered ? `${town.name} city` : "Bengal world map"}>
-          {cityEntered ? (
+          {cityEntered && (
             <CityScene
               townName={town.name}
               selectedBuilding={selectedBuilding}
@@ -2793,22 +2903,27 @@ export default function App() {
                 else setScreen("city");
               }}
             />
-          ) : (
-            <BengalMap
-              state={game}
-              now={now}
-              onSelectTown={(destination: TownId) => {
-                if (!atDock) return;
-                setSelectedBuilding(null);
-                setMoreOpen(false);
-                setScreen("map");
-                dispatch({ type: "selectDestination", town: destination });
-              }}
-            />
           )}
+          {/* Stays mounted in town: rebuilding it would lose the camera and reload its art. */}
+          <BengalMap
+            hidden={cityEntered}
+            bottomInset={portPanelHeight}
+            state={game}
+            now={now}
+            onSelectTown={(destination: TownId) => {
+              if (!atDock) return;
+              setSelectedBuilding(null);
+              setMoreOpen(false);
+              setScreen("map");
+              dispatch({ type: "selectDestination", town: destination });
+            }}
+          />
 
           {screen === "map" && !game.voyage && !game.encounterPending && (
             <PortContextPanel
+              expanded={portPanelExpanded}
+              onToggle={() => setPortPanelExpanded((open) => !open)}
+              onHeightChange={setPortPanelHeight}
               state={game}
               onEnterCity={openCity}
               onTravel={sailToSelectedPort}

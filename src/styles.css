@@ -250,7 +250,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 
 /* ---------- World map ---------- */
 .map-frame { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; animation: fade-in .35s ease-out both; }
-.map-viewport { position: relative; min-height: 0; flex: 1 1 0; overflow: hidden; background: #1c3d41; }
+.map-frame[hidden] { display: none; }
+.map-art-missing { position: absolute; z-index: 5; top: 50%; left: 50%; width: min(320px, 80%); padding: 10px 14px; color: var(--ink); background: var(--paper) var(--paper-texture); border: 1px solid var(--timber-800); border-radius: 3px; box-shadow: 0 5px 12px rgb(10 6 3 / 45%); font-size: 15px; text-align: center; transform: translate(-50%, -50%); }
+.map-viewport { position: relative; min-height: 0; flex: 1 1 0; overflow: hidden; background: #41808a; }
 .map-plate, .bengal-map { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .map-plate { pointer-events: none; }
 .map-plate-shimmer-a, .map-plate-shimmer-b { opacity: .4; will-change: opacity; }
@@ -303,6 +305,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .town-selected-ring { stroke: #fff4d2; }
 .current-port-ring { stroke: var(--brass-light); stroke-dasharray: 3 4; }
 .route-preview { animation: fade-in .3s ease-out both; }
+.route-transfer-point { fill: #fff6dc; stroke: #2a1b12; stroke-width: 1.6; }
+.cart-rolling { animation: cart-roll .5s ease-in-out infinite alternate; }
+.journey-transfer { animation: fade-in .25s ease-out both; }
 .route-moving { animation: river-current 1.2s linear infinite; }
 .ship-wake { fill: #fff8e6; opacity: .16; transform-box: fill-box; transform-origin: center; animation: wake-breathe 2s ease-in-out infinite; }
 .vessel-under-sail { animation: boat-bob 1.5s ease-in-out infinite alternate; }
@@ -384,12 +389,20 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   width: min(450px, 46%);
   padding: 14px 16px;
 }
-.port-context-panel { display: flex; flex-direction: column; gap: 10px; }
-.port-context-copy { min-width: 0; }
-.port-context-copy h2, .route-heading h2, .encounter-card h2 { color: var(--ink); font: 400 25px/1.1 var(--display); }
+.port-context-panel { display: flex; flex-direction: column; width: min(560px, 46%); padding: 8px 10px; }
+.port-context-expanded { max-height: min(62%, 420px); overflow-y: auto; overscroll-behavior: contain; }
+.port-panel-bar { display: flex; align-items: center; gap: 8px; }
+.port-panel-title { min-width: 0; flex: 1 1 auto; }
+.port-panel-title h2 { color: var(--ink); font: 400 21px/1.08 var(--display); overflow-wrap: anywhere; }
+.port-panel-title p { color: var(--ink-soft); font-size: 14px; line-height: 1.15; }
+.port-panel-toggle { display: flex; min-width: 54px; min-height: 44px; flex: 0 0 auto; flex-direction: column; align-items: center; justify-content: center; padding: 0 5px; color: var(--ink); background: linear-gradient(180deg, #f7ebcc, var(--paper-deep)); border: 1px solid #8f7747; border-radius: 3px; cursor: pointer; font-size: 13px; font-weight: 700; line-height: 1; }
+.port-panel-toggle svg { width: 20px; height: 20px; fill: none; stroke: var(--madder); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.port-panel-toggle:hover { filter: brightness(1.05); }
+.port-context-copy { min-width: 0; margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--paper-line); }
 .port-context-copy > p { margin-top: 3px; color: var(--ink-soft); font-size: 15px; }
 .port-context-copy .npc-port-traffic { margin-top: 5px; color: var(--ink-soft); font-size: 13.5px; }
-.port-context-action { width: 100%; }
+.port-context-action { min-height: 44px; flex: 0 0 auto; padding: 0 12px; font-size: 17px; }
+.port-action-short { display: none; }
 .route-speed-note { margin-top: 4px; color: var(--ink); font-size: 14px; font-style: normal; }
 .route-size-note, .route-capital-note.route-hidden-note {
   position: relative;
@@ -418,14 +431,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   border-radius: 50%;
   font-size: 12px;
   font-weight: 800;
-}
-
-@media (min-width: 760px) {
-  /* A low, wide panel leaves the southern ports visible above it. */
-  .port-context-panel { width: min(650px, 58%); flex-direction: row; align-items: center; justify-content: space-between; padding: 9px 14px; }
-  .port-context-copy { flex: 1 1 auto; }
-  .port-context-copy h2 { font-size: 23px; }
-  .port-context-action { width: auto; min-width: 200px; flex: 0 0 auto; }
 }
 
 /* Buttons */
@@ -528,6 +533,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 }
 .voyage-track-ship { position: absolute; bottom: 1px; width: 84px; height: 62px; margin-left: -42px; transition: left .2s linear; }
 .voyage-track-ship .vessel-portrait { display: block; width: 100%; height: 100%; animation: boat-bob 1.5s ease-in-out infinite alternate; }
+.voyage-track-land { background: linear-gradient(180deg, #b9c48c 0%, #a89a62 62%, #8a7648 100%); }
+.voyage-track-land .voyage-track-waves { display: none; }
+.voyage-mode { margin: 3px 0 5px; color: var(--ink); font-size: 14px; font-weight: 700; }
 .voyage-progress { height: 9px; overflow: hidden; background: rgb(66 43 23 / 26%); border: 1px solid var(--timber-800); border-radius: 1px; }
 .voyage-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--jade), var(--madder)); transition: width .18s linear; }
 .voyage-endpoints { display: flex; justify-content: space-between; gap: 10px; margin-top: 5px; color: var(--ink-soft); font-size: 14px; }
@@ -941,6 +949,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 @keyframes river-current { to { stroke-dashoffset: -34; } }
 @keyframes wake-breathe { 50% { opacity: .07; transform: scale(1.18); } }
 @keyframes boat-bob { from { translate: 0 1.5px; rotate: -.8deg; } to { translate: 0 -1.5px; rotate: .9deg; } }
+@keyframes cart-roll { from { translate: 0 .6px; } to { translate: 0 -.6px; } }
 @keyframes boat-rest { from { translate: 0 .8px; } to { translate: 0 -.8px; } }
 @keyframes sail-belly { from { scale: 1 1; } to { scale: 1.035 1; } }
 @keyframes oar-stroke { from { rotate: 5deg; } to { rotate: -6deg; } }
@@ -972,8 +981,23 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   .game-world { display: flex; flex-direction: column; }
   .map-frame { position: relative; inset: auto; min-height: 0; flex: 1 1 0; }
   .map-stamp, .map-caption, .map-camera-controls { display: none; }
-  .map-compass { bottom: 8px; left: 8px; width: 50px; height: 50px; }
-  .game-world > .port-context-panel, .game-world > .voyage-card, .game-world > .encounter-card {
+  .map-compass { bottom: calc(var(--map-bottom-inset, 0px) + 8px); left: 8px; width: 50px; height: 50px; }
+  .game-world > .port-context-panel {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+    border-width: 2px 0 0;
+    border-style: solid;
+    border-color: var(--brass-dark);
+    border-radius: 0;
+    box-shadow: 0 -5px 14px rgb(10 6 3 / 50%), inset 0 0 26px rgb(121 85 35 / 22%);
+  }
+  .game-world > .port-context-expanded { max-height: 58%; }
+  .port-action-long { display: none; }
+  .port-action-short { display: inline; }
+  .game-world > .voyage-card, .game-world > .encounter-card {
     position: relative;
     right: auto;
     bottom: auto;
@@ -988,8 +1012,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
     border-radius: 0;
     box-shadow: 0 -5px 14px rgb(10 6 3 / 50%), inset 0 0 26px rgb(121 85 35 / 22%);
   }
-  .port-context-panel { gap: 7px; }
-  .port-context-copy h2, .route-heading h2, .encounter-card h2 { font-size: 22px; }
+  .route-heading h2, .encounter-card h2 { font-size: 22px; }
   .port-context-copy > p, .route-description { font-size: 14.5px; }
   .route-event-alert, .low-hull-alert { top: 8px; right: 8px; left: 8px; width: auto; }
   .voyage-card .voyage-note { display: none; }
@@ -1096,8 +1119,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
     border-color: var(--brass-dark);
     border-radius: 0;
   }
-  .port-context-action { width: 100%; min-width: 0; }
-  .port-context-copy h2, .route-heading h2, .encounter-card h2 { font-size: 21px; }
+  .port-context-panel, .game-world > .port-context-expanded { max-height: none; }
+  .port-panel-bar { flex-wrap: wrap; }
+  .port-panel-title { flex: 1 1 100%; }
+  .port-context-action { min-width: 0; flex: 1 1 auto; }
+  .port-action-long { display: none; }
+  .port-action-short { display: inline; }
+  .route-heading h2, .encounter-card h2 { font-size: 21px; }
   .map-stamp, .map-caption, .map-compass { display: none; }
   .map-camera-controls { top: auto; right: auto; bottom: 6px; left: 6px; flex-direction: row; }
   .voyage-card .voyage-note { display: none; }
