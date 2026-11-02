@@ -1334,7 +1334,31 @@ function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     };
   }
 
-  return save.version === 18 ? reanchorPausedVoyage(save, now) : save;
+  return save.version === 18
+    ? reanchorPausedVoyage(repairGoldPeak(save), now)
+    : save;
+}
+
+// Cancelling a profitable route once added capital without raising the peak.
+function repairGoldPeak(save: Record<string, unknown>): Record<string, unknown> {
+  if (
+    !isNonnegativeInteger(save.gold) ||
+    !isNonnegativeInteger(save.highestGold) ||
+    save.gold <= save.highestGold
+  ) {
+    return save;
+  }
+  const completed = save.completedMilestones;
+  return {
+    ...save,
+    highestGold: save.gold,
+    completedMilestones:
+      Array.isArray(completed) &&
+      save.gold >= 250 &&
+      !completed.includes("prosperous_merchant")
+        ? [...completed, "prosperous_merchant"]
+        : completed,
+  };
 }
 
 function validateSave(value: unknown): GameState {

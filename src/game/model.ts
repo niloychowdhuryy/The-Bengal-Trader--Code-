@@ -321,14 +321,14 @@ export function cancelAutomatedTradeRoute(
   if (!route) return { state, error: "not-assigned" };
   if (route.phase !== "docked") return { state, error: "not-docked" };
   return {
-    state: {
+    state: updateProgress({
       ...state,
       gold: state.gold + route.capital,
       fleet: state.fleet.map((entry) =>
         entry.id === shipId ? { ...entry, automatedRoute: null } : entry,
       ),
       lastMessage: `${ship.name}'s route ended. ${route.capital} gold returned to your purse.`,
-    },
+    }),
   };
 }
 

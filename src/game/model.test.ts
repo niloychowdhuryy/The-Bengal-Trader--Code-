@@ -1936,6 +1936,58 @@ describe("first playable journey", () => {
     expect(arrived.fleet[1].currentPort).toBe("dhaka");
   });
 
+  it("keeps the gold peak and wealth milestone current when a route returns capital", () => {
+    const purchased = buyPlayerShip({
+      ...createNewGame("Maya"),
+      gold: 1_000,
+      highestGold: 1_000,
+      visitedTowns: ["dhaka", "sonargaon"],
+    }).state;
+    const shipId = purchased.fleet[1].id;
+    const assigned = configureAutomatedTradeRoute(
+      purchased,
+      shipId,
+      "sonargaon",
+      [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
+      100,
+    ).state;
+    const withBalances = (gold: number, highestGold: number, capital: number) => ({
+      ...assigned,
+      gold,
+      highestGold,
+      completedMilestones: [],
+      fleet: assigned.fleet.map((ship) =>
+        ship.id === shipId
+          ? { ...ship, automatedRoute: { ...ship.automatedRoute!, capital } }
+          : ship,
+      ),
+    });
+
+    const aboveMilestone = cancelAutomatedTradeRoute(
+      withBalances(100, 200, 180),
+      shipId,
+    ).state;
+    expect(aboveMilestone.gold).toBe(280);
+    expect(aboveMilestone.highestGold).toBe(280);
+    expect(aboveMilestone.completedMilestones).toContain("prosperous_merchant");
+
+    const belowMilestone = cancelAutomatedTradeRoute(
+      withBalances(100, 120, 50),
+      shipId,
+    ).state;
+    expect(belowMilestone.gold).toBe(150);
+    expect(belowMilestone.highestGold).toBe(150);
+    expect(belowMilestone.completedMilestones).not.toContain("prosperous_merchant");
+
+    const belowPeak = cancelAutomatedTradeRoute(
+      withBalances(100, 200, 50),
+      shipId,
+    ).state;
+    expect(belowPeak.gold).toBe(150);
+    expect(belowPeak.highestGold).toBe(200);
+    expect(belowPeak.completedMilestones).not.toContain("prosperous_merchant");
+  });
+
   it("still blocks route changes for encounters, the selected ship, and ships underway", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),

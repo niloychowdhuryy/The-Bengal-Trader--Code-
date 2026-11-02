@@ -15,6 +15,7 @@ import {
   buyPlayerShip,
   buyResidence,
   buyWarehouse,
+  cancelAutomatedTradeRoute,
   checkpointVoyageProgress,
   createNewGame,
   getGoodPrice,
@@ -823,6 +824,115 @@ describe("IndexedDB offline saves", () => {
     expect(restored?.gold).toBe(changed.gold);
     expect(restored?.voyage?.destination).toBe("sonargaon");
     expect(restored?.voyage?.elapsedMs).toBe(changed.voyage?.elapsedMs);
+  });
+
+  it("reloads a game after a profitable route is cancelled", async () => {
+    const purchased = buyPlayerShip({
+      ...createNewGame("Asha"),
+      gold: 1_000,
+      highestGold: 1_000,
+      visitedTowns: ["dhaka", "sonargaon"],
+    }).state;
+    const shipId = purchased.fleet[1].id;
+    const assigned = configureAutomatedTradeRoute(
+      purchased,
+      shipId,
+      "sonargaon",
+      [{ good: "lac", buyAtOrigin: true, sellAtDestination: true }],
+      300,
+    ).state;
+    const cancelled = cancelAutomatedTradeRoute(
+      {
+        ...assigned,
+        fleet: assigned.fleet.map((ship) =>
+          ship.id === shipId
+            ? { ...ship, automatedRoute: { ...ship.automatedRoute!, capital: 1_500 } }
+            : ship,
+        ),
+      },
+      shipId,
+    ).state;
+    await saveGame(cancelled);
+
+    const restored = await loadGame();
+    expect(restored?.gold).toBe(1_700);
+    expect(restored?.highestGold).toBe(1_700);
+  });
+
+  describe("saves with gold above the recorded peak", () => {
+    function affectedSave(gold: number, highestGold: number): GameState {
+      return { ...createNewGame("Asha"), gold, highestGold, completedMilestones: [] };
+    }
+
+    it("repairs the peak and completes the wealth milestone it reached", async () => {
+      const save = {
+        ...affectedSave(280, 200),
+        completedMilestones: ["river_explorer" as const],
+      };
+      await writeLegacySave(save);
+
+      const restored = await loadGame();
+      expect(restored?.gold).toBe(280);
+      expect(restored?.highestGold).toBe(280);
+      expect(restored?.completedMilestones).toEqual([
+        "river_explorer",
+        "prosperous_merchant",
+      ]);
+      expect(restored?.fleet).toEqual(save.fleet);
+      expect(restored?.cargo).toEqual(save.cargo);
+      expect(restored?.marketStock).toEqual(save.marketStock);
+
+      await saveGame(restored!);
+      await expect(loadGame()).resolves.toEqual(restored);
+    });
+
+    it("does not award the wealth milestone below its target", async () => {
+      await writeLegacySave(affectedSave(150, 120));
+
+      const restored = await loadGame();
+      expect(restored?.highestGold).toBe(150);
+      expect(restored?.completedMilestones).toEqual([]);
+    });
+
+    it("keeps active voyage progress when repairing the peak", async () => {
+      const sailing = startVoyage(
+        { ...createNewGame("Asha"), selectedTown: "sonargaon" },
+        1_000,
+      );
+      await writeLegacySave({ ...sailing, gold: 280, highestGold: 200 });
+
+      vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
+      const restored = await loadGame();
+      expect(restored?.highestGold).toBe(280);
+      expect(restored?.voyage?.elapsedMs).toBe(sailing.voyage?.elapsedMs);
+      expect(restored?.voyage?.destination).toBe("sonargaon");
+    });
+
+    it("leaves a valid peak unchanged", async () => {
+      await writeLegacySave(affectedSave(100, 900));
+
+      const restored = await loadGame();
+      expect(restored?.gold).toBe(100);
+      expect(restored?.highestGold).toBe(900);
+      expect(restored?.completedMilestones).toEqual([]);
+    });
+
+    it.each<[string, Record<string, unknown>]>([
+      ["fractional gold", { gold: 280.5, highestGold: 200 }],
+      ["negative gold", { gold: -1, highestGold: -5 }],
+      ["a missing peak", { gold: 280, highestGold: undefined }],
+      ["a non-numeric peak", { gold: 280, highestGold: "200" }],
+      ["a negative peak", { gold: 280, highestGold: -1 }],
+      ["unrelated invalid reputation", { gold: 280, highestGold: 200, reputation: -1 }],
+      ["unrelated invalid hull", { gold: 280, highestGold: 200, shipHull: 999 }],
+      ["unrelated invalid milestones", { gold: 280, highestGold: 200, completedMilestones: ["not-a-milestone"] }],
+      ["malformed milestones", { gold: 280, highestGold: 200, completedMilestones: "none" }],
+      ["an unknown save version", { gold: 280, highestGold: 200, version: 99 }],
+    ])("still rejects %s", async (_label, overrides) => {
+      await writeLegacySave({ ...affectedSave(280, 200), ...overrides });
+
+      await expect(loadGame()).rejects.toThrow("unsupported version");
+    });
   });
 
   it("does not produce farm goods from wall-clock time while the game is closed", async () => {
