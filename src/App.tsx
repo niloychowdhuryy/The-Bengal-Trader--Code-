@@ -14,25 +14,12 @@ import {
   MAX_AUTOMATED_ROUTE_CAPITAL,
   MAX_PLAYER_SHIPS,
   SHIPYARD_PORTS,
-  acceptMission,
-  arriveAtDestination,
-  buyGood,
-  buyPlayerShip,
-  cancelAutomatedTradeRoute,
-  configureAutomatedTradeRoute,
-  buyFarm,
-  buyResidence,
-  buyWarehouse,
-  buyUpgrade,
   checkpointVoyageProgress,
-  changeVoyageSpeed,
-  collectFarmOutput,
   createNewGame,
   getCargoCapacity,
   getCargoUsed,
   getWarehouseCapacity,
   getWarehouseUsed,
-  marryAtResidence,
   FARM_DAILY_OUTPUT,
   FARM_GOOD_ID,
   FARM_OUTPUT_CAPACITY,
@@ -51,23 +38,12 @@ import {
   getShipRoutePreview,
   getVesselMaximumHull,
   isShipOutOfReach,
-  orderShipReturn,
   getTown,
   getTownRoute,
   getNpcMerchant,
   getNpcTradingIntent,
   isHistoricalRouteAlertActive,
-  repairShip,
   RESIDENCE_PRICE,
-  resolveRiverEncounter,
-  resumeVoyage,
-  sellGood,
-  selectPlayerShip,
-  setAutomatedTradeRouteStatus,
-  storeGoodInWarehouse,
-  retrieveGoodFromWarehouse,
-  tradeWithNpcMerchant,
-  startVoyage,
   WAREHOUSE_CAPACITY,
   WAREHOUSE_PRICE,
   type GameState,
@@ -81,9 +57,9 @@ import {
   type UpgradeId,
   type VesselClass,
   type VesselClassId,
-  type WarehouseTransferError,
 } from "./game/model";
-import { loadGame, saveGame } from "./game/storage";
+import { applyCommand, type CommandResult, type GameCommand, type RecordedCommand } from "./game/commands";
+import { commitGame, openGameSession, startCommandLog } from "./game/storage";
 import {
   formatInGameDays,
   formatTravelDuration,
@@ -2243,12 +2219,27 @@ export default function App() {
   const [saveError, setSaveError] = useState("");
   const gameRef = useRef<GameState | null>(null);
   gameRef.current = game;
+  // Commands applied since the last save. They are written together with the game.
+  const pendingCommands = useRef<RecordedCommand[]>([]);
+  const nextSeq = useRef(1);
+  const lastCommandAt = useRef(0);
 
   useEffect(() => {
     let active = true;
-    loadGame()
-      .then((saved) => {
+    openGameSession()
+      .then(({ game: saved, log, resumedVoyage }) => {
         if (!active) return;
+        nextSeq.current = log?.nextSeq ?? 1;
+        lastCommandAt.current = log?.lastAt ?? 0;
+        if (resumedVoyage) {
+          pendingCommands.current.push({
+            seq: nextSeq.current++,
+            at: resumedVoyage.at,
+            command: { type: "resumeVoyage", pausedAt: resumedVoyage.pausedAt },
+          });
+          lastCommandAt.current = resumedVoyage.at;
+        }
+        gameRef.current = saved;
         setSavedGame(saved);
         setGame(saved);
         setSaveStatus("ready");
@@ -2264,6 +2255,37 @@ export default function App() {
     return () => {
       active = false;
     };
+  }, []);
+
+  // The only way player actions change the game. The state updates immediately and
+  // the command joins the queue, whether or not there is a connection.
+  const dispatch = useCallback((command: GameCommand): CommandResult | null => {
+    const current = gameRef.current;
+    if (!current) return null;
+    const at = Math.max(
+      Date.now(),
+      lastCommandAt.current,
+      current.voyage?.progressUpdatedAt ?? 0,
+    );
+    const result = applyCommand(current, command, at);
+    if (result.status === "applied") {
+      pendingCommands.current.push({ seq: nextSeq.current++, at, command });
+      lastCommandAt.current = at;
+      gameRef.current = result.state;
+      setGame(result.state);
+    }
+    return result;
+  }, []);
+
+  const persistGame = useCallback((): Promise<void> => {
+    const state = gameRef.current;
+    if (!state) return Promise.resolve();
+    const commands = pendingCommands.current;
+    pendingCommands.current = [];
+    return commitGame(state, commands).catch((error: unknown) => {
+      pendingCommands.current = [...commands, ...pendingCommands.current];
+      throw error;
+    });
   }, []);
 
   useEffect(() => {
@@ -2300,7 +2322,7 @@ export default function App() {
       gameRef.current = stateToSave;
       if (stateToSave !== current) setGame(stateToSave);
       setSaveStatus("saving");
-      saveGame(stateToSave)
+      persistGame()
         .then(() => setSaveStatus("saved"))
         .catch((error: unknown) => {
           setSaveError(
@@ -2315,9 +2337,7 @@ export default function App() {
       setNow(timestamp);
       const current = gameRef.current;
       if (!current?.voyage) return;
-      const resumed = resumeVoyage(current, timestamp);
-      gameRef.current = resumed;
-      setGame(resumed);
+      dispatch({ type: "resumeVoyage", pausedAt: current.voyage.progressUpdatedAt });
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") checkpointAndSave();
@@ -2332,25 +2352,21 @@ export default function App() {
       window.removeEventListener("pagehide", checkpointAndSave);
       window.removeEventListener("pageshow", resumeFromPause);
     };
-  }, []);
+  }, [dispatch, persistGame]);
 
   useEffect(() => {
     if (
       !game?.voyage ||
       now < game.voyage.arrivalAt
     ) return;
-    setGame((previous) =>
-      previous?.voyage && now >= previous.voyage.arrivalAt
-        ? arriveAtDestination(previous)
-        : previous,
-    );
-  }, [game, now]);
+    dispatch({ type: "arrive" });
+  }, [game, now, dispatch]);
 
   useEffect(() => {
     if (!game || saveStatus === "loading") return;
     setSaveStatus("saving");
     const saveTimer = window.setTimeout(() => {
-      saveGame(game)
+      persistGame()
         .then(() => setSaveStatus("saved"))
         .catch((error: unknown) => {
           setSaveError(
@@ -2360,7 +2376,7 @@ export default function App() {
         });
     }, 180);
     return () => window.clearTimeout(saveTimer);
-  }, [game, saveStatus === "loading"]);
+  }, [game, saveStatus === "loading", persistGame]);
 
   useEffect(() => {
     if (!notice) return;
@@ -2368,92 +2384,89 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  const updateGame = useCallback((update: (state: GameState) => GameState) => {
-    setGame((previous) => (previous ? update(previous) : previous));
-  }, []);
-
   const startNewGame = useCallback((captain: string) => {
     const nextGame = createNewGame(captain);
+    pendingCommands.current = [];
+    nextSeq.current = 1;
+    lastCommandAt.current = 0;
+    gameRef.current = nextGame;
     setGame(nextGame);
     setSavedGame(nextGame);
     setScreen("map");
     setCityEntered(false);
     setSelectedBuilding(null);
     setNotice(`Welcome to Dhaka, ${nextGame.captainName}. Your little adventure begins!`);
+    startCommandLog(nextGame).catch((error: unknown) => {
+      setSaveError(
+        error instanceof Error ? error.message : "Your latest progress could not be saved.",
+      );
+      setSaveStatus("error");
+    });
   }, []);
+
+  // Runs a command and shows the matching message. The interface hides docked-only
+  // actions at sea, so "not-docked" here means a stale tap.
+  const runCommand = useCallback(
+    (command: GameCommand, messages: Record<string, string> = {}) => {
+      const result = dispatch(command);
+      if (!result) return null;
+      if (result.status === "applied") {
+        setNotice(result.state.lastMessage);
+      } else if (result.status === "rejected") {
+        setNotice(
+          result.error === "not-docked"
+            ? "Finish your voyage or encounter first."
+            : (result.error && messages[result.error]) ?? result.message ?? "",
+        );
+      }
+      return result;
+    },
+    [dispatch],
+  );
 
   const handleBuy = useCallback(
     (good: GoodId, quantity: number) => {
-      updateGame((current) => {
-        const trade = buyGood(current, good, quantity);
-        if (trade.error === "gold") setNotice("Not enough gold yet. Try selling a good first.");
-        if (trade.error === "space") setNotice("Your cargo hold is full. Sell something first.");
-        if (trade.error === "out-of-stock") setNotice("This stall has sold out. Try another port.");
-        if (!trade.error) setNotice(trade.state.lastMessage);
-        return trade.state;
+      runCommand({ type: "buyGood", good, quantity }, {
+        gold: "Not enough gold yet. Try selling a good first.",
+        space: "Your cargo hold is full. Sell something first.",
+        "out-of-stock": "This stall has sold out. Try another port.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleBuyPlayerShip = useCallback((vesselClass: VesselClassId) => {
-    updateGame((current) => {
-      const result = buyPlayerShip(current, vesselClass);
-      if (result.error === "unavailable") {
-        setNotice("Ships can only be purchased while docked and clear of an encounter.");
-      } else if (result.error === "not-shipyard") {
-        setNotice("New ships are available at Dhaka, Chittagong, and Hooghly.");
-      } else if (result.error === "fleet-full") {
-        setNotice(`You can own up to ${MAX_PLAYER_SHIPS} ships in this stage.`);
-      } else if (result.error === "gold") {
-        setNotice(`A new ${VESSEL_CLASSES[vesselClass].name} costs ${VESSEL_CLASSES[vesselClass].price} gold.`);
-      } else {
-        setNotice(result.state.lastMessage);
-      }
-      return result.state;
+    runCommand({ type: "buyShip", vesselClass }, {
+      unavailable: "Ships can only be purchased while docked and clear of an encounter.",
+      "not-shipyard": "New ships are available at Dhaka, Chittagong, and Hooghly.",
+      "fleet-full": `You can own up to ${MAX_PLAYER_SHIPS} ships in this stage.`,
+      gold: `A new ${VESSEL_CLASSES[vesselClass].name} costs ${VESSEL_CLASSES[vesselClass].price} gold.`,
     });
-  }, [updateGame]);
+  }, [runCommand]);
 
   const handleSelectPlayerShip = useCallback(
     (shipId: string) => {
-      updateGame((current) => {
-        const result = selectPlayerShip(current, shipId);
-        if (result.error === "unavailable") {
-          setNotice("Wait until your active ship has docked before switching ships.");
-        } else if (result.error === "not-owned") {
-          setNotice("That ship is not part of your fleet.");
-        } else if (result.error === "not-here") {
-          setNotice("Sail to that ship's port before managing it.");
-        } else if (result.error === "automated") {
-          setNotice("Pause or cancel this ship's automated route before managing it directly.");
-        } else if (result.error === "returning") {
-          setNotice("This ship is on its way back. Wait until it arrives.");
-        } else if (result.state !== current) {
-          setNotice(result.state.lastMessage);
-        }
-        return result.state;
+      runCommand({ type: "selectShip", shipId }, {
+        unavailable: "Wait until your active ship has docked before switching ships.",
+        "not-owned": "That ship is not part of your fleet.",
+        "not-here": "Sail to that ship's port before managing it.",
+        automated: "Pause or cancel this ship's automated route before managing it directly.",
+        returning: "This ship is on its way back. Wait until it arrives.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleReturnShip = useCallback(
     (shipId: string) => {
-      updateGame((current) => {
-        const result = orderShipReturn(current, shipId);
-        if (result.error === "unavailable") {
-          setNotice("Resolve the current river encounter before ordering this ship back.");
-        } else if (result.error === "no-route") {
-          setNotice("No river route is open for that ship right now. Try again later.");
-        } else if (result.error) {
-          setNotice("That ship does not need a return order.");
-        } else {
-          setNotice(result.state.lastMessage);
-        }
-        return result.state;
+      runCommand({ type: "orderShipReturn", shipId }, {
+        unavailable: "Resolve the current river encounter before ordering this ship back.",
+        "no-route": "No river route is open for that ship right now. Try again later.",
+        "not-owned": "That ship does not need a return order.",
+        "not-needed": "That ship does not need a return order.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleConfigureRoute = useCallback(
@@ -2463,239 +2476,141 @@ export default function App() {
       rules: AutomatedTradeRule[],
       initialCapital: number,
     ) => {
-      updateGame((current) => {
-        const result = configureAutomatedTradeRoute(
-          current,
-          shipId,
-          destination,
-          rules,
-          initialCapital,
-        );
-        const errorMessages: Record<
-          NonNullable<typeof result.error>,
-          string
-        > = {
-          unavailable: "Resolve the current river encounter before changing automated routes.",
-          "not-owned": "That ship is not part of your fleet.",
-          "active-ship": "The selected ship stays under your direct control; assign a different ship.",
-          "not-docked": "Wait until the ship reaches a port before changing its route.",
-          "port-not-visited": "Automated routes can use only ports you have visited.",
-          "same-port": "Choose a different visited port for the other end of the route.",
-          "no-route": "There is no open connected river route between those ports.",
-          "too-large": "This ship is too large for the channels to that port.",
-          "invalid-rules": "Choose at least one good to buy and one good to sell.",
-          gold: "Your purse does not have enough gold for that route capital.",
-        };
-        if (result.error) setNotice(errorMessages[result.error]);
-        else setNotice(result.state.lastMessage);
-        return result.state;
+      runCommand({ type: "configureRoute", shipId, destination, rules, initialCapital }, {
+        unavailable: "Resolve the current river encounter before changing automated routes.",
+        "not-owned": "That ship is not part of your fleet.",
+        "active-ship": "The selected ship stays under your direct control; assign a different ship.",
+        "not-docked": "Wait until the ship reaches a port before changing its route.",
+        "port-not-visited": "Automated routes can use only ports you have visited.",
+        "same-port": "Choose a different visited port for the other end of the route.",
+        "no-route": "There is no open connected river route between those ports.",
+        "too-large": "This ship is too large for the channels to that port.",
+        "invalid-rules": "Choose at least one good to buy and one good to sell.",
+        gold: "Your purse does not have enough gold for that route capital.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleAutomatedRouteStatus = useCallback(
     (shipId: string, status: "running" | "paused") => {
-      updateGame((current) => {
-        const result = setAutomatedTradeRouteStatus(current, shipId, status);
-        if (result.error === "unavailable") {
-          setNotice("Resolve the current river encounter before changing route orders.");
-        } else if (result.error === "not-assigned") {
-          setNotice("This ship has no automated route to change.");
-        } else if (result.error === "not-docked") {
-          setNotice("Route orders can be changed only while the ship is docked.");
-        } else if (result.error) {
-          setNotice("That ship is not part of your fleet.");
-        } else {
-          setNotice(result.state.lastMessage);
-        }
-        return result.state;
+      runCommand({ type: "setRouteStatus", shipId, status }, {
+        unavailable: "Resolve the current river encounter before changing route orders.",
+        "not-assigned": "This ship has no automated route to change.",
+        "not-docked": "Route orders can be changed only while the ship is docked.",
+        "not-owned": "That ship is not part of your fleet.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleCancelAutomatedRoute = useCallback(
     (shipId: string) => {
-      updateGame((current) => {
-        const result = cancelAutomatedTradeRoute(current, shipId);
-        if (result.error === "unavailable") {
-          setNotice("Resolve the current river encounter before ending this route.");
-        } else if (result.error === "not-assigned") {
-          setNotice("This ship has no automated route to cancel.");
-        } else if (result.error === "not-docked") {
-          setNotice("A ship can leave its route only while docked.");
-        } else if (result.error) {
-          setNotice("That ship is not part of your fleet.");
-        } else {
-          setNotice(result.state.lastMessage);
-        }
-        return result.state;
+      runCommand({ type: "cancelRoute", shipId }, {
+        unavailable: "Resolve the current river encounter before ending this route.",
+        "not-assigned": "This ship has no automated route to cancel.",
+        "not-docked": "A ship can leave its route only while docked.",
+        "not-owned": "That ship is not part of your fleet.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleNpcTrade = useCallback(
-    (merchantId: string, goodId: GoodId) => {
-      updateGame((current) => {
-        const result = tradeWithNpcMerchant(current, merchantId, goodId);
-        if (result.error === "not-at-port") {
-          setNotice("Dock at a port before trading with a merchant.");
-        } else if (result.error === "not-present") {
-          setNotice("That merchant is no longer at this port.");
-        } else if (result.error === "no-cargo") {
-          setNotice("That merchant no longer has this good to sell.");
-        } else if (result.error === "gold") {
-          setNotice("You do not have enough gold for that trade.");
-        } else if (result.error === "space") {
-          setNotice("Your cargo hold is full; make room before trading.");
-        } else {
-          setNotice(result.state.lastMessage);
-        }
-        return result.state;
+    (merchantId: string, good: GoodId) => {
+      runCommand({ type: "tradeWithMerchant", merchantId, good }, {
+        "not-at-port": "Dock at a port before trading with a merchant.",
+        "not-present": "That merchant is no longer at this port.",
+        "no-cargo": "That merchant no longer has this good to sell.",
+        gold: "You do not have enough gold for that trade.",
+        space: "Your cargo hold is full; make room before trading.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleSell = useCallback(
     (good: GoodId, quantity: number) => {
-      updateGame((current) => {
-        const trade = sellGood(current, good, quantity);
-        if (trade.error === "empty") setNotice("You don't have any of that good to sell.");
-        if (trade.error === "market-full") setNotice("This stall cannot store any more of that good.");
-        if (!trade.error) setNotice(trade.state.lastMessage);
-        return trade.state;
+      runCommand({ type: "sellGood", good, quantity }, {
+        empty: "You don't have any of that good to sell.",
+        "market-full": "This stall cannot store any more of that good.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleBuyWarehouse = useCallback(() => {
-    updateGame((current) => {
-      const result = buyWarehouse(current);
-      if (result.error === "gold") {
-        setNotice(`A warehouse costs ${WAREHOUSE_PRICE} gold. Earn more before purchasing.`);
-      } else if (result.error === "already-owned") {
-        setNotice("You already own a warehouse in this port.");
-      } else {
-        setNotice(result.state.lastMessage);
-      }
-      return result.state;
+    runCommand({ type: "buyWarehouse" }, {
+      gold: `A warehouse costs ${WAREHOUSE_PRICE} gold. Earn more before purchasing.`,
+      "already-owned": "You already own a warehouse in this port.",
     });
-  }, [updateGame]);
+  }, [runCommand]);
 
   const handleBuyResidence = useCallback(() => {
-    updateGame((current) => {
-      const result = buyResidence(current);
-      if (result.error === "gold") {
-        setNotice(`A residence costs ${RESIDENCE_PRICE} gold. Earn more before purchasing.`);
-      } else if (result.error === "already-owned") {
-        setNotice("You already have a residence in another port.");
-      } else {
-        setNotice(result.state.lastMessage);
-      }
-      return result.state;
+    runCommand({ type: "buyResidence" }, {
+      gold: `A residence costs ${RESIDENCE_PRICE} gold. Earn more before purchasing.`,
+      "already-owned": "You already have a residence in another port.",
     });
-  }, [updateGame]);
+  }, [runCommand]);
 
   const handleBuyFarm = useCallback(() => {
-    updateGame((current) => {
-      const result = buyFarm(current);
-      if (result.error === "gold") {
-        setNotice(`A farm costs ${FARM_PRICE} gold. Earn more before purchasing.`);
-      } else if (result.error === "already-owned") {
-        setNotice("You already own a farm in this port.");
-      } else {
-        setNotice(result.state.lastMessage);
-      }
-      return result.state;
+    runCommand({ type: "buyFarm" }, {
+      gold: `A farm costs ${FARM_PRICE} gold. Earn more before purchasing.`,
+      "already-owned": "You already own a farm in this port.",
     });
-  }, [updateGame]);
+  }, [runCommand]);
 
   const handleMarry = useCallback(() => {
-    updateGame((current) => {
-      const result = marryAtResidence(current);
-      if (result.error === "no-residence") {
-        setNotice("Establish a residence before starting a household.");
-      } else if (result.error === "away-from-residence") {
-        setNotice("Return to your residence to establish a household.");
-      } else if (result.error === "already-married") {
-        setNotice("Your household is already established.");
-      } else if (result.error === "gold") {
-        setNotice(`Establishing a household costs ${MARRIAGE_HOUSEHOLD_COST} gold.`);
-      } else {
-        setNotice(result.state.lastMessage);
-      }
-      return result.state;
+    runCommand({ type: "marry" }, {
+      "no-residence": "Establish a residence before starting a household.",
+      "away-from-residence": "Return to your residence to establish a household.",
+      "already-married": "Your household is already established.",
+      gold: `Establishing a household costs ${MARRIAGE_HOUSEHOLD_COST} gold.`,
     });
-  }, [updateGame]);
+  }, [runCommand]);
 
   const handleCollectFarm = useCallback(() => {
-    updateGame((current) => {
-      const result = collectFarmOutput(current);
-      if (result.error === "not-owned") setNotice("There is no farm here.");
-      else if (result.error === "empty") setNotice("No Rice is ready to collect yet.");
-      else if (result.error === "cargo-full") setNotice("Your ship's hold is full.");
-      else setNotice(result.state.lastMessage);
-      return result.state;
+    runCommand({ type: "collectFarm" }, {
+      "not-owned": "There is no farm here.",
+      empty: "No Rice is ready to collect yet.",
+      "cargo-full": "Your ship's hold is full.",
     });
-  }, [updateGame]);
+  }, [runCommand]);
 
   const handleWarehouseTransfer = useCallback(
     (good: GoodId, action: "store" | "retrieve") => {
-      updateGame((current) => {
-        const result = action === "store"
-          ? storeGoodInWarehouse(current, good)
-          : retrieveGoodFromWarehouse(current, good);
-        const errorMessages: Record<WarehouseTransferError, string> = {
-          "not-owned": "There is no warehouse here.",
-          empty: action === "store"
-            ? "You are not carrying any of that good."
-            : "No units of that good are stored here.",
-          full: "This warehouse has no free space.",
-          "cargo-full": "Your ship's hold is full.",
-        };
-        if (result.error) setNotice(errorMessages[result.error]);
-        else setNotice(result.state.lastMessage);
-        return result.state;
+      runCommand({ type: action === "store" ? "storeGood" : "retrieveGood", good }, {
+        "not-owned": "There is no warehouse here.",
+        empty: action === "store"
+          ? "You are not carrying any of that good."
+          : "No units of that good are stored here.",
+        full: "This warehouse has no free space.",
+        "cargo-full": "Your ship's hold is full.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleUpgrade = useCallback(
     (upgrade: UpgradeId) => {
-      updateGame((current) => {
-        const result = buyUpgrade(current, upgrade);
-        if (result.error === "gold") setNotice("Save a little more gold for this ship upgrade.");
-        if (result.error === "max-level") setNotice("This upgrade is already at its best.");
-        if (result.error === "unavailable") setNotice("You can only upgrade while docked and clear of an encounter.");
-        if (!result.error) setNotice(result.state.lastMessage);
-        return result.state;
+      runCommand({ type: "buyUpgrade", upgrade }, {
+        gold: "Save a little more gold for this ship upgrade.",
+        "max-level": "This upgrade is already at its best.",
+        unavailable: "You can only upgrade while docked and clear of an encounter.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   const handleAcceptMission = useCallback(
     (missionId: string) => {
-      updateGame((current) => {
-        const result = acceptMission(current, missionId);
-        if (result.error === "not-at-board") {
-          setNotice("You must be docked to accept a contract.");
-        } else if (result.error === "not-available") {
-          setNotice("That contract is no longer available at this port.");
-        } else if (result.error === "active-limit") {
-          setNotice("Complete or expire an active contract before accepting another.");
-        } else {
-          setNotice(result.state.lastMessage);
-        }
-        return result.state;
+      runCommand({ type: "acceptMission", missionId }, {
+        "not-at-board": "You must be docked to accept a contract.",
+        "not-available": "That contract is no longer available at this port.",
+        "active-limit": "Complete or expire an active contract before accepting another.",
       });
     },
-    [updateGame],
+    [runCommand],
   );
 
   if (saveStatus === "loading") return <LoadingScreen />;
@@ -2770,15 +2685,12 @@ export default function App() {
     setCityEntered(false);
     setSelectedBuilding(null);
     setScreen("map");
-    updateGame((current) => {
-      const next = startVoyage(current, startedAt);
-      if (next.voyage) {
-        setNotice(`Your boat is sailing to ${getTown(next.voyage.destination).name}.`);
-      } else if (next.lastMessage) {
-        setNotice(next.lastMessage);
-      }
-      return next;
-    });
+    const result = dispatch({ type: "startVoyage" });
+    if (result?.state.voyage) {
+      setNotice(`Your boat is sailing to ${getTown(result.state.voyage.destination).name}.`);
+    } else if (result?.message) {
+      setNotice(result.message);
+    }
   };
 
   return (
@@ -2837,7 +2749,7 @@ export default function App() {
             <button onClick={() => {
               setSaveError("");
               setSaveStatus("saving");
-              saveGame(game)
+              persistGame()
                 .then(() => setSaveStatus("saved"))
                 .catch((error: unknown) => {
                   setSaveError(error instanceof Error ? error.message : "Could not save your voyage.");
@@ -2879,11 +2791,7 @@ export default function App() {
                 setSelectedBuilding(null);
                 setMoreOpen(false);
                 setScreen("map");
-                updateGame((current) => ({
-                  ...current,
-                  selectedTown: destination,
-                  lastMessage: "",
-                }));
+                dispatch({ type: "selectDestination", town: destination });
               }}
             />
           )}
@@ -2899,17 +2807,10 @@ export default function App() {
           {screen === "map" && (game.voyage || game.encounterPending) && (
             <VoyagePanel
               now={now}
-              onSpeedChange={(speed) =>
-                updateGame((current) =>
-                  changeVoyageSpeed(current, speed, Date.now()),
-                )
-              }
+              onSpeedChange={(speed) => dispatch({ type: "changeVoyageSpeed", speed })}
               onDefend={() => {
-                updateGame((current) => {
-                  const encounter = resolveRiverEncounter(current);
-                  setNotice(encounter.result.message);
-                  return encounter.state;
-                });
+                const result = dispatch({ type: "resolveEncounter" });
+                if (result?.encounter) setNotice(result.encounter.message);
               }}
               onSail={sailToSelectedPort}
               state={game}
@@ -2950,12 +2851,9 @@ export default function App() {
               {screen === "dock" && (
                 <DockPanel
                   onRepair={() => {
-                    updateGame((current) => {
-                      const repair = repairShip(current);
-                      if (repair.error === "gold") setNotice("Earn a little more gold before repairing your ship.");
-                      if (repair.error === "unavailable") setNotice("You can only repair while docked and clear of an encounter.");
-                      if (!repair.error) setNotice(repair.state.lastMessage);
-                      return repair.state;
+                    runCommand({ type: "repairShip" }, {
+                      gold: "Earn a little more gold before repairing your ship.",
+                      unavailable: "You can only repair while docked and clear of an encounter.",
                     });
                   }}
                   onUpgrade={handleUpgrade}

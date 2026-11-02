@@ -211,4 +211,7 @@ Stage each system as a small, testable game loop, following the recommended rule
 
 ## Current next milestone
 
-Stage 13 is the last planned gameplay stage for v1. Next is visual polish ([VISUAL_POLISH_HANDOFF.md](./VISUAL_POLISH_HANDOFF.md)), then playtesting and release polish. Stages 14–16 are not planned for v1. No new major gameplay stage starts unless testing reveals a genuine blocker.
+Visual polish is committed. The owner has approved a larger online expansion, which replaces the earlier plan to stop after Stage 13. Its 13 stages are in [ONLINE_EXPANSION_PLAN.md](./ONLINE_EXPANSION_PLAN.md) and supersede Stages 14–16 above.
+
+- **Online Stage 1, command layer and server replay: implemented, awaiting review.** Every player action is a named command, recorded on the device and replayable. The server logic, database schema and access rules exist and are tested, but the game doesn't connect to any server yet. Save version stays 19 and gameplay is unchanged.
+- **Next: Online Stage 2,** Google login and player profiles, which needs a Supabase project and Google OAuth setup to test live.

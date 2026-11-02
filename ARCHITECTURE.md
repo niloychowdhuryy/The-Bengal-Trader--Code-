@@ -52,9 +52,25 @@ Implemented integration points are per-town standing, residence and household, w
 - Trade, Docks and Fleet are quick actions. Politics, Family, Properties and Notifications are grouped in More. Drawer close returns to the underlying map or city; Map is always a quick exit.
 - `src/styles.css` defines the carved-teak, brass and ledger-paper interface: design tokens, portrait, landscape-phone and desktop layouts, touch targets, overlays and reduced-motion behavior. Fonts are served locally from `public/fonts/`.
 
+## Commands and replay
+
+Player actions never change game state directly. `src/App.tsx` calls `dispatch(command)`, and `src/game/commands.ts` validates and applies it through `applyCommand(state, command, at)`, which is pure. Commands also enforce rules the interface otherwise relies on, such as no trading at sea and no arriving before a voyage has finished.
+
+Applied commands are numbered and written in the same IndexedDB transaction as the save (`commitGame` in `src/game/storage.ts`), so the saved game always equals its base state plus its log. Log records share the existing `save` object store, under `command-log:` keys, so the database version is unchanged. Refused and no-effect commands aren't recorded. A game started from an existing save is marked `imported`, because its earlier history can't be proved.
+
+`src/game/replay.ts` rebuilds state from commands. A batch is all or nothing, and it's refused if numbering has gaps, a verified command is rewritten, time runs backward or beyond the moment it arrived, a command is refused by the rules, or the result fails save validation.
+
+The voyage clock is the one exception to recording. Background checkpoints aren't logged, because any command during a voyage first brings it up to that command's time, so they don't change the result. Resuming records when the voyage paused, so closed-app time still counts for nothing. New player actions must be added as commands.
+
+## Server foundation
+
+`src/server/sync.ts` handles a batch of commands independently of any platform, and `src/server/supabase-store.ts` connects it to Supabase. `npm run build:server` bundles them with the game rules into `supabase/functions/_shared/game-server.js` (generated, not committed) for the Edge Function in `supabase/functions/sync/`. `supabase/migrations/` holds the schema: players can read their own records, and every write goes through server functions using the service role, whose key exists only in Supabase's secrets.
+
+The browser game doesn't import any of this and makes no network requests yet. Cloud saves connect it in Stage 3.
+
 ## Save and offline behavior
 
-`src/game/storage.ts` validates bounded game data before restoring it, migrates earlier game saves through game-state version 19, preserves cargo, market stock, progression, property, household, missions, NPC merchants, the player fleet, automated routes, warehouse inventories and cost basis, and surfaces IndexedDB errors. On load it also raises a recorded gold peak that is below current gold, because an earlier route-cancellation bug could save that state; other invalid data is still rejected. Version 6 voyages keep their last persisted elapsed-time checkpoint and are re-anchored on load; older voyage formats without a saved progress checkpoint restart the in-progress voyage at its current route duration instead of deriving progress from wall-clock time. Version 7 also persists whether the Chittagong introduction has occurred. A production service worker precaches the app shell for offline reopening after first visit. The dev server intentionally does not register a service worker so HMR remains reliable.
+`src/game/save-format.ts` holds the pure validation and migrations, and `src/game/storage.ts` the IndexedDB access. Together they validate bounded game data before restoring it, migrates earlier game saves through game-state version 19, preserves cargo, market stock, progression, property, household, missions, NPC merchants, the player fleet, automated routes, warehouse inventories and cost basis, and surfaces IndexedDB errors. On load it also raises a recorded gold peak that is below current gold, because an earlier route-cancellation bug could save that state; other invalid data is still rejected. Version 6 voyages keep their last persisted elapsed-time checkpoint and are re-anchored on load; older voyage formats without a saved progress checkpoint restart the in-progress voyage at its current route duration instead of deriving progress from wall-clock time. Version 7 also persists whether the Chittagong introduction has occurred. A production service worker precaches the app shell for offline reopening after first visit. The dev server intentionally does not register a service worker so HMR remains reliable.
 
 ## Verification commands
 

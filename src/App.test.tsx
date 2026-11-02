@@ -25,7 +25,7 @@ import {
   TOWNS,
 } from "./game/model";
 import { formatTravelDuration, getRouteTravelTime } from "./game/travel-time";
-import { saveGame } from "./game/storage";
+import { saveGame, whenStorageIdle } from "./game/storage";
 
 function getMapPort(name: RegExp): HTMLElement {
   const marker = screen
@@ -41,8 +41,12 @@ describe("first game screen", () => {
     vi.restoreAllMocks();
   });
 
-  beforeEach(() => {
-    indexedDB.deleteDatabase("bengal-trader");
+  beforeEach(async () => {
+    await whenStorageIdle();
+    await new Promise<void>((resolve) => {
+      const request = indexedDB.deleteDatabase("bengal-trader");
+      request.onsuccess = request.onerror = request.onblocked = () => resolve();
+    });
   });
 
   it("starts a new story and completes a market trade at Dhaka", async () => {

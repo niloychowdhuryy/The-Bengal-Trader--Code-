@@ -31,7 +31,7 @@ import {
   syncSelectedShip,
   type GameState,
 } from "./model";
-import { loadGame, saveGame } from "./storage";
+import { loadGame, saveGame, whenStorageIdle } from "./storage";
 import {
   getRouteTravelTime,
   getVoyageProgressMs,
@@ -63,8 +63,12 @@ function writeLegacySave(value: unknown): Promise<void> {
 }
 
 describe("IndexedDB offline saves", () => {
-  beforeEach(() => {
-    indexedDB.deleteDatabase("bengal-trader");
+  beforeEach(async () => {
+    await whenStorageIdle();
+    await new Promise<void>((resolve) => {
+      const request = indexedDB.deleteDatabase("bengal-trader");
+      request.onsuccess = request.onerror = request.onblocked = () => resolve();
+    });
   });
   afterEach(() => {
     vi.restoreAllMocks();
