@@ -1,6 +1,60 @@
 # Online Merchant Empire — Implementation Plan
 
-**Status:** Stage 1 implemented and awaiting review, 2 November 2026. Later stages are planned only. Numbers are starting values that the simulations in Stage 13 may change; changes get recorded in the Decision log at the end.
+**Status:** Stage 1 committed as `eb28e82`, 2 November 2026. Later stages and milestones are planned only. Numbers are starting values that the simulations in Stage 13 may change; changes get recorded in the Decision log at the end.
+
+## Essential milestones
+
+These three requirements are part of the game, not optional extras. A basic version doesn't count as complete; each has its own exit check.
+
+### Milestone S: online staging deployment
+
+**Goal:** an early playable version at a stable web address, updated automatically, so the game can be tested from home well before it's finished.
+
+- **Hosting:** Vercel, connected to the private GitHub repository. Cloudflare Pages was tried first but didn't work during setup. Vercel's free Hobby plan is for personal, non-commercial use and its definition of commercial use is broad, so the game must move to a paid plan or another host before ads, revenue or public launch.
+- **Updating:** each approved stage commit is pushed to GitHub and deploys itself. The build runs all tests first, so a failing version doesn't replace a working one.
+- **Separation:** staging has its own Vercel project and Supabase project. Production gets separate ones later, with its own keys and data.
+- **Secrets:** only the Supabase URL and publishable key reach the browser, and both are designed for that. Secret keys never go in the repository or Vercel's project settings.
+- **Reporting problems:** the game shows its version in the More menu, with a simple way to send a report that includes it.
+
+**Exit check:** the game opens at the stable address, plays and saves, works offline after first load, shows its version, and a pushed change appears without any manual build. The local version still works. Google login and cloud saves join this deployment when Stages 2 and 3 are ready.
+
+### Milestone N: correct water and land navigation
+
+**What's actually wrong, measured on 2 November 2026:**
+
+- **The network doesn't match the painting.** Overlaying it on the map shows routes crossing Bakla and Sandwip islands, Dhaka itself and the Jessore land mass. 45 of 49 route segments measured under 75% on water. The detector is imperfect, but the overlay confirms the pattern.
+- **Painted channels go unused.** The routes were traced for an earlier map, and the network is sparse.
+- **It has almost no loops, so routes make long detours.** Balasore to Hooghly is 5.4 times the straight-line distance, because it must go via Dhaka despite open water between them. Bakla to Satgaon is 5.2 times, and Sonargaon to Sylhet 4.8 times.
+- **Port markers aren't quays.** Many sit inside the town, so boats leave across land.
+- **Speed isn't the cause,** and it won't be used to hide the problem.
+
+**Automatic generation from the picture isn't enough.** A rough pathfinding test over the painted water showed one large connected water body, but colour detection breaks around ripples and bridges, so it isn't reliable by itself. Sylhet had no detected connected water near its marker, which needs a closer look. It may be a narrow channel or a genuine land case. The route network will be traced deliberately, then checked automatically against a water map baked from the painting.
+
+**Design:**
+
+- **One transport network** with water routes, land routes and named transfer points (quays and landings). Markers stay where they are for display; quays are separate points on the painted waterfront.
+- **Water routes** are retraced on the current painting with real loops and branches, and each carries a width class that decides which vessels fit.
+- **Land routes** are only added where the map needs them, following roads or sensible paths and avoiding water and buildings.
+- **Route choice** minimises actual travel time for that vessel, across both modes. So a direct waterway always beats a detour.
+- **Journeys** become a list of legs (water, land). The boat moors at the landing, a cart takes over, and it reverses on the way back. Cargo stays the same single record throughout, so nothing can be duplicated, lost or sold by a transition. The vehicle shown always matches the current leg.
+- **Vessel rules:** River boat and Bora reach all 15 ports. Patello stays barred from Sylhet and Balasore by an explicit rule, so a land link can't bypass it. If a port can't be reached, the game says why.
+- **Land speed:** starting at 40% of a River boat's normal water speed per unit of distance, to be tuned by simulation. Land is a necessity, not a shortcut.
+- **One source of truth:** the route drawn, the vehicle's movement and the travel time all read the same legs.
+- **Also uses the planner:** automated routes, return orders, NPC merchants and previews.
+- **Saves:** a voyage under way at migration finishes on its old route. This takes save version 20, so Coins moves to version 21.
+- **Art:** a bullock or horse-drawn cart, with historical suitability checked first.
+
+**Exit check, with automated tests for each:** direct connected water routes; narrow waterway connections; dead ends; branching waterways; routes with unnecessary detours; vessel-specific draft restrictions; ports only reachable by land (on test networks, and on the real map wherever one exists); water-to-land and land-to-water transitions; cargo and journey preservation during transitions; land routes avoiding impassable terrain; unreachable destinations; and agreement between the displayed route, animation and travel time.
+
+In addition, every water leg must stay on the baked water map, every land leg must stay off it except at marked bridges, and no route may exceed a set detour limit unless the map genuinely requires it. The five-minute cap is reviewed here, because all journey times change.
+
+### Milestone T: individual town identities
+
+Each of the 15 towns gets its own appearance, layout, waterfront and landmark, based on its historical character around 1665, and every important building does something. **[TOWN_IDENTITY_PLAN.md](./TOWN_IDENTITY_PLAN.md)** has the town-by-town design, the acceptance test and the research still needed. It's built progressively alongside Stage 9, starting with Dhaka, Chittagong, Sylhet, Sonargaon and Hooghly.
+
+### What every stage must deliver
+
+Its own commit, passing tests, type-check and production build, and a report of what changed, known limitations and what remains before the next stage. A feature isn't marked complete because a basic version exists. Physical mobile testing happens in a dedicated later phase, though the interface must stay responsive throughout.
 
 ## 1. What the audit found
 
@@ -222,19 +276,21 @@ The harness starts in Stage 4, not Stage 13, so each economic stage is measured 
 
 ## 11. Stages
 
-Your order is kept, with three adjustments: the command layer goes first because everything secure depends on it; simulations start early; and Stage 12 includes the Android app.
+Your order is kept, with these adjustments: the command layer went first because everything secure depends on it; simulations start early; Stage 12 includes the Android app; staging comes straight away; and navigation comes before cloud saves, Coins and markets. Navigation changes every journey time and the save format, so doing it first means balance work is measured on correct travel, and cloud data never needs this migration.
 
 | # | Stage | Testable here without your accounts? |
 |---|---|---|
-| 1 | Command layer, server replay, database schema and rules (tested with PGlite) — **implemented, awaiting review** | Yes |
+| 1 | Command layer, server replay, database schema and rules — **done, `eb28e82`** | Yes |
+| S | Online staging deployment | Needs your GitHub and Vercel accounts |
 | 2 | Google login and profiles | Code yes; live login needs your setup |
-| 3 | Cloud saves, linking, conflict handling | Logic yes; live sync needs your setup |
-| 4 | Coins, version 20 migration, simulation harness | Yes |
+| N | Correct water and land navigation, version 20 save | Yes |
+| 3 | Cloud saves, linking, conflict handling, multi-tab safety | Logic yes; live sync needs your setup |
+| 4 | Coins, version 21 migration, simulation harness | Yes |
 | 5 | Dynamic markets | Yes |
 | 6 | Farm production orders | Yes |
 | 7 | Warehouse network | Yes |
 | 8 | City unlocks, reputation levels, collapsible map panel (Part 15) | Yes |
-| 9 | Buildings, new art, mission engine, journal | Yes |
+| 9 | Buildings, mission engine, journal, and Milestone T town identities | Yes |
 | 10 | Voyage events, vessel checks | Yes |
 | 11 | Leaderboards | Logic yes; live needs your setup |
 | 12 | Android app, AdMob, Merchant's Opportunity | Needs your accounts and a real device |
@@ -244,22 +300,23 @@ Tests, type-check and build run after every stage, and docs are updated. Nothing
 
 ## 12. What you need to set up
 
-Nothing is needed today. Stages 1 and 4–10 can go ahead without it. I'll give step-by-step instructions when each is due.
+Setup for Milestone S and Stage 2 is now under way. Later items get step-by-step instructions when each is due.
 
 | When | Account | Cost, to confirm at signup | What I need from you |
 |---|---|---|---|
-| Stage 2 | Supabase project | Free tier to start; free projects can pause when idle, so a paid plan is needed for launch | Project URL and public anon key. The service-role key goes only into Supabase's secrets, never to me or the code |
-| Stage 2 | Google Cloud OAuth client | Free | Consent screen, web client ID and secret entered in Supabase, redirect URLs |
-| Stage 3 | Web hosting | Often free to start | A domain or hosting choice |
+| Milestone S | GitHub (private repository) and Vercel | Free for testing; paid or moved before revenue | The staging web address |
+| Stage 2 | Supabase project | Free to start; free projects may pause after a quiet week and can be restored, so a paid plan is needed for launch | Project URL and publishable key (`sb_publishable_...`), which replaces the older anon key. The secret key and database password are never shared |
+| Stage 2 | Google Cloud OAuth client | Free | Consent screen, web client ID and secret entered directly in Supabase, redirect URLs |
 | Stage 12 | Google Play Console | One-off fee | Developer account. New personal accounts may need a closed test with testers before release |
 | Stage 12 | AdMob | Free | App and rewarded ad unit IDs, SSV enabled, payment details, consent message |
 | Before launch | Legal documents | Varies | Privacy policy, terms, advice on age rating and children's privacy |
 | If iOS | Apple Developer | Yearly fee | Account, Sign in with Apple |
 
-Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the app. Server secrets stay in Supabase only.
+Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the app. Server secrets stay in Supabase only. Supabase is deprecating `anon` and `service_role` keys by the end of 2026, so Stage 2 also moves the Edge Function from `SUPABASE_SERVICE_ROLE_KEY` to the current secret key.
 
 ## 13. Biggest risks
 
+0. **Navigation rework.** Retracing the network changes every journey and could disturb saves and automated routes. Mitigation: automatic checks against the water map, and old voyages finish on their old routes.
 1. **Economy balance.** Dynamic markets with real-time farms could easily collapse into one dominant strategy. Mitigation: simulations from Stage 4 on real game code.
 2. **Scale of the work.** This is a very large expansion of a working game. Mitigation: each stage ships working, with the old systems kept until replaced.
 3. **Cheating through offline play.** Replay stops false claims but can't catch a very skilled bot playing legally. Mitigation: plausibility flags, and restricting rewards to online play.
@@ -277,6 +334,11 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the a
 | 2 Nov 2026 | The server bundle is generated by `npm run build:server` rather than importing game files directly | Supabase's runtime needs explicit file extensions the game code doesn't use, and this keeps a single copy of the rules |
 | 2 Nov 2026 | Background voyage checkpoints aren't recorded; `resumeVoyage` records when a voyage paused | Logging one per second would bloat the log, and replay gives the same result without them |
 | 2 Nov 2026 | Ad and leaderboard tables are left for Stages 11 and 12 | Stage 1 only creates what it uses |
+| 2 Nov 2026 | Added Milestones S, N and T as essential work | Owner's requirement |
+| 2 Nov 2026 | Navigation goes before cloud saves and Coins; it takes save version 20 and Coins version 21 | It changes every journey time, so balance has to be measured on correct travel |
+| 2 Nov 2026 | Hosting is Vercel with a private GitHub repository, replacing Cloudflare Pages | Cloudflare setup failed for the owner. Vercel gives automatic deploys, but its free plan is non-commercial, so it must change before revenue |
+| 2 Nov 2026 | Water routes are traced deliberately and checked against a baked water map rather than generated from colours | A rough test showed colour detection alone breaks around ripples and bridges |
+| 2 Nov 2026 | Patello's limits are an explicit rule, not a result of channel width | Balasore sits on wide painted water, so width alone wouldn't exclude it |
 
 ## Sources
 
@@ -286,3 +348,5 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the a
 - [Google sign-in with Capacitor and Supabase, Capgo (secondary source)](https://capgo.app/blog/how-to-add-authentication-to-a-capacitor-app/)
 - [Apple guideline 4.8, discussed on Apple's forums](https://developer.apple.com/forums/thread/765145)
 - [Supabase free tier, secondary source](https://automationatlas.io/answers/supabase-free-tier-limits-2026/); check supabase.com/pricing at signup
+- [Supabase: Login with Google](https://supabase.com/docs/guides/auth/social-login/auth-google), [API keys](https://supabase.com/docs/guides/api/api-keys), [going into production](https://supabase.com/docs/guides/platform/going-into-prod)
+- [Vercel Hobby plan](https://vercel.com/docs/plans/hobby), [fair use guidelines](https://vercel.com/docs/limits/fair-use-guidelines)

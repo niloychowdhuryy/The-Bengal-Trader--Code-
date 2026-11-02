@@ -213,5 +213,13 @@ Stage each system as a small, testable game loop, following the recommended rule
 
 Visual polish is committed. The owner has approved a larger online expansion, which replaces the earlier plan to stop after Stage 13. Its 13 stages are in [ONLINE_EXPANSION_PLAN.md](./ONLINE_EXPANSION_PLAN.md) and supersede Stages 14–16 above.
 
-- **Online Stage 1, command layer and server replay: implemented, awaiting review.** Every player action is a named command, recorded on the device and replayable. The server logic, database schema and access rules exist and are tested, but the game doesn't connect to any server yet. Save version stays 19 and gameplay is unchanged.
-- **Next: Online Stage 2,** Google login and player profiles, which needs a Supabase project and Google OAuth setup to test live.
+- **Online Stage 1, command layer and server replay: done (`eb28e82`).** Every player action is a named command, recorded on the device and replayable. The server logic, database schema and access rules exist and are tested, but the game doesn't connect to any server yet.
+
+**Essential milestones, not optional extras:**
+
+- **Milestone S, online staging deployment: next.** An early playable game at a stable web address, updated automatically. Needs the owner's GitHub and Vercel accounts.
+- **Online Stage 2, Google login and profiles: next.** Needs the owner's Supabase project and Google OAuth setup.
+- **Milestone N, correct water and land navigation:** comes before cloud saves, Coins, markets and voyage events. The route network doesn't match the painted map and needs retracing, with land legs and boat-to-cart transitions where the map needs them.
+- **Milestone T, individual town identities:** every town gets its own look, layout and landmarks, with every important building functional. Built with Stage 9; see [TOWN_IDENTITY_PLAN.md](./TOWN_IDENTITY_PLAN.md).
+
+Exit checks are in the plan. Each stage gets its own commit, passing tests and build, and a report. Physical mobile testing is a later dedicated phase.
