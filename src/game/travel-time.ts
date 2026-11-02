@@ -1,0 +1,98 @@
+import {
+  RIVER_NODES,
+  planRiverRoute,
+  type RiverRoute,
+} from "./navigation";
+
+export const MAX_NORMAL_VOYAGE_DURATION_MS = 5 * 60 * 1000;
+export const IN_GAME_DAY_DURATION_MS = 60 * 1000;
+export const CHITTAGONG_ALERT_EXTRA_DAYS = 1;
+export const SAILING_SPEEDS = [1, 2, 4] as const;
+export type SailingSpeed = (typeof SAILING_SPEEDS)[number];
+
+export interface VoyageProgress {
+  durationMs: number;
+  elapsedMs: number;
+  progressUpdatedAt: number;
+}
+
+export function getVoyageProgressMs(
+  voyage: VoyageProgress,
+  speed: SailingSpeed,
+  now: number,
+): number {
+  return Math.min(
+    voyage.durationMs,
+    voyage.elapsedMs + Math.max(0, now - voyage.progressUpdatedAt) * speed,
+  );
+}
+
+export function getVoyageRemainingRealTimeMs(
+  voyage: VoyageProgress,
+  speed: SailingSpeed,
+  now: number,
+): number {
+  return (
+    (voyage.durationMs - getVoyageProgressMs(voyage, speed, now)) / speed
+  );
+}
+
+let maximumRouteDistance: number | null = null;
+
+export function getMaximumNavigableRouteDistance(): number {
+  if (maximumRouteDistance !== null) return maximumRouteDistance;
+
+  const ports = RIVER_NODES.flatMap((node) => node.port ? [node.port] : []);
+  let longestDistance = 0;
+  for (const origin of ports) {
+    for (const destination of ports) {
+      if (origin === destination) continue;
+      const route = planRiverRoute(origin, destination);
+      if (route) longestDistance = Math.max(longestDistance, route.distance);
+    }
+  }
+
+  if (longestDistance <= 0) {
+    throw new Error("Cannot calculate travel time without a navigable route.");
+  }
+  maximumRouteDistance = longestDistance;
+  return longestDistance;
+}
+
+export interface RouteTravelTime {
+  durationMs: number;
+  durationDays: number;
+}
+
+export function getRouteTravelTime(
+  route: RiverRoute,
+  chittagongAlert = false,
+): RouteTravelTime {
+  const normalDurationMs =
+    (route.distance / getMaximumNavigableRouteDistance()) *
+    MAX_NORMAL_VOYAGE_DURATION_MS;
+  const alertDelayMs = chittagongAlert
+    ? CHITTAGONG_ALERT_EXTRA_DAYS * IN_GAME_DAY_DURATION_MS
+    : 0;
+  const durationMs = Math.min(
+    MAX_NORMAL_VOYAGE_DURATION_MS,
+    normalDurationMs + alertDelayMs,
+  );
+
+  return {
+    durationMs,
+    durationDays: durationMs / IN_GAME_DAY_DURATION_MS,
+  };
+}
+
+export function formatTravelDuration(durationMs: number): string {
+  const totalSeconds = Math.ceil(Math.max(0, durationMs) / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes === 0) return `${seconds}s`;
+  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
+}
+
+export function formatInGameDays(days: number): string {
+  return days.toFixed(1);
+}
