@@ -11,9 +11,9 @@
 **Read this first:**
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
-- Saves are now version 24, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end are new in Economy Plan Step 4, **not committed, awaiting review**.
+- Saves are now version 25, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end (Economy Plan Step 4) are committed. Offline rankings (Economy Plan Step 5) are committed too, with only focused tests so far.
 - The economy has a simulation harness and a recorded baseline (Economy Plan Step 1). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
-- Most of the planned commercial game is **not built**. In particular, there are no ads or leaderboards, and farms, contracts and warehouses are out of balance.
+- Most of the planned commercial game is **not built**. In particular, there are no ads or online leaderboards, and farms, contracts and warehouses are out of balance.
 
 ## 1. The game
 
@@ -62,7 +62,7 @@
 | Vessel access rules | Implemented | See section 8 |
 | Up to three ships, each with its own cargo and hull | Implemented | Sold at Dhaka, Chittagong and Hooghly |
 | Cannon, hull and hold upgrades; paid repairs | Implemented | Repair is 100 Coins per hull, 150 for Patello. A short purse repairs part of the damage |
-| Recovery when a player has no options left | Implemented, awaiting review | A moneylender's advance, with a debt that blocks purchases until repaid. See `GAME_RULES.md` |
+| Recovery when a player has no options left | Implemented | A moneylender's advance, with a debt that blocks purchases until repaid. See `GAME_RULES.md` |
 | Automated two-port trade routes | Implemented | Patello trades up to 4 units per good per call, others 1 |
 | Return orders for out-of-reach ships | Implemented | Free, and only for ships that can't otherwise be reached |
 | Distinct art per vessel, plus a bullock cart | Implemented | |
@@ -71,9 +71,9 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| 26 named merchants with real ships, cargo and purses | Implemented, awaiting review | They travel real routes, trade at shared prices, compete, and appear on the map and at docks |
-| Inspecting rivals | Implemented, awaiting review | Tap a ship, or use **More → Rival merchants** |
-| Rankings against rivals | Planned | Economy Plan Step 5 |
+| 26 named merchants with real ships, cargo and purses | Implemented | They travel real routes, trade at shared prices, compete, and appear on the map and at docks |
+| Inspecting rivals | Implemented | Tap a ship, or use **More → Rival merchants** |
+| Rankings against rivals | Implemented | Wealth and influence boards counted every 5 days, under **More → Merchant rankings** |
 
 ### Property, family and progress
 
@@ -114,7 +114,7 @@
 | Named commands and replay | Implemented | Every player action is recorded and can be re-checked |
 | Server replay logic and database rules | Partially implemented | Tested locally. The server function isn't deployed |
 | Cloud saves and linking | Blocked | Owner postponed until the main game is built |
-| Leaderboards | Planned | Depends on cloud saves |
+| Online leaderboards | Planned | Depends on cloud saves. Offline rankings exist (see NPC traders) |
 | Rewarded ads ("Merchant's Opportunity") | Blocked | Needs an Android app and Google Play and AdMob accounts. Nothing is built |
 
 ### Presentation
@@ -148,11 +148,11 @@
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
 
-**Tests:** 577 passing across 27 test files, plus a passing type-check and production build, at the Economy Plan Step 4 dead-end checkpoint.
+**Tests:** 577 passing across 27 test files, plus a passing type-check and production build, at the Economy Plan Step 4 dead-end checkpoint. Later work has had focused tests only, until the next full checkpoint.
 
 ## 4. Saves
 
-**Current format:** version 24. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
+**Current format:** version 25. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
 
 | Version | Added |
 |---|---|
@@ -170,6 +170,7 @@
 | 22 | Stalls hold three times the stock, keeping their share, and the NPC clock becomes the world clock |
 | 23 | 22 more merchants and a world seed. The original four get ships, and purses at least at their roster capital |
 | 24 | A debt record for the moneylender's advance, empty for every existing game |
+| 25 | The merchant rankings, first counted from the save's current state, with no movement shown |
 
 A repair on load also fixes saves affected by an earlier gold-peak bug. After a migration, the command log restarts and the game is marked `imported`, because old commands used old rules.
 
@@ -219,7 +220,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `c01862b` | Economy Plan Step 1: simulation harness and baseline | Yes |
 | `cbe2404` | Economy Plan Step 2: Coins and save backup, save version 21 | Yes |
 | `5628866` | Economy Plan Step 3: pricing fix, deeper stock and world clock, save version 22 | Yes |
-| (none) | Economy Plan Step 4: 26 merchants and dead-end recovery, save version 24 | **Not committed, awaiting review** |
+| `4689530` | Economy Plan Step 4: 26 merchants and dead-end recovery, save version 24 | Yes |
+| The commit after `4689530` | Economy Plan Step 5: offline rankings, save version 25. Focused tests only | Not when this was written |
 
 | Service | Status |
 |---|---|
@@ -236,7 +238,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | Requirement | Status | Current state |
 |---|---|---|
 | Distinct identity for all 15 towns | Partially implemented | Plan in `TOWN_IDENTITY_PLAN.md`. Today's towns fail its acceptance test. Religious placements and several town histories still need research |
-| At least 25 active NPC traders | Implemented, awaiting review | Economy Plan Step 4 |
+| At least 25 active NPC traders | Implemented | Economy Plan Step 4 |
 | Dynamic markets | Partially implemented | Stage 5 |
 | Coins (50×) | Implemented | Economy Plan Step 2 |
 | Paid farm production orders | Planned | Stage 6. Needs a trusted clock for real-time timers, which is weak until cloud saves exist |
@@ -245,7 +247,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | Every building functional | Partially implemented | Stage 9 |
 | Hundreds of missions, journal | Partially implemented | Stage 9. About 40 templates and 8–10 chains are planned |
 | Voyage events with choices | Partially implemented | Stage 10 |
-| Leaderboards | Planned | Stage 11 |
+| Leaderboards | Partially implemented | Offline rankings done (Economy Plan Step 5). Online boards are Stage 11 |
 | Rewarded ads | Blocked | Stage 12 |
 | Android app | Planned | Stage 12. Needed because verified ad rewards rely on AdMob in a native app |
 | Economic simulations | Partially implemented | Tools and baseline done, full pass at Stage 13. Must cover the owner's requirements for automated trading, delivery contracts and farms, listed in `ROADMAP.md` |
@@ -306,8 +308,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Review the 26 merchants** (Economy Plan Step 4). Which commit staging runs is still unconfirmed.
-2. **Offline leaderboards** (Economy Plan Step 5), once approved.
+1. **Full tests, type-check, build and browser checks** at the next agreed checkpoint. These cover Economy Plan Step 5 and the repayment confirmation. Which commit staging runs is still unconfirmed.
+2. **Economy Plan Step 6:** review of time-away progression, which is not approved.
 3. **Rebalance farms, automated ships, contracts and warehouses,** once the NPC economy is measured (see `ROADMAP.md`).
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.
 5. **City unlocks and reputation** (Stage 8).

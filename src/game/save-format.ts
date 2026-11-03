@@ -1,4 +1,5 @@
 // Save validation and migrations. Pure, so the server can use them too.
+import { PLAYER_ENTRY_ID, createLeaderboardSnapshot } from "./leaderboard";
 import {
   MARKET_MAX_STOCK,
   WAREHOUSE_CAPACITY,
@@ -375,6 +376,47 @@ function isValidMissions(value: unknown, sailingDay: number): value is Mission[]
     }) &&
     new Set(value.map((mission) => isRecord(mission) ? mission.id : null)).size ===
       value.length
+  );
+}
+
+function isValidLeaderboard(value: unknown, ids: Set<string>, lowest: number): boolean {
+  if (!Array.isArray(value) || value.length !== ids.size) return false;
+  const seen = new Set<string>();
+  return value.every((entry, index) => {
+    if (
+      !isRecord(entry) ||
+      typeof entry.id !== "string" ||
+      !ids.has(entry.id) ||
+      seen.has(entry.id) ||
+      !Number.isSafeInteger(entry.value) ||
+      Number(entry.value) < lowest ||
+      entry.rank !== index + 1 ||
+      !(
+        entry.previousRank === null ||
+        (isNonnegativeInteger(entry.previousRank) &&
+          entry.previousRank >= 1 &&
+          entry.previousRank <= ids.size)
+      ) ||
+      (index > 0 && Number((value[index - 1] as { value: number }).value) < Number(entry.value))
+    ) {
+      return false;
+    }
+    seen.add(entry.id);
+    return true;
+  });
+}
+
+function isValidLeaderboards(
+  value: unknown,
+  merchants: NpcMerchant[],
+  worldDay: number,
+): boolean {
+  if (!isRecord(value) || !isNonnegativeInteger(value.day) || value.day > worldDay) return false;
+  const ids = new Set([PLAYER_ENTRY_ID, ...merchants.map((merchant) => merchant.id)]);
+  // Debt can take net worth below zero, but nothing can do that to influence.
+  return (
+    isValidLeaderboard(value.wealth, ids, Number.MIN_SAFE_INTEGER) &&
+    isValidLeaderboard(value.influence, ids, 0)
   );
 }
 
@@ -968,6 +1010,7 @@ export function isValidGameState(value: unknown): value is GameState {
     !isNonnegativeInteger(value.worldSeed) ||
     !isNonnegativeInteger(value.worldDay) ||
     Number(value.worldDay) > Math.floor(maximumNpcDay) ||
+    !isValidLeaderboards(value.leaderboards, npcMerchants, value.worldDay) ||
     !isValidRouteConditions(value.navigationConditions) ||
     !isNonnegativeInteger(value.shipHull) ||
     typeof value.sailingDay !== "number" ||
@@ -1106,6 +1149,20 @@ function migrateToWorldClock(save: Record<string, unknown>): Record<string, unkn
     }
   }
   return { ...rest, version: 22, worldDay: npcSimulationDay, marketStock };
+}
+
+// The first count comes from the save's real state, so it shows no movement. A save too
+// damaged to value is left without rankings, and validation then refuses it unchanged.
+function migrateToLeaderboards(save: Record<string, unknown>): Record<string, unknown> {
+  try {
+    return {
+      ...save,
+      version: 25,
+      leaderboards: createLeaderboardSnapshot(save as unknown as GameState),
+    };
+  } catch {
+    return { ...save, version: 25 };
+  }
 }
 
 // Twenty-two merchants join. The original four keep their cargo and whereabouts, and get a
@@ -1768,6 +1825,10 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
 
   if (save.version === 23) {
     save = { ...save, version: 24, debtOwed: 0, rescuesTaken: 0 };
+  }
+
+  if (save.version === 24) {
+    save = migrateToLeaderboards(save);
   }
 
   return save.version === SAVE_VERSION

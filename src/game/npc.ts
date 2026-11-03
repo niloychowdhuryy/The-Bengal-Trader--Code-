@@ -172,7 +172,7 @@ export function getNpcTradingIntent(merchant: NpcMerchant): string {
   return `Specialises in ${goods.join(", ")}.`;
 }
 
-function goodsAtReference(goods: Record<GoodId, number>): number {
+export function goodsAtReference(goods: Record<GoodId, number>): number {
   return GOODS.reduce((total, good) => total + goods[good.id] * MARKET_BASE_PRICES[good.id] * 0.8, 0);
 }
 

@@ -61,7 +61,7 @@ function scaled(amounts: Record<string, number>): Record<string, number> {
 }
 
 function expectExactCoins(old: Loose, game: GameState): void {
-  expect(game.version).toBe(24);
+  expect(game.version).toBe(25);
   expect(game.coins).toBe(old.gold * 50);
   expect(game.highestCoins).toBe(old.highestGold * 50);
   expect("gold" in game).toBe(false);
@@ -100,7 +100,7 @@ function expectExactCoins(old: Loose, game: GameState): void {
 // What's left of a save once every money field is taken out should be identical.
 function withoutMoney(save: Loose): Loose {
   // Stock and the world clock are covered by the market tests.
-  const { gold, highestGold, coins, highestCoins, version, averagePurchasePrice, warehouseAveragePurchasePrice, lastMessage, voyage, marketStock, npcSimulationDay, worldDay, worldSeed, npcActivity, debtOwed, rescuesTaken, ...rest } = save;
+  const { gold, highestGold, coins, highestCoins, version, averagePurchasePrice, warehouseAveragePurchasePrice, lastMessage, voyage, marketStock, npcSimulationDay, worldDay, worldSeed, npcActivity, debtOwed, rescuesTaken, leaderboards, ...rest } = save;
   const { startedAt, arrivalAt, progressUpdatedAt, ...voyageRest } = voyage ?? {};
   return {
     ...rest,
@@ -245,7 +245,7 @@ describe("save backups", () => {
 
     const session = await openGameSession(T0);
 
-    expect(session.game?.version).toBe(24);
+    expect(session.game?.version).toBe(25);
     expect(session.log?.provenance).toBe("imported");
     expect((await readCommandLog())?.commands).toEqual([]);
     const backup = await readSaveBackup(MIGRATION_BACKUP);
@@ -350,7 +350,7 @@ describe("save backups", () => {
 });
 
 describe("a save from a newer version of the game", () => {
-  const newer = { ...createNewGame("Maya"), version: 25, somethingNew: true };
+  const newer = { ...createNewGame("Maya"), version: 26, somethingNew: true };
 
   beforeEach(resetDatabase);
 

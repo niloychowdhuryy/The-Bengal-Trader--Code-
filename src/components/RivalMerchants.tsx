@@ -37,7 +37,7 @@ function cargoSummary(merchant: NpcMerchant): string {
   return carried.length ? carried.join(", ") : "Nothing right now";
 }
 
-function RivalDetails({ state, merchant }: { state: GameState; merchant: NpcMerchant }) {
+export function RivalDetails({ state, merchant }: { state: GameState; merchant: NpcMerchant }) {
   const profile = getMerchantProfile(merchant.id);
   const recent = state.npcActivity
     .filter((activity) => activity.merchantId === merchant.id)
@@ -48,6 +48,7 @@ function RivalDetails({ state, merchant }: { state: GameState; merchant: NpcMerc
       {profile && <p>{profile.description}</p>}
       {profile && <p>{TEMPERAMENT_LABELS[profile.temperament]}</p>}
       <dl>
+        <div><dt>Home port</dt><dd>{getTown(merchant.homePort).name}</dd></div>
         <div><dt>Ship</dt><dd>{VESSEL_CLASSES[merchant.vesselClass].name}, hold {merchant.cargoCapacity}</dd></div>
         <div><dt>Carrying</dt><dd>{cargoSummary(merchant)}</dd></div>
         <div><dt>Deals in</dt><dd>{merchant.preferences.map(goodName).join(", ")}</dd></div>

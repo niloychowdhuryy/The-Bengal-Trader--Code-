@@ -11,6 +11,11 @@ import {
   type RouteTravelTime,
   type SailingSpeed,
 } from "./travel-time";
+import {
+  createLeaderboardSnapshot,
+  refreshLeaderboards,
+  type LeaderboardSnapshot,
+} from "./leaderboard";
 import { createNpcMerchants, getNpcMerchant, hashText, runMerchantDay } from "./npc";
 
 export {
@@ -68,6 +73,7 @@ export type Screen =
   | "notifications"
   | "backups"
   | "rivals"
+  | "leaderboards"
   | "account";
 
 export interface Town {
@@ -429,6 +435,7 @@ export interface GameState {
   npcMerchants: NpcMerchant[];
   npcActivity: NpcActivity[];
   worldDay: number;
+  leaderboards: LeaderboardSnapshot;
   /** Sets how this game's merchants judge prices and take turns. */
   worldSeed: number;
   farmOutput: Record<MarketPortId, number>;
@@ -955,7 +962,7 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
 ];
 
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 export const STARTING_COINS = 5_000;
 export const PROSPEROUS_MERCHANT_COINS = 12_500;
 const CHITTAGONG_ALERT_SALT_SURCHARGE = 300;
@@ -1527,6 +1534,7 @@ export function advanceWorld(
     for (const ship of [...next.fleet]) {
       next = advanceAutomatedShipDay(next, ship.id, day);
     }
+    next = refreshLeaderboards(next);
   }
   return next;
 }
@@ -1677,7 +1685,7 @@ export function createNewGame(
     returnOrder: null,
   };
 
-  return {
+  const game: GameState = {
     version: SAVE_VERSION,
     captainName: cleanName || "Captain",
     coins: STARTING_COINS,
@@ -1698,6 +1706,7 @@ export function createNewGame(
     npcMerchants: createNpcMerchants(),
     npcActivity: [],
     worldDay: 0,
+    leaderboards: { day: 0, wealth: [], influence: [] },
     worldSeed: worldSeed >>> 0,
     farmOutput: createEmptyFarmOutput(),
     farmProductionDay: createEmptyFarmProductionDays(),
@@ -1720,6 +1729,7 @@ export function createNewGame(
     chittagongIntroductionSeen: false,
     lastMessage: "",
   };
+  return { ...game, leaderboards: createLeaderboardSnapshot(game) };
 }
 
 export function getMilestoneProgress(

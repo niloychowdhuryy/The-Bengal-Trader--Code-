@@ -22,7 +22,7 @@ import {
   playRecordedGame,
 } from "./recorded-game";
 import { STRATEGIES, replayMatches, runStrategy } from "./runner";
-import currentBaseline from "./__fixtures__/economy-baseline-v24.json";
+import currentBaseline from "./__fixtures__/economy-baseline-v25.json";
 import frozenBaseline from "./__fixtures__/economy-baseline-v20.json";
 import recorded from "./__fixtures__/recorded-game-v20.json";
 

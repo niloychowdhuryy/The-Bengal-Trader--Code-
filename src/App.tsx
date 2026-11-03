@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AccountPanel from "./components/AccountPanel";
 import BengalMap from "./components/BengalMap";
+import { Leaderboards } from "./components/Leaderboards";
 import { CartPortrait } from "./components/map-art/LandCart";
 import { VesselPortrait } from "./components/map-art/VesselArt";
 import { getRouteStateAt, type RiverRoute } from "./game/navigation";
@@ -2931,6 +2932,7 @@ export default function App() {
     notifications: "Notices",
     backups: "Save backups",
     rivals: "Rival merchants",
+    leaderboards: "Merchant rankings",
     account: "Account",
   };
 
@@ -3190,6 +3192,7 @@ export default function App() {
               {screen === "progress" && <ProgressPanel state={game} />}
               {screen === "family" && <HouseholdPanel state={game} />}
               {screen === "rivals" && <RivalList state={game} />}
+              {screen === "leaderboards" && <Leaderboards state={game} />}
               {screen === "backups" && (
                 <SaveBackupPanel onRestored={() => window.location.reload()} />
               )}
@@ -3290,6 +3293,7 @@ export default function App() {
                 ["family", "Household"],
                 ["properties", "Properties"],
                 ["notifications", "Notifications"],
+                ["leaderboards", "Merchant rankings"],
                 ["rivals", "Rival merchants"],
                 ["backups", "Save backups"],
                 ...(accountService ? ([["account", "Account"]] as const) : []),

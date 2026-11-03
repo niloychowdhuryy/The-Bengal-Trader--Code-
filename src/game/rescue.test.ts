@@ -384,7 +384,7 @@ describe("saving a debt", () => {
   it("gives older saves no debt, and keeps a debt across a reload", () => {
     const { debtOwed: _debt, rescuesTaken: _rescues, ...old } = createNewGame("Old");
     const migrated = validateSave(migrateLegacySave({ ...old, version: 23 }));
-    expect(migrated.version).toBe(24);
+    expect(migrated.version).toBe(25);
     expect(migrated.debtOwed).toBe(0);
     expect(migrated.rescuesTaken).toBe(0);
 

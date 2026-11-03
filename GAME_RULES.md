@@ -8,7 +8,7 @@ Recommended future design decisions, which are not all implemented, are recorded
 
 - Start in Dhaka with **5,000 Coins**, **2 rice + 1 fine cloth**, a **12-item hold** and a basic wooden vessel.
 - Each good takes one place in the hold.
-- Progress saves to IndexedDB on this device. Version 19 saves add each ship's vessel class and any return order; version 18 ships migrate as River boats with everything else unchanged. Version 20 saves use the rebuilt routes. Version 24 saves add a debt record, empty for every existing game. Version 23 saves add 22 merchants and a world seed. Version 22 saves give stalls three times the stock, keeping each stall's share, and use a single world clock. Version 21 saves count in Coins: every older amount becomes exactly ×50, and the original save is kept as a backup under **More → Save backups**. Version 18 saves also persist each non-selected ship's automated route, route capital and recent activity. Version 17 fleets migrate with no routes assigned and empty activity logs; the selected ship and active voyage remain unchanged. Version 16 saves migrate their current vessel into one named ship without resetting cargo, upgrades, condition, Coins or voyage progress. Earlier versions migrate through the existing steps before receiving newer features. Version 15 saves preserve NPC trader state while removing the former voyage encounter; version 14 saves initialize bounded traders. Older voyage formats without a saved progress checkpoint restart the active trip at its route duration rather than using closed-app wall time. Production app files can be cached for offline reopening after first visit.
+- Progress saves to IndexedDB on this device. Version 19 saves add each ship's vessel class and any return order; version 18 ships migrate as River boats with everything else unchanged. Version 20 saves use the rebuilt routes. Version 25 saves add the merchant rankings, first counted from the save's current state. Version 24 saves add a debt record, empty for every existing game. Version 23 saves add 22 merchants and a world seed. Version 22 saves give stalls three times the stock, keeping each stall's share, and use a single world clock. Version 21 saves count in Coins: every older amount becomes exactly ×50, and the original save is kept as a backup under **More → Save backups**. Version 18 saves also persist each non-selected ship's automated route, route capital and recent activity. Version 17 fleets migrate with no routes assigned and empty activity logs; the selected ship and active voyage remain unchanged. Version 16 saves migrate their current vessel into one named ship without resetting cargo, upgrades, condition, Coins or voyage progress. Earlier versions migrate through the existing steps before receiving newer features. Version 15 saves preserve NPC trader state while removing the former voyage encounter; version 14 saves initialize bounded traders. Older voyage formats without a saved progress checkpoint restart the active trip at its route duration rather than using closed-app wall time. Production app files can be cached for offline reopening after first visit.
 
 ## Map and navigation
 
@@ -113,6 +113,27 @@ The advance patches the hull to 2 if it's lower and brings the purse up to 1,000
 Until the debt is repaid at the docks, in full or in parts, the player can't buy ships, upgrades, warehouses, farms or a residence, set up a household, or put capital into a trade route. Trading, repairs, contracts and sailing all still work. If a repayment would leave the player unable to buy goods or pay for repairs, with nothing to sell, the Docks show what would be left in the purse and ask them to confirm. A debt counts against net worth, so an advance always leaves the player worth less than before.
 
 The moneylender is a game invention, not a documented historical practice.
+
+## Merchant rankings
+
+**More → Merchant rankings** compares the player with the 26 merchants on two boards. The player's rank and the gap to the merchant immediately above are always shown, and tapping a rival opens their profile. These rankings are offline, and only read the game: they never give or take anything.
+
+**Wealthiest merchants** ranks by net worth:
+
+| Counts as | Value |
+|---|---|
+| Coins in the purse | In full |
+| Coins held by trade routes (goods a route has bought count as goods instead) | In full |
+| Goods on any ship, in a warehouse or waiting on a farm | 80% of the good's fixed reference price, not today's market price |
+| Ships and every upgrade level bought | 60% of purchase cost |
+| Warehouses, farms and the residence | 70% of purchase cost |
+| Debt to the moneylender | Subtracted in full, so net worth can go below zero |
+
+A household's cost counts for nothing, because it isn't a property. Merchants are valued the same way. They have no routes, property or debt.
+
+**Most influential merchants** ranks the player and every merchant by the same rule: personal reputation alone. Merchants have no local standing, so the player's doesn't count towards this score. It stays where it's already shown and keeps its existing uses.
+
+**Counting:** the rankings are counted on every world day that is a multiple of 5, including during a voyage, and they don't change in between. Arrows show each merchant's change in rank since the count before. A new game is counted on day 0, and an older save is first counted when it's loaded, so neither shows movement until the next count. Equal scores keep their previous order. Nothing is counted while the game is closed.
 
 ## Reputation and optional milestones
 

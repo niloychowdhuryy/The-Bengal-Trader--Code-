@@ -1,55 +1,18 @@
-// Measurements taken from game state. The net worth here is the harness's own estimate,
-// using the proposed formula, until the game has a shared valuation of its own.
+// Measurements taken from game state. Net worth is the game's own valuation.
+import { getPlayerNetWorth } from "../game/leaderboard";
 import {
-  FARM_PRICE,
   GOODS,
-  MARKET_BASE_PRICES,
   MARKET_MAX_STOCK,
   MARKET_PORTS,
-  RESIDENCE_PRICE,
-  UPGRADES,
-  VESSEL_CLASSES,
-  WAREHOUSE_PRICE,
   createInitialMarketStock,
   getGoodPrice,
   getMerchantWorth,
   type GameState,
-  type GoodId,
 } from "../game/model";
 
-const GOODS_SHARE = 0.8;
-const SHIP_SHARE = 0.6;
-const PROPERTY_SHARE = 0.7;
 const STALL_NEAR_LIMIT = 6;
 
-function goodsValue(goods: Record<GoodId, number>): number {
-  return GOODS.reduce(
-    (total, good) => total + goods[good.id] * MARKET_BASE_PRICES[good.id] * GOODS_SHARE,
-    0,
-  );
-}
-
-export function estimateNetWorth(state: GameState): number {
-  let worth = state.coins - state.debtOwed;
-  for (const ship of state.fleet) {
-    worth += goodsValue(ship.cargo);
-    worth += VESSEL_CLASSES[ship.vesselClass].price * SHIP_SHARE;
-    worth += (ship.automatedRoute?.capital ?? 0);
-    for (const upgrade of UPGRADES) {
-      const level = ship.upgrades[upgrade.id];
-      // Each level costs baseCost × its own number.
-      worth += upgrade.baseCost * ((level * (level + 1)) / 2) * SHIP_SHARE;
-    }
-  }
-  for (const port of MARKET_PORTS) {
-    worth += goodsValue(state.warehouseStock[port.id]);
-    worth += state.farmOutput[port.id] * MARKET_BASE_PRICES.rice * GOODS_SHARE;
-  }
-  worth += state.ownedWarehouses.length * WAREHOUSE_PRICE * PROPERTY_SHARE;
-  worth += state.ownedFarms.length * FARM_PRICE * PROPERTY_SHARE;
-  if (state.residenceTown) worth += RESIDENCE_PRICE * PROPERTY_SHARE;
-  return Math.round(worth);
-}
+export const estimateNetWorth = getPlayerNetWorth;
 
 export const npcWorth = getMerchantWorth;
 
