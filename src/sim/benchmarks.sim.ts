@@ -8,7 +8,7 @@ import { buildBenchmarks, renderBenchmarks, type BenchmarkRecord } from "./bench
 import approved from "./__fixtures__/economy-baseline-v25.json";
 import frozen from "./__fixtures__/economy-benchmark-v25.json";
 
-const BENCHMARK_VERSION = 26;
+const BENCHMARK_VERSION = 27;
 const before = frozen as unknown as BenchmarkRecord;
 
 test("economy benchmarks", () => {

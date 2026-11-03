@@ -129,7 +129,7 @@ function snapshot(sim: Sim, day: number): DaySnapshot {
     realMinutes: round(sim.realMs / 60_000),
     portsVisited: state.visitedTowns.length,
     milestones: state.completedMilestones.length,
-    contractsDone: state.missions.filter((mission) => mission.status === "completed").length,
+    contractsDone: sim.ledger.contractsCompleted,
     fleet: state.fleet.length,
     market: measureMarket(state),
     npcTotalWorth: state.npcMerchants.reduce((total, merchant) => total + npcWorth(merchant), 0),

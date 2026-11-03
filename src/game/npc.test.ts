@@ -437,7 +437,7 @@ describe("moving a version 22 save to the living merchants", () => {
   it("adds 22 merchants, and leaves the player's game alone", () => {
     const old = version22();
     const game = validateSave(old, T0);
-    expect(game.version).toBe(26);
+    expect(game.version).toBe(27);
     expect(game.npcMerchants).toHaveLength(26);
     expect(isValidGameState(game)).toBe(true);
     expect(game.coins).toBe(73_450);
@@ -494,7 +494,7 @@ describe("moving a version 22 save to the living merchants", () => {
       };
     });
     const session = await openGameSession(T0);
-    expect(session.game?.version).toBe(26);
+    expect(session.game?.version).toBe(27);
     expect((await readSaveBackup("save-backup:migration:v22"))?.save).toEqual(old);
     expect((await listSaveBackups()).map((backup) => backup.saveVersion)).toEqual([22]);
   });

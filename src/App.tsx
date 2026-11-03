@@ -10,6 +10,7 @@ import CityScene, {
   type CityBuildingId,
 } from "./components/CityScene";
 import {
+  CONTRACT_REPEAT_DAYS,
   CURRENT_MARKET_GOODS,
   MARKET_MAX_STOCK,
   UPGRADES,
@@ -1981,11 +1982,17 @@ function MissionBoardPanel({
             {mission.deadlineSailingDay?.toFixed(1)}
           </p>
         ) : (
-          <p>{mission.deadlineDays} in-game days after acceptance · one-time reward</p>
+          <p>
+            {mission.availableAgainDay !== null
+              ? `Offered again on day ${mission.availableAgainDay}`
+              : `${mission.deadlineDays} in-game days after acceptance`}
+          </p>
         )}
         <p className="mission-reward">
-          Reward: {formatCoins(mission.rewardCoins)} Coins · +2 global reputation · +5 local standing in{" "}
-          {getTown(mission.origin).name}
+          Reward: {formatCoins(mission.rewardCoins)} Coins
+          {mission.reputationEarned
+            ? " · reputation already earned"
+            : ` · +2 global reputation · +5 local standing in ${getTown(mission.origin).name}`}
         </p>
         {mission.status !== "completed" &&
           mission.status !== "expired" &&
@@ -2013,7 +2020,7 @@ function MissionBoardPanel({
       <div className="feature-heading">
         <span className="eyebrow">MISSION BOARD · {getTown(state.currentTown).name.toUpperCase()}</span>
         <h2>Trade contracts & journeys</h2>
-        <p>Optional contracts use sailing days for deadlines. Rewards are paid once; expired contracts cannot be repeated.</p>
+        <p>Optional contracts use sailing days for deadlines. A finished or expired contract is offered again after {CONTRACT_REPEAT_DAYS} days. Reputation and standing come from the first success only.</p>
       </div>
       <div className="mission-summary">
         <span>Global reputation <strong>{state.reputation}</strong></span>

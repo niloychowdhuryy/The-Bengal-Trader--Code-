@@ -374,6 +374,8 @@ export interface ContractValue {
   averageReward: number;
   averageGoodsCost: number;
   worthDoing: number;
+  /** Pay more than the same goods would fetch at the destination's stall. */
+  beatsSelling: number;
 }
 
 /** Whether contracts pay for the goods handed over, priced at the starting market. */
@@ -393,6 +395,11 @@ export function measureContracts(): ContractValue[] {
       averageReward: round(missions.reduce((total, mission) => total + mission.rewardCoins, 0) / missions.length),
       averageGoodsCost: round(costs.reduce((total, cost) => total + cost, 0) / missions.length),
       worthDoing: missions.filter((mission, index) => mission.rewardCoins > costs[index]).length,
+      beatsSelling: missions.filter((mission) => {
+        if (mission.good === null || mission.quantity <= 0) return false;
+        const sale = getTradeQuote(state, mission.destination, mission.good, "sell", mission.quantity)?.total ?? 0;
+        return mission.rewardCoins > sale;
+      }).length,
     };
   });
 }

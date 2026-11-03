@@ -11,7 +11,7 @@
 **Read this first:**
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
-- Saves are now version 26, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end (Economy Plan Step 4) are committed. Offline rankings (Economy Plan Step 5) are committed too. Both passed the full checkpoint in section 3. Economy rebalance Stages 1 and 2 (benchmarks, and farm costs in save version 26) are committed, with focused tests only since that checkpoint.
+- Saves are now version 27, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end (Economy Plan Step 4) are committed. Offline rankings (Economy Plan Step 5) are committed too. Both passed the full checkpoint in section 3. Economy rebalance Stages 1 to 3 (benchmarks, farm costs and repeating contracts, in save version 27) are committed, with focused tests only since that checkpoint.
 - The economy has a simulation harness and a recorded baseline (Economy Plan Step 1). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
 - Most of the planned commercial game is **not built**. In particular, there are no ads or online leaderboards, and farms, contracts and warehouses are out of balance.
 
@@ -52,7 +52,7 @@
 | Daily stock recovery toward each port's baseline | Implemented | 6–12% of the gap per day, at least 1–3 units, by what the town produces and buys |
 | Coins at 50×, 5,000 starting balance | Implemented | Older saves convert at exactly ×50 |
 | Dynamic market (production, shortages, events, explained prices) | Partially implemented | Stock moves prices and recovers by town. Merchants trade real stock, and markets note their recent trades. No seasons, shortages from events, or full price explanations yet |
-| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`, including 26 merchants. Rebalance benchmarks to day 400 are in `ECONOMY_BENCHMARKS.md`: 13 of 20 targets are met after the farm change, up from 11 |
+| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`, including 26 merchants. Rebalance benchmarks to day 400 are in `ECONOMY_BENCHMARKS.md`: 15 of 20 targets are met after the farm and contract changes, up from 11 |
 
 ### Ships
 
@@ -91,7 +91,7 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| Missions | Partially implemented | 60 fixed one-time offers (4 per port), two active at a time. Hundreds of generated missions and a journal are planned |
+| Missions | Partially implemented | 60 fixed offers (4 per port), two active at a time. They return 40 days after finishing, with reputation and standing on the first success only. Hundreds of generated missions and a journal are planned |
 | Town scenes | Partially implemented | 15 towns, but they share 8 building drawings, 4 layouts and 4 settings. **This fails the agreed requirement for individual identities** |
 | Building functions | Partially implemented | Market, Docks, Warehouse, Town centre, Home and Farm work. Mosque and Workshop only show text |
 | Other planned buildings | Planned | Temple, church, inn, shipwright, customs house, granary, guardhouse, governor's residence, separate shipyard |
@@ -155,7 +155,7 @@
 
 ## 4. Saves
 
-**Current format:** version 26. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
+**Current format:** version 27. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
 
 | Version | Added |
 |---|---|
@@ -175,6 +175,7 @@
 | 24 | A debt record for the moneylender's advance, empty for every existing game |
 | 25 | The merchant rankings, first counted from the save's current state, with no movement shown |
 | 26 | No data changes. Farm costs change, so the command log restarts |
+| 27 | Contracts repeat. New rewards apply, past successes are remembered, and finished contracts return after 40 days |
 
 A repair on load also fixes saves affected by an earlier gold-peak bug. After a migration, the command log restarts and the game is marked `imported`, because old commands used old rules.
 
@@ -228,7 +229,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `15ce0a3` | Economy Plan Step 5: offline rankings, save version 25 | Yes |
 | `213dc62` | Integration fixes: More menu scrolling and the pinned ranking card | Not when this was written |
 | `5a67933` | Economy rebalance Stage 1: benchmarks, income ledger and proposal. No economy rule changed | Not when this was written |
-| The commit after `5a67933` | Economy rebalance Stage 2: farm costs, save version 26 | Not when this was written |
+| `9835a2c` | Economy rebalance Stage 2: farm costs, save version 26 | Not when this was written |
+| The commit after `9835a2c` | Economy rebalance Stage 3: repeating contracts, save version 27 | Not when this was written |
 
 | Service | Status |
 |---|---|
@@ -299,7 +301,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 - No filter for offensive merchant names. Non-Latin names are untested.
 
 **Technical and business risks:**
-1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md) and [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md), with the plan in [ECONOMY_REBALANCE_PROPOSAL.md](./ECONOMY_REBALANCE_PROPOSAL.md). The same-port exploit is fixed. Before Stage 2, a player building farms everywhere reached 735,335 Coins by day 200, against 274,985 for the skilled trader and 92,770 for the casual one. With the Stage 2 costs that falls to 137,055, but a skilled trader with 6 farms reaches 414,675, and farms keep pulling ahead by day 400 and beyond. Delivery contracts mostly lose money, and warehouses and larger main ships don't pay back.
+1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md) and [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md), with the plan in [ECONOMY_REBALANCE_PROPOSAL.md](./ECONOMY_REBALANCE_PROPOSAL.md). The same-port exploit is fixed. Before Stage 2, a player building farms everywhere reached 735,335 Coins by day 200, against 274,985 for the skilled trader and 92,770 for the casual one. With the Stage 2 costs that falls to 137,055, but a skilled trader with 6 farms reaches 414,675, and farms keep pulling ahead by day 400 and beyond. Warehouses and larger main ships don't pay back.
 2. **Scale:** most of the planned game is still unbuilt.
 3. **Delaying cloud saves:** each new system adds saved data, and real-time farms can't be fully trusted without a server clock. Everything must stay in the command system so this can be added later.
 4. **Performance with 26 traders:** about 1.3 ms per world day on the development computer, with routes cached, measured partway through the Step 4 refinement. Not yet measured on a phone.
@@ -315,7 +317,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Economy rebalance,** in stages: benchmarks (done), farms (done), contracts, routes, then a full checkpoint. See `ECONOMY_REBALANCE_PROPOSAL.md`.
+1. **Economy rebalance,** in stages: benchmarks (done), farms (done), contracts (done), routes, then a full checkpoint. See `ECONOMY_REBALANCE_PROPOSAL.md`.
 2. **Economy Plan Step 6:** review of time-away progression, which is not approved.
 3. **Full tests, type-check, build and browser checks** at each meaningful checkpoint.
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.

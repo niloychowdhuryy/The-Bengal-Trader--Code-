@@ -397,15 +397,19 @@ function contractBonus(state: GameState, port: TownId): number {
     .reduce((total, mission) => total + mission.rewardCoins, 0);
 }
 
-function takeContracts(sim: Sim, context: BotContext): void {
+function takeContracts(sim: Sim, context: BotContext, withProfitTargets = false): void {
   for (const mission of sim.state.missions) {
     if (
       mission.status !== "available" ||
       mission.origin !== sim.state.currentTown ||
-      mission.type === "profitable_trade" ||
+      (mission.type === "profitable_trade" && !withProfitTargets) ||
       sim.state.missions.filter((entry) => entry.status === "active").length >= 2 ||
       !canSelectedShipReach(sim.state, mission.destination)
     ) {
+      continue;
+    }
+    if (mission.type === "profitable_trade") {
+      send(sim, { type: "acceptMission", missionId: mission.id });
       continue;
     }
     if (mission.good !== null) {
@@ -422,7 +426,8 @@ function takeContracts(sim: Sim, context: BotContext): void {
   // Goods promised to a contract are only sold if it's over.
   context.reserved = {};
   for (const mission of sim.state.missions) {
-    if (mission.status === "active" && mission.good !== null) {
+    // A profit target's progress is in Coins, and its goods are there to be sold.
+    if (mission.status === "active" && mission.good !== null && mission.type !== "profitable_trade") {
       context.reserved[mission.good] =
         (context.reserved[mission.good] ?? 0) + mission.quantity - mission.progress;
     }
@@ -449,7 +454,7 @@ export const mixed: Strategy = (sim, context) => {
 // ---- Benchmark players ----
 
 /** The whole round trip decides where to go, so it won't sail somewhere with no cargo back. */
-function tradeBothWays(sim: Sim): void {
+function tradeBothWays(sim: Sim, bonus: (port: TownId) => number = () => 0): void {
   const state = sim.state;
   let best: { port: TownId; plan: CargoPlan; value: number } | null = null;
   for (const town of TOWNS) {
@@ -458,7 +463,8 @@ function tradeBothWays(sim: Sim): void {
     if (!time) continue;
     const out = planCargo(state, state.currentTown, town.id, room(state), state.coins);
     const back = planCargo(state, town.id, state.currentTown, room(state), state.coins);
-    const value = (out.profit + back.profit) / (2 * Math.max(MIN_DAYS_FOR_VALUE, time.durationDays));
+    const value =
+      (out.profit + back.profit + bonus(town.id)) / (2 * Math.max(MIN_DAYS_FOR_VALUE, time.durationDays));
     if (!best || value > best.value) best = { port: town.id, plan: out, value };
   }
   if (!best) throw new Error("The ship has nowhere to sail.");
@@ -490,13 +496,50 @@ export function skilledWithRoutes(shipLimit = 2, vesselClass: VesselClassId = "b
   };
 }
 
-export function skilledWithContracts(): Strategy {
+export function skilledWithContracts(withProfitTargets = false): Strategy {
   const trade = skilledManual();
   return (sim, context) => {
-    takeContracts(sim, context);
+    takeContracts(sim, context, withProfitTargets);
     trade(sim, context);
   };
 }
+
+/** A skilled trader who takes contracts and weighs them when choosing where to sail. */
+export const skilledContractTrader: Strategy = (sim, context) => {
+  takeContracts(sim, context);
+  sellCargo(sim, context);
+  repairIfNeeded(sim);
+  takeContracts(sim, context);
+  tradeBothWays(sim, (port) => contractBonus(sim.state, port));
+};
+
+/** The test of "easy money": does nothing but run visit contracts, as fast as they come. */
+export const visitRunner: Strategy = (sim, context) => {
+  sellCargo(sim, context);
+  repairIfNeeded(sim);
+  const here = sim.state.currentTown;
+  const active = () => sim.state.missions.filter((mission) => mission.status === "active");
+  for (const mission of sim.state.missions) {
+    if (
+      mission.type === "visit" &&
+      mission.status === "available" &&
+      mission.origin === here &&
+      active().length < 2 &&
+      canSelectedShipReach(sim.state, mission.destination)
+    ) {
+      send(sim, { type: "acceptMission", missionId: mission.id });
+    }
+  }
+  const delivering = active().find((mission) => mission.destination !== here);
+  if (delivering) {
+    goTo(sim, delivering.destination);
+    return;
+  }
+  const next = sim.state.missions.find(
+    (mission) => mission.type === "visit" && mission.status === "available" && mission.origin !== here,
+  );
+  goTo(sim, next?.origin ?? (here === "dhaka" ? "sonargaon" : "dhaka"));
+};
 
 /** Plays as usual, but changes to a new main ship as soon as it can afford one. */
 export function onMainShip(vesselClass: VesselClassId, play: Strategy): Strategy {

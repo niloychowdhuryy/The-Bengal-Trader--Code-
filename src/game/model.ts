@@ -245,6 +245,10 @@ export interface Mission {
   deadlineSailingDay: number | null;
   progress: number;
   purchasedQuantity: number;
+  /** Reputation and standing are earned from a contract's first success only. */
+  reputationEarned: boolean;
+  /** The world day a finished contract is offered again. Null until it finishes. */
+  availableAgainDay: number | null;
 }
 
 export interface HouseholdChild {
@@ -962,7 +966,7 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
 ];
 
-export const SAVE_VERSION = 26;
+export const SAVE_VERSION = 27;
 export const STARTING_COINS = 5_000;
 export const PROSPEROUS_MERCHANT_COINS = 12_500;
 const CHITTAGONG_ALERT_SALT_SURCHARGE = 300;
@@ -1183,6 +1187,18 @@ export function createEmptyHousehold(): HouseholdState {
   };
 }
 
+export const CONTRACT_REPEAT_DAYS = 40;
+const DELIVERY_REWARD_SHARE = 1.3;
+const VISIT_REWARD = 500;
+
+/** Pays a share of what the goods are worth at their reference price. */
+function deliveryReward(good: GoodId, quantity: number): number {
+  return (
+    MARKET_PRICE_STEP *
+    Math.round((quantity * MARKET_BASE_PRICES[good] * DELIVERY_REWARD_SHARE) / MARKET_PRICE_STEP)
+  );
+}
+
 export function createMissionBoard(): Mission[] {
   return MARKET_PORTS.flatMap((port, index) => {
     const destination = (offset: number) =>
@@ -1198,13 +1214,15 @@ export function createMissionBoard(): Mission[] {
         good: good(1),
         quantity: 2,
         targetProfit: 0,
-        rewardCoins: 1_200,
+        rewardCoins: deliveryReward(good(1), 2),
         deadlineDays: 24,
         status: "available" as const,
         acceptedAtSailingDay: null,
         deadlineSailingDay: null,
         progress: 0,
         purchasedQuantity: 0,
+        reputationEarned: false,
+        availableAgainDay: null,
       },
       {
         id: `${port.id}:purchase-delivery`,
@@ -1214,13 +1232,15 @@ export function createMissionBoard(): Mission[] {
         good: good(3),
         quantity: 2,
         targetProfit: 0,
-        rewardCoins: 1_500,
+        rewardCoins: deliveryReward(good(3), 2),
         deadlineDays: 24,
         status: "available" as const,
         acceptedAtSailingDay: null,
         deadlineSailingDay: null,
         progress: 0,
         purchasedQuantity: 0,
+        reputationEarned: false,
+        availableAgainDay: null,
       },
       {
         id: `${port.id}:visit`,
@@ -1230,13 +1250,15 @@ export function createMissionBoard(): Mission[] {
         good: null,
         quantity: 1,
         targetProfit: 0,
-        rewardCoins: 900,
+        rewardCoins: VISIT_REWARD,
         deadlineDays: 30,
         status: "available" as const,
         acceptedAtSailingDay: null,
         deadlineSailingDay: null,
         progress: 0,
         purchasedQuantity: 0,
+        reputationEarned: false,
+        availableAgainDay: null,
       },
       {
         id: `${port.id}:profitable-trade`,
@@ -1253,6 +1275,8 @@ export function createMissionBoard(): Mission[] {
         deadlineSailingDay: null,
         progress: 0,
         purchasedQuantity: 0,
+        reputationEarned: false,
+        availableAgainDay: null,
       },
     ];
   });
@@ -1535,6 +1559,7 @@ export function advanceWorld(
     for (const ship of [...next.fleet]) {
       next = advanceAutomatedShipDay(next, ship.id, day);
     }
+    next = reopenContracts(next, day);
     next = refreshLeaderboards(next);
   }
   return next;
@@ -1810,19 +1835,53 @@ function completeMission(
   mission: Mission,
   progress: number,
 ): GameState {
+  const firstSuccess = !mission.reputationEarned;
   const completed = {
     ...state,
     coins: state.coins + mission.rewardCoins,
-    reputation: state.reputation + 2,
-    localStanding: addLocalStanding(state.localStanding, mission.origin, 5),
+    reputation: state.reputation + (firstSuccess ? 2 : 0),
+    localStanding: firstSuccess
+      ? addLocalStanding(state.localStanding, mission.origin, 5)
+      : state.localStanding,
     missions: state.missions.map((entry) =>
       entry.id === mission.id
-        ? { ...entry, status: "completed" as const, progress }
+        ? {
+            ...entry,
+            status: "completed" as const,
+            progress,
+            reputationEarned: true,
+            availableAgainDay: state.worldDay + CONTRACT_REPEAT_DAYS,
+          }
         : entry,
     ),
-    lastMessage: `Contract complete: ${formatCoins(mission.rewardCoins)} Coins, +2 reputation, and +5 local standing in ${getTown(mission.origin).name}.`,
+    lastMessage: firstSuccess
+      ? `Contract complete: ${formatCoins(mission.rewardCoins)} Coins, +2 reputation, and +5 local standing in ${getTown(mission.origin).name}.`
+      : `Contract complete: ${formatCoins(mission.rewardCoins)} Coins.`,
   };
   return updateProgress(completed);
+}
+
+/** Offers finished contracts again once their time has come. */
+function reopenContracts(state: GameState, day: number): GameState {
+  if (!state.missions.some((mission) => mission.availableAgainDay !== null && mission.availableAgainDay <= day)) {
+    return state;
+  }
+  return {
+    ...state,
+    missions: state.missions.map((mission) =>
+      mission.availableAgainDay !== null && mission.availableAgainDay <= day
+        ? {
+            ...mission,
+            status: "available" as const,
+            acceptedAtSailingDay: null,
+            deadlineSailingDay: null,
+            progress: 0,
+            purchasedQuantity: 0,
+            availableAgainDay: null,
+          }
+        : mission,
+    ),
+  };
 }
 
 export function acceptMission(
@@ -1946,7 +2005,11 @@ function resolveArrivalMissions(
         ...next,
         missions: next.missions.map((entry) =>
           entry.id === current.id
-            ? { ...entry, status: "expired" as const }
+            ? {
+                ...entry,
+                status: "expired" as const,
+                availableAgainDay: next.worldDay + CONTRACT_REPEAT_DAYS,
+              }
             : entry,
         ),
       };

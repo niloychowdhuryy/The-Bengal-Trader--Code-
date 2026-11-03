@@ -1,6 +1,7 @@
 // Save validation and migrations. Pure, so the server can use them too.
 import { PLAYER_ENTRY_ID, createLeaderboardSnapshot } from "./leaderboard";
 import {
+  CONTRACT_REPEAT_DAYS,
   MARKET_MAX_STOCK,
   WAREHOUSE_CAPACITY,
   GOODS,
@@ -339,6 +340,11 @@ function isValidMissions(value: unknown, sailingDay: number): value is Mission[]
         !isNonnegativeFiniteNumber(mission.progress) ||
         !isNonnegativeInteger(mission.purchasedQuantity) ||
         mission.purchasedQuantity > template.quantity ||
+        typeof mission.reputationEarned !== "boolean" ||
+        (mission.status === "completed" && !mission.reputationEarned) ||
+        ((mission.status === "completed" || mission.status === "expired")
+          ? !isNonnegativeInteger(mission.availableAgainDay)
+          : mission.availableAgainDay !== null) ||
         (template.type === "delivery" &&
           mission.progress > template.quantity) ||
         (template.type === "purchase_delivery" &&
@@ -1151,6 +1157,30 @@ function migrateToWorldClock(save: Record<string, unknown>): Record<string, unkn
   return { ...rest, version: 22, worldDay: npcSimulationDay, marketStock };
 }
 
+// Contracts pay the new rewards from now on, including any already accepted. One already
+// finished has earned its reputation, and is offered again after the usual wait.
+function migrateToRepeatingContracts(save: Record<string, unknown>): Record<string, unknown> {
+  const templates = createMissionBoard();
+  const worldDay = isNonnegativeInteger(save.worldDay) ? save.worldDay : 0;
+  return {
+    ...save,
+    version: 27,
+    missions: Array.isArray(save.missions)
+      ? save.missions.map((mission) => {
+          if (!isRecord(mission)) return mission;
+          const template = templates.find((entry) => entry.id === mission.id);
+          const finished = mission.status === "completed" || mission.status === "expired";
+          return {
+            ...mission,
+            rewardCoins: template?.rewardCoins ?? mission.rewardCoins,
+            reputationEarned: mission.status === "completed",
+            availableAgainDay: finished ? worldDay + CONTRACT_REPEAT_DAYS : null,
+          };
+        })
+      : save.missions,
+  };
+}
+
 // The first count comes from the save's real state, so it shows no movement. A save too
 // damaged to value is left without rankings, and validation then refuses it unchanged.
 function migrateToLeaderboards(save: Record<string, unknown>): Record<string, unknown> {
@@ -1835,6 +1865,10 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
   // command log, since a game's old commands were made under the old prices.
   if (save.version === 25) {
     save = { ...save, version: 26 };
+  }
+
+  if (save.version === 26) {
+    save = migrateToRepeatingContracts(save);
   }
 
   return save.version === SAVE_VERSION

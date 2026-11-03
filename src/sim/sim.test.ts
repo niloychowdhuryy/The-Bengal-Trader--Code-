@@ -24,8 +24,8 @@ import {
   playRecordedGame,
 } from "./recorded-game";
 import { STRATEGIES, replayMatches, runStrategy } from "./runner";
-import currentBaseline from "./__fixtures__/economy-baseline-v26.json";
-import benchmarkRecord from "./__fixtures__/economy-benchmark-v26.json";
+import currentBaseline from "./__fixtures__/economy-baseline-v27.json";
+import benchmarkRecord from "./__fixtures__/economy-benchmark-v27.json";
 import frozenBaseline from "./__fixtures__/economy-baseline-v20.json";
 import recorded from "./__fixtures__/recorded-game-v20.json";
 
@@ -170,13 +170,28 @@ describe("problems the Coins economy has fixed", () => {
 });
 
 // Step 4 and later balancing change these. A test that fails here should become a fix.
-describe("farm costs, in play", () => {
+describe("rebalanced systems, in play", () => {
   it("records every crop cost in the ledger, and no crop goes unpaid", () => {
     const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === "farm-circuit")!, { days: [120] });
     expect(sim.farmUnitsCollected).toBeGreaterThan(0);
     expect(sim.ledger.cropCost).toBe(sim.farmUnitsCollected * FARM_CROP_COST);
     expect(purseChange(sim.ledger)).toBeCloseTo(sim.state.coins - sim.base.coins, 2);
     expect(replayMatches(sim)).toBe(true);
+  }, 30_000);
+
+  it("lets contracts repeat without reputation running away", () => {
+    const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === "contract-focused")!, { days: [200] });
+    expect(sim.ledger.contractsCompleted).toBeGreaterThan(60);
+    // Two reputation for each of the 60 offers at most, plus port and trade bonuses.
+    expect(sim.state.reputation).toBeLessThanOrEqual(255);
+    expect(isValidGameState(sim.state)).toBe(true);
+    expect(replayMatches(sim)).toBe(true);
+  }, 30_000);
+
+  it("doesn't let visit contracts alone keep up with even a casual trader", () => {
+    const worth = (id: string) =>
+      runStrategy(BENCHMARKS.find((entry) => entry.id === id)!, { days: [200] }).result.snapshots[0].netWorth;
+    expect(worth("visit-runner")).toBeLessThan(worth("manual"));
   }, 30_000);
 
   it("no longer lets six farms out-earn the casual trader by more than double", () => {

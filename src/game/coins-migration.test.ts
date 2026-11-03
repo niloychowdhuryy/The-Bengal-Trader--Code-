@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asGoldSave } from "../test/gold-save";
 import { applyCommand } from "./commands";
 import {
+  createMissionBoard,
   MARKET_PORTS,
   STARTING_COINS,
   createNewGame,
@@ -61,7 +62,7 @@ function scaled(amounts: Record<string, number>): Record<string, number> {
 }
 
 function expectExactCoins(old: Loose, game: GameState): void {
-  expect(game.version).toBe(26);
+  expect(game.version).toBe(27);
   expect(game.coins).toBe(old.gold * 50);
   expect(game.highestCoins).toBe(old.highestGold * 50);
   expect("gold" in game).toBe(false);
@@ -89,7 +90,9 @@ function expectExactCoins(old: Loose, game: GameState): void {
   }
   game.missions.forEach((mission, index) => {
     const before = old.missions[index];
-    expect(mission.rewardCoins).toBe(before.rewardGold * 50);
+    // A later step sets new delivery and visit rewards. Profit targets kept their converted one.
+    if (mission.type === "profitable_trade") expect(mission.rewardCoins).toBe(before.rewardGold * 50);
+    else expect(mission.rewardCoins).toBe(createMissionBoard().find((offer) => offer.id === mission.id)!.rewardCoins);
     expect(mission.targetProfit).toBe(before.targetProfit * 50);
     expect(mission.progress).toBe(
       before.type === "profitable_trade" ? before.progress * 50 : before.progress,
@@ -113,7 +116,7 @@ function withoutMoney(save: Loose): Loose {
     // Merchants have their own migration tests.
     npcMerchants: undefined,
     missions: save.missions.map(
-      ({ rewardGold, rewardCoins, targetProfit, progress, ...mission }: Loose) => mission,
+      ({ rewardGold, rewardCoins, targetProfit, progress, reputationEarned, availableAgainDay, ...mission }: Loose) => mission,
     ),
   };
 }
@@ -245,7 +248,7 @@ describe("save backups", () => {
 
     const session = await openGameSession(T0);
 
-    expect(session.game?.version).toBe(26);
+    expect(session.game?.version).toBe(27);
     expect(session.log?.provenance).toBe("imported");
     expect((await readCommandLog())?.commands).toEqual([]);
     const backup = await readSaveBackup(MIGRATION_BACKUP);
@@ -350,7 +353,7 @@ describe("save backups", () => {
 });
 
 describe("a save from a newer version of the game", () => {
-  const newer = { ...createNewGame("Maya"), version: 27, somethingNew: true };
+  const newer = { ...createNewGame("Maya"), version: 28, somethingNew: true };
 
   beforeEach(resetDatabase);
 

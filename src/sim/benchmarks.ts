@@ -6,6 +6,7 @@ import { createSim, sail, send } from "./driver";
 import {
   findSamePortLoops,
   measureClosedLoops,
+  measureContracts,
   measureFarmPayback,
   measureRouteShip,
 } from "./experiments";
@@ -21,11 +22,13 @@ import {
   manual,
   onMainShip,
   routeRules,
+  skilledContractTrader,
   skilledManual,
   skilledWithContracts,
   skilledWithFarms,
   skilledWithRoutes,
   twoPort,
+  visitRunner,
 } from "./strategies";
 
 export const BENCHMARK_DAYS = [30, 90, 200, 400] as const;
@@ -44,6 +47,9 @@ export const BENCHMARKS: StrategyDefinition[] = [
   player("skilled-hold", "Skilled, 3 hold upgrades", () => skilledManual(3), 0),
   player("skilled-routes", "Skilled, 2 Bora routes", () => skilledWithRoutes(), 0),
   player("skilled-contracts", "Skilled, with contracts", () => skilledWithContracts(), 0),
+  player("skilled-all-contracts", "Skilled, with profit-target contracts too", () => skilledWithContracts(true), 0),
+  player("skilled-contract-trader", "Skilled, planning around contracts", () => skilledContractTrader, 0),
+  player("visit-runner", "Visit contracts only", () => visitRunner),
   player("skilled-farms", "Skilled, up to 6 farms", () => skilledWithFarms(6), 0),
   player("skilled-patello", "Skilled, Patello as main ship", () => onMainShip("patello", skilledManual()), 0),
   player("manual-bora", "Basic, Bora as main ship", () => onMainShip("bora", manual)),
@@ -347,6 +353,7 @@ export interface BenchmarkRecord {
   farmPayback: ReturnType<typeof measureFarmPayback>;
   routeShips: ReturnType<typeof measureRouteShip>[];
   routeSpread: RouteTest[];
+  contracts: ReturnType<typeof measureContracts>;
   warehousePaybackDays: number | null;
   exploits: { samePortStalls: number; profitableCycles: number };
   /** Strategies the approved baseline also measured, and whether they still match it. */
@@ -395,6 +402,7 @@ export function buildBenchmarks(approved: Baseline, seeds: readonly number[] = S
     farmPayback: measureFarmPayback(),
     routeShips: VESSEL_CLASS_IDS.map((vessel) => measureRouteShip(vessel)),
     routeSpread: measureRouteSpread(),
+    contracts: measureContracts(),
     warehousePaybackDays: extraPerDay > 0 ? round(warehouseCost / extraPerDay, 0) : null,
     exploits: { samePortStalls: findSamePortLoops().length, profitableCycles: closed.profitableCycles },
     approved: {
@@ -535,6 +543,16 @@ ${table(
 - **Farm:** ${record.farmPayback.paybackDays} days to repay its price, at ${whole(record.farmPayback.coinsPerDay)} Coins a day after crop costs, selling at a typical stall.
 - **Route ships on Hooghly–Tanda:** ${record.routeShips.map((ship) => `${ship.vessel} ${whole(ship.coinsPerDay)} Coins a day, ${ship.paybackDays ?? "never"} days`).join("; ")}.
 - **A Bora on every route from a shipyard:** ${routes.length} routes. ${routes.length - earning.length} had nothing profitable to trade when set up. Of the rest, ${earning.filter((perDay) => perDay < 0).length} lost money, and the median earned ${whole(median(earning))} Coins a day, from ${whole(Math.min(...earning))} to ${whole(Math.max(...earning))}. Measured on one seed, counting Coins only.
+- **Contracts at a new game's prices, buying goods at the issuing port:** ${record.contracts
+    .map((entry) => `${entry.type.replace("_", " ")}: ${entry.count} offers, average reward ${whole(entry.averageReward)}, goods ${whole(entry.averageGoodsCost)}, ${entry.worthDoing} pay more than the goods cost${entry.averageGoodsCost > 0 ? `, ${entry.beatsSelling} beat selling the goods at the destination` : ""}`)
+    .join("; ")}.
+- **Contracts' share of income, mixed play, after goods costs:** ${record.strategies
+    .find((entry) => entry.id === "mixed-active")!
+    .days.map((day) => {
+      const income = day.tradeProfit + day.farmRevenue - day.cropCost + day.contractProfit + day.routeGain;
+      return `day ${day.day}: ${income > 0 ? round((day.contractProfit / income) * 100, 1) : 0}%`;
+    })
+    .join(", ")}.
 - **Two warehouses:** ${record.warehousePaybackDays === null ? "no extra profit" : `${record.warehousePaybackDays} days to repay, from the extra trading profit against the same loop without them`}.
 
 ## Against the baseline of save version ${record.approved.saveVersion}
@@ -548,7 +566,7 @@ Every run replays exactly from its commands: ${record.strategies.every((entry) =
 - Bots show what the rules allow, not what feels fun. The skilled bot is a simple rule, so a good player may beat it.
 - The skilled bots judge exactly, so their seeds only vary the merchants. No target covers a skilled player's early game.
 - The farm circuit is an upper test, and most players wouldn't play that way. The "6 farms" bot buys only in ports it passes.
-- A contract bot doesn't take profit-target contracts, so contract income is a lower limit.
+- Except where named, contract bots don't take profit-target contracts, so their contract income is a lower limit.
 - Commands aren't time spent thinking.
 `;
 }
