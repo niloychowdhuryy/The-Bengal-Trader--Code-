@@ -1,0 +1,2313 @@
+{
+ "version": 20,
+ "captainName": "Recorded",
+ "gold": 1662,
+ "highestGold": 4000,
+ "reputation": 9,
+ "visitedTowns": [
+  "dhaka",
+  "hooghly",
+  "balasore",
+  "chittagong",
+  "satgaon",
+  "sonargaon"
+ ],
+ "profitableTradeMarks": [
+  "dhaka:rice",
+  "sonargaon:opium"
+ ],
+ "completedMilestones": [
+  "river_explorer",
+  "prosperous_merchant"
+ ],
+ "ownedWarehouses": [
+  "dhaka"
+ ],
+ "ownedFarms": [
+  "dhaka"
+ ],
+ "residenceTown": "dhaka",
+ "household": {
+  "spouse": {
+   "status": "married",
+   "marriedAtSailingDay": 0
+  },
+  "children": [],
+  "inheritance": {
+   "designatedHeirId": null
+  }
+ },
+ "missions": [
+  {
+   "id": "dhaka:delivery",
+   "type": "delivery",
+   "origin": "dhaka",
+   "destination": "kasimbazar",
+   "good": "muslin",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "dhaka:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "dhaka",
+   "destination": "sylhet",
+   "good": "silk",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "active",
+   "acceptedAtSailingDay": 21.798083854032047,
+   "deadlineSailingDay": 45.79808385403204,
+   "progress": 0,
+   "purchasedQuantity": 2
+  },
+  {
+   "id": "dhaka:visit",
+   "type": "visit",
+   "origin": "dhaka",
+   "destination": "satgaon",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "completed",
+   "acceptedAtSailingDay": 0,
+   "deadlineSailingDay": 30,
+   "progress": 1,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "dhaka:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "dhaka",
+   "destination": "dhaka",
+   "good": "saltpetre",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sonargaon:delivery",
+   "type": "delivery",
+   "origin": "sonargaon",
+   "destination": "chittagong",
+   "good": "salt",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sonargaon:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "sonargaon",
+   "destination": "hooghly",
+   "good": "sugar",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sonargaon:visit",
+   "type": "visit",
+   "origin": "sonargaon",
+   "destination": "rajmahal",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sonargaon:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "sonargaon",
+   "destination": "sonargaon",
+   "good": "opium",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "active",
+   "acceptedAtSailingDay": 23.305630152205467,
+   "deadlineSailingDay": 43.30563015220547,
+   "progress": 7,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "kasimbazar:delivery",
+   "type": "delivery",
+   "origin": "kasimbazar",
+   "destination": "sylhet",
+   "good": "silk",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "kasimbazar:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "kasimbazar",
+   "destination": "satgaon",
+   "good": "saltpetre",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "kasimbazar:visit",
+   "type": "visit",
+   "origin": "kasimbazar",
+   "destination": "tanda",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "kasimbazar:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "kasimbazar",
+   "destination": "kasimbazar",
+   "good": "lac",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "chittagong:delivery",
+   "type": "delivery",
+   "origin": "chittagong",
+   "destination": "hooghly",
+   "good": "sugar",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "chittagong:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "chittagong",
+   "destination": "rajmahal",
+   "good": "opium",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "chittagong:visit",
+   "type": "visit",
+   "origin": "chittagong",
+   "destination": "malda",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "chittagong:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "chittagong",
+   "destination": "chittagong",
+   "good": "rice",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sylhet:delivery",
+   "type": "delivery",
+   "origin": "sylhet",
+   "destination": "satgaon",
+   "good": "saltpetre",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sylhet:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "sylhet",
+   "destination": "tanda",
+   "good": "lac",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sylhet:visit",
+   "type": "visit",
+   "origin": "sylhet",
+   "destination": "balasore",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sylhet:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "sylhet",
+   "destination": "sylhet",
+   "good": "muslin",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "hooghly:delivery",
+   "type": "delivery",
+   "origin": "hooghly",
+   "destination": "rajmahal",
+   "good": "opium",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "hooghly:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "hooghly",
+   "destination": "malda",
+   "good": "rice",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "hooghly:visit",
+   "type": "visit",
+   "origin": "hooghly",
+   "destination": "jessore",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "hooghly:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "hooghly",
+   "destination": "hooghly",
+   "good": "salt",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "satgaon:delivery",
+   "type": "delivery",
+   "origin": "satgaon",
+   "destination": "tanda",
+   "good": "lac",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "satgaon:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "satgaon",
+   "destination": "balasore",
+   "good": "muslin",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "satgaon:visit",
+   "type": "visit",
+   "origin": "satgaon",
+   "destination": "sandwip",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "satgaon:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "satgaon",
+   "destination": "satgaon",
+   "good": "silk",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "rajmahal:delivery",
+   "type": "delivery",
+   "origin": "rajmahal",
+   "destination": "malda",
+   "good": "rice",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "rajmahal:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "rajmahal",
+   "destination": "jessore",
+   "good": "salt",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "rajmahal:visit",
+   "type": "visit",
+   "origin": "rajmahal",
+   "destination": "bakla-chandradwip",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "rajmahal:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "rajmahal",
+   "destination": "rajmahal",
+   "good": "sugar",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "tanda:delivery",
+   "type": "delivery",
+   "origin": "tanda",
+   "destination": "balasore",
+   "good": "muslin",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "tanda:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "tanda",
+   "destination": "sandwip",
+   "good": "silk",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "tanda:visit",
+   "type": "visit",
+   "origin": "tanda",
+   "destination": "patna",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "tanda:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "tanda",
+   "destination": "tanda",
+   "good": "saltpetre",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "malda:delivery",
+   "type": "delivery",
+   "origin": "malda",
+   "destination": "jessore",
+   "good": "salt",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "malda:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "malda",
+   "destination": "bakla-chandradwip",
+   "good": "sugar",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "malda:visit",
+   "type": "visit",
+   "origin": "malda",
+   "destination": "dhaka",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "malda:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "malda",
+   "destination": "malda",
+   "good": "opium",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "balasore:delivery",
+   "type": "delivery",
+   "origin": "balasore",
+   "destination": "sandwip",
+   "good": "silk",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "balasore:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "balasore",
+   "destination": "patna",
+   "good": "saltpetre",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "balasore:visit",
+   "type": "visit",
+   "origin": "balasore",
+   "destination": "sonargaon",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "balasore:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "balasore",
+   "destination": "balasore",
+   "good": "lac",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "jessore:delivery",
+   "type": "delivery",
+   "origin": "jessore",
+   "destination": "bakla-chandradwip",
+   "good": "sugar",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "jessore:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "jessore",
+   "destination": "dhaka",
+   "good": "opium",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "jessore:visit",
+   "type": "visit",
+   "origin": "jessore",
+   "destination": "kasimbazar",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "jessore:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "jessore",
+   "destination": "jessore",
+   "good": "rice",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sandwip:delivery",
+   "type": "delivery",
+   "origin": "sandwip",
+   "destination": "patna",
+   "good": "saltpetre",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sandwip:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "sandwip",
+   "destination": "sonargaon",
+   "good": "lac",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sandwip:visit",
+   "type": "visit",
+   "origin": "sandwip",
+   "destination": "chittagong",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "sandwip:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "sandwip",
+   "destination": "sandwip",
+   "good": "muslin",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "bakla-chandradwip:delivery",
+   "type": "delivery",
+   "origin": "bakla-chandradwip",
+   "destination": "dhaka",
+   "good": "opium",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "bakla-chandradwip:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "bakla-chandradwip",
+   "destination": "kasimbazar",
+   "good": "rice",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "bakla-chandradwip:visit",
+   "type": "visit",
+   "origin": "bakla-chandradwip",
+   "destination": "sylhet",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "bakla-chandradwip:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "bakla-chandradwip",
+   "destination": "bakla-chandradwip",
+   "good": "salt",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "patna:delivery",
+   "type": "delivery",
+   "origin": "patna",
+   "destination": "sonargaon",
+   "good": "lac",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 24,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "patna:purchase-delivery",
+   "type": "purchase_delivery",
+   "origin": "patna",
+   "destination": "chittagong",
+   "good": "muslin",
+   "quantity": 2,
+   "targetProfit": 0,
+   "rewardGold": 30,
+   "deadlineDays": 24,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "patna:visit",
+   "type": "visit",
+   "origin": "patna",
+   "destination": "hooghly",
+   "good": null,
+   "quantity": 1,
+   "targetProfit": 0,
+   "rewardGold": 18,
+   "deadlineDays": 30,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  },
+  {
+   "id": "patna:profitable-trade",
+   "type": "profitable_trade",
+   "origin": "patna",
+   "destination": "patna",
+   "good": "silk",
+   "quantity": 0,
+   "targetProfit": 25,
+   "rewardGold": 22,
+   "deadlineDays": 20,
+   "status": "available",
+   "acceptedAtSailingDay": null,
+   "deadlineSailingDay": null,
+   "progress": 0,
+   "purchasedQuantity": 0
+  }
+ ],
+ "localStanding": {
+  "dhaka": 5,
+  "sonargaon": 2,
+  "kasimbazar": 0,
+  "chittagong": 0,
+  "sylhet": 0,
+  "hooghly": 2,
+  "satgaon": 0,
+  "rajmahal": 0,
+  "tanda": 0,
+  "malda": 0,
+  "balasore": 0,
+  "jessore": 0,
+  "sandwip": 0,
+  "bakla-chandradwip": 0,
+  "patna": 0
+ },
+ "voyagesStarted": 18,
+ "npcMerchants": [
+  {
+   "id": "abdul-rahman",
+   "name": "Abdul Rahman",
+   "homePort": "dhaka",
+   "strategy": "specialist",
+   "preferences": [
+    "rice",
+    "salt",
+    "muslin"
+   ],
+   "preferredPorts": [
+    "patna",
+    "sonargaon",
+    "hooghly"
+   ],
+   "currentPort": "sonargaon",
+   "destinationPort": "sonargaon",
+   "phase": "docked",
+   "cargo": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCost": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCapacity": 3,
+   "budget": 64,
+   "travelDaysRemaining": 0,
+   "travelDaysTotal": 0
+  },
+  {
+   "id": "mariam-banu",
+   "name": "Mariam Banu",
+   "homePort": "sonargaon",
+   "strategy": "arbitrage",
+   "preferences": [
+    "muslin",
+    "silk",
+    "sugar",
+    "lac",
+    "salt"
+   ],
+   "preferredPorts": [],
+   "currentPort": "satgaon",
+   "destinationPort": "rajmahal",
+   "phase": "traveling",
+   "cargo": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 2,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCost": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 32.5,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCapacity": 3,
+   "budget": 107,
+   "travelDaysRemaining": 2,
+   "travelDaysTotal": 3
+  },
+  {
+   "id": "govinda-das",
+   "name": "Govinda Das",
+   "homePort": "kasimbazar",
+   "strategy": "specialist",
+   "preferences": [
+    "silk",
+    "saltpetre",
+    "lac"
+   ],
+   "preferredPorts": [
+    "patna",
+    "hooghly",
+    "rajmahal"
+   ],
+   "currentPort": "patna",
+   "destinationPort": "rajmahal",
+   "phase": "traveling",
+   "cargo": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 1,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCost": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 35,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCapacity": 3,
+   "budget": 34,
+   "travelDaysRemaining": 1,
+   "travelDaysTotal": 2
+  },
+  {
+   "id": "fatima-khatun",
+   "name": "Fatima Khatun",
+   "homePort": "patna",
+   "strategy": "regional",
+   "preferences": [
+    "saltpetre",
+    "opium",
+    "silk"
+   ],
+   "preferredPorts": [
+    "rajmahal",
+    "tanda",
+    "malda",
+    "kasimbazar"
+   ],
+   "currentPort": "tanda",
+   "destinationPort": "tanda",
+   "phase": "docked",
+   "cargo": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCost": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "cargoCapacity": 3,
+   "budget": 23,
+   "travelDaysRemaining": 0,
+   "travelDaysTotal": 0
+  }
+ ],
+ "npcActivity": [
+  {
+   "id": "govinda-das:28:bought 2 preferred cargo units",
+   "merchantId": "govinda-das",
+   "town": "rajmahal",
+   "sailingDay": 28,
+   "message": "bought 2 preferred cargo units"
+  },
+  {
+   "id": "govinda-das:28:sailed toward Patna",
+   "merchantId": "govinda-das",
+   "town": "rajmahal",
+   "sailingDay": 28,
+   "message": "sailed toward Patna"
+  },
+  {
+   "id": "fatima-khatun:28:arrived",
+   "merchantId": "fatima-khatun",
+   "town": "tanda",
+   "sailingDay": 28,
+   "message": "arrived"
+  },
+  {
+   "id": "fatima-khatun:28:sold 1 cargo unit",
+   "merchantId": "fatima-khatun",
+   "town": "tanda",
+   "sailingDay": 28,
+   "message": "sold 1 cargo unit"
+  },
+  {
+   "id": "abdul-rahman:29:bought 2 preferred cargo units",
+   "merchantId": "abdul-rahman",
+   "town": "patna",
+   "sailingDay": 29,
+   "message": "bought 2 preferred cargo units"
+  },
+  {
+   "id": "abdul-rahman:29:sailed toward Sonargaon",
+   "merchantId": "abdul-rahman",
+   "town": "patna",
+   "sailingDay": 29,
+   "message": "sailed toward Sonargaon"
+  },
+  {
+   "id": "fatima-khatun:29:bought 1 preferred cargo unit",
+   "merchantId": "fatima-khatun",
+   "town": "tanda",
+   "sailingDay": 29,
+   "message": "bought 1 preferred cargo unit"
+  },
+  {
+   "id": "fatima-khatun:29:sailed toward Kasimbazar",
+   "merchantId": "fatima-khatun",
+   "town": "tanda",
+   "sailingDay": 29,
+   "message": "sailed toward Kasimbazar"
+  },
+  {
+   "id": "mariam-banu:30:arrived",
+   "merchantId": "mariam-banu",
+   "town": "satgaon",
+   "sailingDay": 30,
+   "message": "arrived"
+  },
+  {
+   "id": "mariam-banu:30:sold 2 cargo units",
+   "merchantId": "mariam-banu",
+   "town": "satgaon",
+   "sailingDay": 30,
+   "message": "sold 2 cargo units"
+  },
+  {
+   "id": "govinda-das:30:arrived",
+   "merchantId": "govinda-das",
+   "town": "patna",
+   "sailingDay": 30,
+   "message": "arrived"
+  },
+  {
+   "id": "govinda-das:30:sold 2 cargo units",
+   "merchantId": "govinda-das",
+   "town": "patna",
+   "sailingDay": 30,
+   "message": "sold 2 cargo units"
+  },
+  {
+   "id": "fatima-khatun:30:arrived",
+   "merchantId": "fatima-khatun",
+   "town": "kasimbazar",
+   "sailingDay": 30,
+   "message": "arrived"
+  },
+  {
+   "id": "fatima-khatun:30:sold 1 cargo unit",
+   "merchantId": "fatima-khatun",
+   "town": "kasimbazar",
+   "sailingDay": 30,
+   "message": "sold 1 cargo unit"
+  },
+  {
+   "id": "mariam-banu:31:bought 2 preferred cargo units",
+   "merchantId": "mariam-banu",
+   "town": "satgaon",
+   "sailingDay": 31,
+   "message": "bought 2 preferred cargo units"
+  },
+  {
+   "id": "mariam-banu:31:sailed toward Rajmahal",
+   "merchantId": "mariam-banu",
+   "town": "satgaon",
+   "sailingDay": 31,
+   "message": "sailed toward Rajmahal"
+  },
+  {
+   "id": "govinda-das:31:bought 1 preferred cargo unit",
+   "merchantId": "govinda-das",
+   "town": "patna",
+   "sailingDay": 31,
+   "message": "bought 1 preferred cargo unit"
+  },
+  {
+   "id": "govinda-das:31:sailed toward Rajmahal",
+   "merchantId": "govinda-das",
+   "town": "patna",
+   "sailingDay": 31,
+   "message": "sailed toward Rajmahal"
+  },
+  {
+   "id": "fatima-khatun:31:bought 1 preferred cargo unit",
+   "merchantId": "fatima-khatun",
+   "town": "kasimbazar",
+   "sailingDay": 31,
+   "message": "bought 1 preferred cargo unit"
+  },
+  {
+   "id": "fatima-khatun:31:sailed toward Tanda",
+   "merchantId": "fatima-khatun",
+   "town": "kasimbazar",
+   "sailingDay": 31,
+   "message": "sailed toward Tanda"
+  },
+  {
+   "id": "abdul-rahman:32:arrived",
+   "merchantId": "abdul-rahman",
+   "town": "sonargaon",
+   "sailingDay": 32,
+   "message": "arrived"
+  },
+  {
+   "id": "abdul-rahman:32:sold 2 cargo units",
+   "merchantId": "abdul-rahman",
+   "town": "sonargaon",
+   "sailingDay": 32,
+   "message": "sold 2 cargo units"
+  },
+  {
+   "id": "fatima-khatun:32:arrived",
+   "merchantId": "fatima-khatun",
+   "town": "tanda",
+   "sailingDay": 32,
+   "message": "arrived"
+  },
+  {
+   "id": "fatima-khatun:32:sold 1 cargo unit",
+   "merchantId": "fatima-khatun",
+   "town": "tanda",
+   "sailingDay": 32,
+   "message": "sold 1 cargo unit"
+  }
+ ],
+ "npcSimulationDay": 32,
+ "farmOutput": {
+  "dhaka": 10,
+  "sonargaon": 0,
+  "kasimbazar": 0,
+  "chittagong": 0,
+  "sylhet": 0,
+  "hooghly": 0,
+  "satgaon": 0,
+  "rajmahal": 0,
+  "tanda": 0,
+  "malda": 0,
+  "balasore": 0,
+  "jessore": 0,
+  "sandwip": 0,
+  "bakla-chandradwip": 0,
+  "patna": 0
+ },
+ "farmProductionDay": {
+  "dhaka": 31,
+  "sonargaon": 0,
+  "kasimbazar": 0,
+  "chittagong": 0,
+  "sylhet": 0,
+  "hooghly": 0,
+  "satgaon": 0,
+  "rajmahal": 0,
+  "tanda": 0,
+  "malda": 0,
+  "balasore": 0,
+  "jessore": 0,
+  "sandwip": 0,
+  "bakla-chandradwip": 0,
+  "patna": 0
+ },
+ "warehouseStock": {
+  "dhaka": {
+   "rice": 0,
+   "muslin": 1,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "sonargaon": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "kasimbazar": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "chittagong": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "sylhet": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "hooghly": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "satgaon": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "rajmahal": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "tanda": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "malda": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "balasore": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "jessore": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "sandwip": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "bakla-chandradwip": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "patna": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  }
+ },
+ "warehouseAveragePurchasePrice": {
+  "dhaka": {
+   "rice": 0,
+   "muslin": 18.8,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "sonargaon": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "kasimbazar": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "chittagong": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "sylhet": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "hooghly": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "satgaon": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "rajmahal": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "tanda": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "malda": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "balasore": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "jessore": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "sandwip": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "bakla-chandradwip": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "patna": {
+   "rice": 0,
+   "muslin": 0,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  }
+ },
+ "currentTown": "sonargaon",
+ "selectedTown": "dhaka",
+ "fleet": [
+  {
+   "id": "player-ship-1",
+   "name": "Recorded's Boat",
+   "currentPort": "hooghly",
+   "shipHull": 10,
+   "upgrades": {
+    "cannon": 1,
+    "hull": 1,
+    "hold": 1
+   },
+   "cargoCapacity": 18,
+   "cargo": {
+    "rice": 2,
+    "salt": 0,
+    "muslin": 0,
+    "silk": 0,
+    "sugar": 1,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "averagePurchasePrice": {
+    "rice": 9,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 11,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sailingSpeed": 1,
+   "vesselClass": "river-boat",
+   "automatedRoute": {
+    "origin": "hooghly",
+    "destination": "satgaon",
+    "rules": [
+     {
+      "good": "sugar",
+      "buyAtOrigin": true,
+      "sellAtDestination": true
+     }
+    ],
+    "status": "running",
+    "phase": "traveling",
+    "direction": "outbound",
+    "destinationPort": "satgaon",
+    "travelDaysRemaining": 1,
+    "travelDaysTotal": 1,
+    "capital": 204
+   },
+   "automationLog": [
+    {
+     "sailingDay": 28,
+     "port": "hooghly",
+     "message": "Bought 1 Sugar and molasses for 11 gold."
+    },
+    {
+     "sailingDay": 28,
+     "port": "hooghly",
+     "message": "Sailed toward Satgaon (1 in-game day)."
+    },
+    {
+     "sailingDay": 29,
+     "port": "satgaon",
+     "message": "Arrived at Satgaon."
+    },
+    {
+     "sailingDay": 30,
+     "port": "satgaon",
+     "message": "Sold 1 Sugar and molasses for 16 gold."
+    },
+    {
+     "sailingDay": 30,
+     "port": "satgaon",
+     "message": "Sailed toward Hooghly (1 in-game day)."
+    },
+    {
+     "sailingDay": 31,
+     "port": "hooghly",
+     "message": "Arrived at Hooghly."
+    },
+    {
+     "sailingDay": 32,
+     "port": "hooghly",
+     "message": "Bought 1 Sugar and molasses for 11 gold."
+    },
+    {
+     "sailingDay": 32,
+     "port": "hooghly",
+     "message": "Sailed toward Satgaon (1 in-game day)."
+    }
+   ],
+   "returnOrder": null
+  },
+  {
+   "id": "player-ship-2",
+   "name": "Bora II",
+   "currentPort": "hooghly",
+   "shipHull": 6,
+   "upgrades": {
+    "cannon": 0,
+    "hull": 0,
+    "hold": 0
+   },
+   "cargoCapacity": 8,
+   "cargo": {
+    "rice": 0,
+    "salt": 0,
+    "muslin": 0,
+    "silk": 0,
+    "sugar": 1,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "averagePurchasePrice": {
+    "rice": 0,
+    "salt": 0,
+    "muslin": 0,
+    "silk": 0,
+    "sugar": 11,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sailingSpeed": 1,
+   "vesselClass": "bora",
+   "automatedRoute": null,
+   "automationLog": [
+    {
+     "sailingDay": 12,
+     "port": "balasore",
+     "message": "Sold 1 Sugar and molasses for 11 gold."
+    },
+    {
+     "sailingDay": 12,
+     "port": "balasore",
+     "message": "Sailed toward Hooghly (3 in-game days)."
+    },
+    {
+     "sailingDay": 15,
+     "port": "hooghly",
+     "message": "Arrived at Hooghly."
+    },
+    {
+     "sailingDay": 16,
+     "port": "hooghly",
+     "message": "Bought 1 Sugar and molasses for 11 gold."
+    },
+    {
+     "sailingDay": 16,
+     "port": "hooghly",
+     "message": "Sailed toward Balasore (3 in-game days)."
+    },
+    {
+     "sailingDay": 19,
+     "port": "balasore",
+     "message": "Arrived at Balasore."
+    },
+    {
+     "sailingDay": 19,
+     "port": "balasore",
+     "message": "Bora II is returning to Hooghly (3 in-game days)."
+    },
+    {
+     "sailingDay": 22,
+     "port": "hooghly",
+     "message": "Returned to Hooghly."
+    }
+   ],
+   "returnOrder": null
+  },
+  {
+   "id": "player-ship-3",
+   "name": "Patello III",
+   "currentPort": "sonargaon",
+   "shipHull": 14,
+   "upgrades": {
+    "cannon": 0,
+    "hull": 0,
+    "hold": 0
+   },
+   "cargoCapacity": 30,
+   "cargo": {
+    "rice": 0,
+    "salt": 4,
+    "muslin": 0,
+    "silk": 2,
+    "sugar": 3,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "averagePurchasePrice": {
+    "rice": 0,
+    "salt": 15.166666666666666,
+    "muslin": 0,
+    "silk": 32.5,
+    "sugar": 14.333333333333334,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sailingSpeed": 2,
+   "vesselClass": "patello",
+   "automatedRoute": null,
+   "automationLog": [],
+   "returnOrder": null
+  }
+ ],
+ "selectedShipId": "player-ship-3",
+ "cargo": {
+  "rice": 0,
+  "salt": 4,
+  "muslin": 0,
+  "silk": 2,
+  "sugar": 3,
+  "saltpetre": 0,
+  "opium": 0,
+  "lac": 0
+ },
+ "averagePurchasePrice": {
+  "rice": 0,
+  "salt": 15.166666666666666,
+  "muslin": 0,
+  "silk": 32.5,
+  "sugar": 14.333333333333334,
+  "saltpetre": 0,
+  "opium": 0,
+  "lac": 0
+ },
+ "marketStock": {
+  "dhaka": {
+   "rice": 30,
+   "muslin": 24,
+   "salt": 20,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 20
+  },
+  "sonargaon": {
+   "rice": 22,
+   "muslin": 20,
+   "salt": 22,
+   "silk": 20,
+   "sugar": 17,
+   "saltpetre": 20,
+   "opium": 21,
+   "lac": 20
+  },
+  "kasimbazar": {
+   "rice": 20,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 24,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 20
+  },
+  "chittagong": {
+   "rice": 20,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 20
+  },
+  "sylhet": {
+   "rice": 20,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 20
+  },
+  "hooghly": {
+   "rice": 24,
+   "muslin": 24,
+   "salt": 20,
+   "silk": 24,
+   "sugar": 23,
+   "saltpetre": 24,
+   "opium": 24,
+   "lac": 20
+  },
+  "satgaon": {
+   "rice": 16,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 20,
+   "sugar": 16,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 16
+  },
+  "rajmahal": {
+   "rice": 20,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 16,
+   "sugar": 20,
+   "saltpetre": 16,
+   "opium": 20,
+   "lac": 20
+  },
+  "tanda": {
+   "rice": 16,
+   "muslin": 16,
+   "salt": 20,
+   "silk": 16,
+   "sugar": 16,
+   "saltpetre": 21,
+   "opium": 20,
+   "lac": 20
+  },
+  "malda": {
+   "rice": 20,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 16,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 16
+  },
+  "balasore": {
+   "rice": 20,
+   "muslin": 20,
+   "salt": 16,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 20
+  },
+  "jessore": {
+   "rice": 24,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 20
+  },
+  "sandwip": {
+   "rice": 16,
+   "muslin": 20,
+   "salt": 16,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 20
+  },
+  "bakla-chandradwip": {
+   "rice": 24,
+   "muslin": 20,
+   "salt": 16,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 20,
+   "opium": 20,
+   "lac": 16
+  },
+  "patna": {
+   "rice": 20,
+   "muslin": 20,
+   "salt": 20,
+   "silk": 20,
+   "sugar": 20,
+   "saltpetre": 24,
+   "opium": 24,
+   "lac": 20
+  }
+ },
+ "navigationConditions": {},
+ "shipHull": 14,
+ "upgrades": {
+  "cannon": 0,
+  "hull": 0,
+  "hold": 0
+ },
+ "sailingDay": 31.460754797962878,
+ "sailingSpeed": 2,
+ "voyage": {
+  "shipId": "player-ship-3",
+  "origin": "sonargaon",
+  "destination": "dhaka",
+  "startedAt": 1800023457650,
+  "arrivalAt": 1800023522876.389,
+  "durationMs": 90452.77789040512,
+  "elapsedMs": 40000,
+  "progressUpdatedAt": 1800023497650,
+  "durationDays": 1.5075462981734187,
+  "routeAlert": false,
+  "route": {
+   "origin": "sonargaon",
+   "destination": "dhaka",
+   "edgeIds": [
+    "land-29",
+    "water-25",
+    "water-45",
+    "water-17"
+   ],
+   "points": [
+    {
+     "x": 830.5,
+     "y": 276
+    },
+    {
+     "x": 837.4,
+     "y": 274.5
+    },
+    {
+     "x": 841.4,
+     "y": 276
+    },
+    {
+     "x": 844.8,
+     "y": 280
+    },
+    {
+     "x": 846.5,
+     "y": 284
+    },
+    {
+     "x": 846.5,
+     "y": 288
+    },
+    {
+     "x": 845.88,
+     "y": 290.75
+    },
+    {
+     "x": 844.63,
+     "y": 292.25
+    },
+    {
+     "x": 844,
+     "y": 295.5
+    },
+    {
+     "x": 844,
+     "y": 300.5
+    },
+    {
+     "x": 843.35,
+     "y": 303.75
+    },
+    {
+     "x": 842.05,
+     "y": 305.25
+    },
+    {
+     "x": 840.98,
+     "y": 309
+    },
+    {
+     "x": 840.13,
+     "y": 315
+    },
+    {
+     "x": 836.98,
+     "y": 321.25
+    },
+    {
+     "x": 831.53,
+     "y": 327.75
+    },
+    {
+     "x": 825.43,
+     "y": 331.25
+    },
+    {
+     "x": 818.68,
+     "y": 331.75
+    },
+    {
+     "x": 813.6,
+     "y": 334
+    },
+    {
+     "x": 810.2,
+     "y": 338
+    },
+    {
+     "x": 807.65,
+     "y": 340
+    },
+    {
+     "x": 805.95,
+     "y": 340
+    },
+    {
+     "x": 803.63,
+     "y": 341.75
+    },
+    {
+     "x": 800.68,
+     "y": 345.25
+    },
+    {
+     "x": 797.95,
+     "y": 347.25
+    },
+    {
+     "x": 795.45,
+     "y": 347.75
+    },
+    {
+     "x": 792.5,
+     "y": 350.25
+    },
+    {
+     "x": 787.4,
+     "y": 357
+    },
+    {
+     "x": 787.4,
+     "y": 365.25
+    },
+    {
+     "x": 783.83,
+     "y": 367.75
+    },
+    {
+     "x": 776.68,
+     "y": 367.25
+    },
+    {
+     "x": 772.25,
+     "y": 366.25
+    },
+    {
+     "x": 770.55,
+     "y": 364.75
+    },
+    {
+     "x": 767.18,
+     "y": 364
+    },
+    {
+     "x": 762.13,
+     "y": 364
+    },
+    {
+     "x": 758.13,
+     "y": 363.25
+    },
+    {
+     "x": 755.18,
+     "y": 361.75
+    },
+    {
+     "x": 749.9,
+     "y": 360.75
+    },
+    {
+     "x": 742.3,
+     "y": 360.25
+    },
+    {
+     "x": 732.8,
+     "y": 357.25
+    },
+    {
+     "x": 721.4,
+     "y": 351.75
+    },
+    {
+     "x": 715.7,
+     "y": 348
+    },
+    {
+     "x": 715.7,
+     "y": 345
+    }
+   ],
+   "distance": 211.9424357268632,
+   "legs": [
+    {
+     "mode": "land",
+     "firstPoint": 0,
+     "lastPoint": 27,
+     "distance": 124.04335975135419
+    },
+    {
+     "mode": "water",
+     "firstPoint": 27,
+     "lastPoint": 42,
+     "distance": 87.89907597550896
+    }
+   ]
+  },
+  "travelEvent": null
+ },
+ "encounterPending": false,
+ "chittagongIntroductionSeen": true,
+ "lastMessage": ""
+}

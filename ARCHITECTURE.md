@@ -78,10 +78,17 @@ The browser game doesn't import any of this. Cloud saves connect it in Stage 3.
 
 `src/game/save-format.ts` holds the pure validation and migrations, and `src/game/storage.ts` the IndexedDB access. Together they validate bounded game data before restoring it, migrates earlier game saves through game-state version 20, preserves cargo, market stock, progression, property, household, missions, NPC merchants, the player fleet, automated routes, warehouse inventories and cost basis, and surfaces IndexedDB errors. On load it also raises a recorded gold peak that is below current gold, because an earlier route-cancellation bug could save that state; other invalid data is still rejected. Version 6 voyages keep their last persisted elapsed-time checkpoint and are re-anchored on load; older voyage formats without a saved progress checkpoint restart the in-progress voyage at its current route duration instead of deriving progress from wall-clock time. Version 7 also persists whether the Chittagong introduction has occurred. A production service worker precaches the app shell for offline reopening after first visit. The dev server intentionally does not register a service worker so HMR remains reliable.
 
+## Simulation harness
+
+`src/sim/` plays the real game headlessly: scripted players (`strategies.ts`) send real commands through `driver.ts` on a virtual clock, so every run can be rebuilt by replay. `experiments.ts` measures one behaviour each, such as route income, stock recovery, the NPC world and known exploits. `baseline.ts` gathers these into a record with no dates or machine details, so the same rules always give the same record, and `report.ts` writes it up. Nothing in `src/sim/` is part of the game bundle.
+
+`npm run sim` writes the current measurements to `sim-reports/` (not committed). `npm run sim:freeze` records [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md), the baseline in `src/sim/__fixtures__/`, the recorded game (`recorded-game.ts`, using every kind of command) and the test save `src/game/__fixtures__/save-v20.json`. It refuses to run on later rules, so a stage can't overwrite the record it's compared against. Normal tests check these against the current rules while the save version is 20. Known problems have tests that describe them, and a stage that fixes one changes its test to require the fix.
+
 ## Verification commands
 
 - `npm run test`
 - `npm run build`
+- `npm run sim`
 - `npm run dev` (LAN binding is configured in Vite on port 5173)
 
 The `dist/` folder contains the production build and generated service worker.

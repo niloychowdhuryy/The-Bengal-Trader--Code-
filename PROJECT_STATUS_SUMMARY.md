@@ -1,6 +1,6 @@
 # The Bengal Trader: Project Status Summary
 
-**As of:** 2 November 2026. Written from the repository, its Git history and its documents. It is for someone with no prior knowledge of the project, to help decide what to build next.
+**As of:** 3 November 2026. Written from the repository, its Git history and its documents. It is for someone with no prior knowledge of the project, to help decide what to build next.
 
 **Labels:**
 - **Implemented:** works in the game and has automated tests.
@@ -12,6 +12,7 @@
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
 - Saves are now version 20. Older saves migrate on load.
+- The economy has a simulation harness and a recorded baseline (Economy Plan Step 1, approved and committed locally, not pushed). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
 - Most of the planned commercial game is **not built**. In particular, the currency is still Gold, markets are simple, and there are no ads or leaderboards.
 
 ## 1. The game
@@ -52,7 +53,7 @@
 | Currency | Implemented as Gold | Coins are planned (below) |
 | Coins at 50×, 5,000 starting balance | Planned | Stage 4 |
 | Dynamic market (production, shortages, events, explained prices) | Partially implemented | Only stock movement and one fixed Chittagong salt event exist |
-| Economic simulations | Planned | None exist, so no balance has been validated |
+| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`. Balance targets are not met yet |
 
 ### Ships
 
@@ -146,7 +147,7 @@
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
 
-**Tests:** 420 passing across 18 test files, plus a passing type-check and production build, at the navigation commit.
+**Tests:** 420 passing across 18 test files, plus a passing type-check and production build, at the navigation commit. Economy Plan Step 1 adds a simulation harness and its tests.
 
 ## 4. Saves
 
@@ -208,8 +209,9 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `80c3fb7` | Visual redesign | Yes |
 | `eb28e82` | Online Stage 1: commands and replay | Yes |
 | `4645376` | Staging, navigation and town plans | Yes |
-| `7f1fa25` | Online Stage 2: Google sign-in and profiles | Approved for push |
-| Latest | Navigation rebuild, map fix and port panel, save version 20 | Approved for push |
+| `7f1fa25` | Online Stage 2: Google sign-in and profiles | Yes |
+| `d45a93d` | Navigation rebuild, map fix and port panel, save version 20 | Yes |
+| Latest | Economy Plan Step 1: simulation harness and baseline | **No, awaiting the owner's instruction** |
 
 | Service | Status |
 |---|---|
@@ -238,7 +240,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | Leaderboards | Planned | Stage 11 |
 | Rewarded ads | Blocked | Stage 12 |
 | Android app | Planned | Stage 12. Needed because verified ad rewards rely on AdMob in a native app |
-| Economic simulations | Planned | Tools at Stage 4, full pass at Stage 13 |
+| Economic simulations | Partially implemented | Tools and baseline done, full pass at Stage 13. Must cover the owner's requirements for automated trading, delivery contracts and farms, listed in `ROADMAP.md` |
 | Real-phone testing | Planned | A later dedicated phase, by the owner's decision |
 
 ## 8. Agreed decisions and constraints
@@ -281,7 +283,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 - No filter for offensive merchant names. Non-Latin names are untested.
 
 **Technical and business risks:**
-1. **Economy balance:** nothing has been simulated. An earlier measurement on the old routes found one route (Hooghly to Satgaon) far more profitable than the rest. Journey times have since changed, and this hasn't been remeasured.
+1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). Same-port trading can create money, farms and automated ships out-earn trading, and NPC merchants barely affect markets. None of this is fixed yet.
 2. **Scale:** most of the planned game is still unbuilt.
 3. **Delaying cloud saves:** each new system adds saved data, and real-time farms can't be fully trusted without a server clock. Everything must stay in the command system so this can be added later.
 4. **Performance with 25+ traders:** untested. The current planner is not optimised for many routes per day.
@@ -297,9 +299,9 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Review and commit navigation, the map fix and the port panel,** then push so staging catches up.
-2. **Coins and simulation tools** (Stage 4). Later balance depends on them.
-3. **Dynamic markets, with the 25 NPC traders** (Stage 5). Traders are the main force on stock and prices, so they should be built and balanced together.
+1. **Coins** (Stage 4, Economy Plan Step 2), once the owner approves it. Whether staging runs `d45a93d` is still unconfirmed.
+2. **Pricing, stock and the world tick** (Economy Plan Step 3). Later balance depends on it.
+3. **The 25+ NPC traders, then offline leaderboards** (Stage 5, Economy Plan Steps 4–5). Traders are the main force on stock and prices, so they should be built and balanced together.
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.
 5. **City unlocks and reputation** (Stage 8).
 6. **Buildings, missions and town identities** (Stage 9).

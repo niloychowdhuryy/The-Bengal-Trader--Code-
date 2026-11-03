@@ -1089,7 +1089,7 @@ export const PORT_ECONOMIES: Record<MarketPortId, PortEconomyProfile> = {
   },
 };
 
-const MARKET_BASE_PRICES: Record<GoodId, number> = {
+export const MARKET_BASE_PRICES: Record<GoodId, number> = {
   rice: 8,
   salt: 12,
   muslin: 24,

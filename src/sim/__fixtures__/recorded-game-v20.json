@@ -1,0 +1,3801 @@
+{
+ "note": "Commands from `base`, with every amount of money after each. Step 2 replays these under Coins and expects ×50. Scale the initialCapital of configureRoute commands too.",
+ "saveVersion": 20,
+ "startAt": 1800000000000,
+ "endAt": 1800023497650,
+ "base": {
+  "version": 20,
+  "captainName": "Recorded",
+  "gold": 4000,
+  "highestGold": 4000,
+  "reputation": 0,
+  "visitedTowns": [
+   "dhaka"
+  ],
+  "profitableTradeMarks": [],
+  "completedMilestones": [],
+  "ownedWarehouses": [],
+  "ownedFarms": [],
+  "residenceTown": null,
+  "household": {
+   "spouse": null,
+   "children": [],
+   "inheritance": {
+    "designatedHeirId": null
+   }
+  },
+  "missions": [
+   {
+    "id": "dhaka:delivery",
+    "type": "delivery",
+    "origin": "dhaka",
+    "destination": "kasimbazar",
+    "good": "muslin",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "dhaka:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "dhaka",
+    "destination": "sylhet",
+    "good": "silk",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "dhaka:visit",
+    "type": "visit",
+    "origin": "dhaka",
+    "destination": "satgaon",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "dhaka:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "dhaka",
+    "destination": "dhaka",
+    "good": "saltpetre",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sonargaon:delivery",
+    "type": "delivery",
+    "origin": "sonargaon",
+    "destination": "chittagong",
+    "good": "salt",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sonargaon:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "sonargaon",
+    "destination": "hooghly",
+    "good": "sugar",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sonargaon:visit",
+    "type": "visit",
+    "origin": "sonargaon",
+    "destination": "rajmahal",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sonargaon:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "sonargaon",
+    "destination": "sonargaon",
+    "good": "opium",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "kasimbazar:delivery",
+    "type": "delivery",
+    "origin": "kasimbazar",
+    "destination": "sylhet",
+    "good": "silk",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "kasimbazar:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "kasimbazar",
+    "destination": "satgaon",
+    "good": "saltpetre",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "kasimbazar:visit",
+    "type": "visit",
+    "origin": "kasimbazar",
+    "destination": "tanda",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "kasimbazar:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "kasimbazar",
+    "destination": "kasimbazar",
+    "good": "lac",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "chittagong:delivery",
+    "type": "delivery",
+    "origin": "chittagong",
+    "destination": "hooghly",
+    "good": "sugar",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "chittagong:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "chittagong",
+    "destination": "rajmahal",
+    "good": "opium",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "chittagong:visit",
+    "type": "visit",
+    "origin": "chittagong",
+    "destination": "malda",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "chittagong:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "chittagong",
+    "destination": "chittagong",
+    "good": "rice",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sylhet:delivery",
+    "type": "delivery",
+    "origin": "sylhet",
+    "destination": "satgaon",
+    "good": "saltpetre",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sylhet:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "sylhet",
+    "destination": "tanda",
+    "good": "lac",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sylhet:visit",
+    "type": "visit",
+    "origin": "sylhet",
+    "destination": "balasore",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sylhet:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "sylhet",
+    "destination": "sylhet",
+    "good": "muslin",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "hooghly:delivery",
+    "type": "delivery",
+    "origin": "hooghly",
+    "destination": "rajmahal",
+    "good": "opium",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "hooghly:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "hooghly",
+    "destination": "malda",
+    "good": "rice",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "hooghly:visit",
+    "type": "visit",
+    "origin": "hooghly",
+    "destination": "jessore",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "hooghly:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "hooghly",
+    "destination": "hooghly",
+    "good": "salt",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "satgaon:delivery",
+    "type": "delivery",
+    "origin": "satgaon",
+    "destination": "tanda",
+    "good": "lac",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "satgaon:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "satgaon",
+    "destination": "balasore",
+    "good": "muslin",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "satgaon:visit",
+    "type": "visit",
+    "origin": "satgaon",
+    "destination": "sandwip",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "satgaon:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "satgaon",
+    "destination": "satgaon",
+    "good": "silk",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "rajmahal:delivery",
+    "type": "delivery",
+    "origin": "rajmahal",
+    "destination": "malda",
+    "good": "rice",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "rajmahal:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "rajmahal",
+    "destination": "jessore",
+    "good": "salt",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "rajmahal:visit",
+    "type": "visit",
+    "origin": "rajmahal",
+    "destination": "bakla-chandradwip",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "rajmahal:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "rajmahal",
+    "destination": "rajmahal",
+    "good": "sugar",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "tanda:delivery",
+    "type": "delivery",
+    "origin": "tanda",
+    "destination": "balasore",
+    "good": "muslin",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "tanda:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "tanda",
+    "destination": "sandwip",
+    "good": "silk",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "tanda:visit",
+    "type": "visit",
+    "origin": "tanda",
+    "destination": "patna",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "tanda:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "tanda",
+    "destination": "tanda",
+    "good": "saltpetre",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "malda:delivery",
+    "type": "delivery",
+    "origin": "malda",
+    "destination": "jessore",
+    "good": "salt",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "malda:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "malda",
+    "destination": "bakla-chandradwip",
+    "good": "sugar",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "malda:visit",
+    "type": "visit",
+    "origin": "malda",
+    "destination": "dhaka",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "malda:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "malda",
+    "destination": "malda",
+    "good": "opium",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "balasore:delivery",
+    "type": "delivery",
+    "origin": "balasore",
+    "destination": "sandwip",
+    "good": "silk",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "balasore:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "balasore",
+    "destination": "patna",
+    "good": "saltpetre",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "balasore:visit",
+    "type": "visit",
+    "origin": "balasore",
+    "destination": "sonargaon",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "balasore:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "balasore",
+    "destination": "balasore",
+    "good": "lac",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "jessore:delivery",
+    "type": "delivery",
+    "origin": "jessore",
+    "destination": "bakla-chandradwip",
+    "good": "sugar",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "jessore:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "jessore",
+    "destination": "dhaka",
+    "good": "opium",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "jessore:visit",
+    "type": "visit",
+    "origin": "jessore",
+    "destination": "kasimbazar",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "jessore:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "jessore",
+    "destination": "jessore",
+    "good": "rice",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sandwip:delivery",
+    "type": "delivery",
+    "origin": "sandwip",
+    "destination": "patna",
+    "good": "saltpetre",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sandwip:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "sandwip",
+    "destination": "sonargaon",
+    "good": "lac",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sandwip:visit",
+    "type": "visit",
+    "origin": "sandwip",
+    "destination": "chittagong",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "sandwip:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "sandwip",
+    "destination": "sandwip",
+    "good": "muslin",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "bakla-chandradwip:delivery",
+    "type": "delivery",
+    "origin": "bakla-chandradwip",
+    "destination": "dhaka",
+    "good": "opium",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "bakla-chandradwip:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "bakla-chandradwip",
+    "destination": "kasimbazar",
+    "good": "rice",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "bakla-chandradwip:visit",
+    "type": "visit",
+    "origin": "bakla-chandradwip",
+    "destination": "sylhet",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "bakla-chandradwip:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "bakla-chandradwip",
+    "destination": "bakla-chandradwip",
+    "good": "salt",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "patna:delivery",
+    "type": "delivery",
+    "origin": "patna",
+    "destination": "sonargaon",
+    "good": "lac",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 24,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "patna:purchase-delivery",
+    "type": "purchase_delivery",
+    "origin": "patna",
+    "destination": "chittagong",
+    "good": "muslin",
+    "quantity": 2,
+    "targetProfit": 0,
+    "rewardGold": 30,
+    "deadlineDays": 24,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "patna:visit",
+    "type": "visit",
+    "origin": "patna",
+    "destination": "hooghly",
+    "good": null,
+    "quantity": 1,
+    "targetProfit": 0,
+    "rewardGold": 18,
+    "deadlineDays": 30,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   },
+   {
+    "id": "patna:profitable-trade",
+    "type": "profitable_trade",
+    "origin": "patna",
+    "destination": "patna",
+    "good": "silk",
+    "quantity": 0,
+    "targetProfit": 25,
+    "rewardGold": 22,
+    "deadlineDays": 20,
+    "status": "available",
+    "acceptedAtSailingDay": null,
+    "deadlineSailingDay": null,
+    "progress": 0,
+    "purchasedQuantity": 0
+   }
+  ],
+  "localStanding": {
+   "dhaka": 0,
+   "sonargaon": 0,
+   "kasimbazar": 0,
+   "chittagong": 0,
+   "sylhet": 0,
+   "hooghly": 0,
+   "satgaon": 0,
+   "rajmahal": 0,
+   "tanda": 0,
+   "malda": 0,
+   "balasore": 0,
+   "jessore": 0,
+   "sandwip": 0,
+   "bakla-chandradwip": 0,
+   "patna": 0
+  },
+  "voyagesStarted": 0,
+  "npcMerchants": [
+   {
+    "id": "abdul-rahman",
+    "name": "Abdul Rahman",
+    "homePort": "dhaka",
+    "strategy": "specialist",
+    "preferences": [
+     "rice",
+     "salt",
+     "muslin"
+    ],
+    "preferredPorts": [
+     "patna",
+     "sonargaon",
+     "hooghly"
+    ],
+    "currentPort": "dhaka",
+    "destinationPort": "dhaka",
+    "phase": "docked",
+    "cargo": {
+     "rice": 2,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCost": {
+     "rice": 8,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCapacity": 3,
+    "budget": 100,
+    "travelDaysRemaining": 0,
+    "travelDaysTotal": 0
+   },
+   {
+    "id": "mariam-banu",
+    "name": "Mariam Banu",
+    "homePort": "sonargaon",
+    "strategy": "arbitrage",
+    "preferences": [
+     "muslin",
+     "silk",
+     "sugar",
+     "lac",
+     "salt"
+    ],
+    "preferredPorts": [],
+    "currentPort": "sonargaon",
+    "destinationPort": "sonargaon",
+    "phase": "docked",
+    "cargo": {
+     "rice": 0,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCost": {
+     "rice": 0,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCapacity": 3,
+    "budget": 100,
+    "travelDaysRemaining": 0,
+    "travelDaysTotal": 0
+   },
+   {
+    "id": "govinda-das",
+    "name": "Govinda Das",
+    "homePort": "kasimbazar",
+    "strategy": "specialist",
+    "preferences": [
+     "silk",
+     "saltpetre",
+     "lac"
+    ],
+    "preferredPorts": [
+     "patna",
+     "hooghly",
+     "rajmahal"
+    ],
+    "currentPort": "kasimbazar",
+    "destinationPort": "kasimbazar",
+    "phase": "docked",
+    "cargo": {
+     "rice": 0,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCost": {
+     "rice": 0,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCapacity": 3,
+    "budget": 100,
+    "travelDaysRemaining": 0,
+    "travelDaysTotal": 0
+   },
+   {
+    "id": "fatima-khatun",
+    "name": "Fatima Khatun",
+    "homePort": "patna",
+    "strategy": "regional",
+    "preferences": [
+     "saltpetre",
+     "opium",
+     "silk"
+    ],
+    "preferredPorts": [
+     "rajmahal",
+     "tanda",
+     "malda",
+     "kasimbazar"
+    ],
+    "currentPort": "patna",
+    "destinationPort": "patna",
+    "phase": "docked",
+    "cargo": {
+     "rice": 0,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCost": {
+     "rice": 0,
+     "muslin": 0,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "cargoCapacity": 3,
+    "budget": 100,
+    "travelDaysRemaining": 0,
+    "travelDaysTotal": 0
+   }
+  ],
+  "npcActivity": [],
+  "npcSimulationDay": 0,
+  "farmOutput": {
+   "dhaka": 0,
+   "sonargaon": 0,
+   "kasimbazar": 0,
+   "chittagong": 0,
+   "sylhet": 0,
+   "hooghly": 0,
+   "satgaon": 0,
+   "rajmahal": 0,
+   "tanda": 0,
+   "malda": 0,
+   "balasore": 0,
+   "jessore": 0,
+   "sandwip": 0,
+   "bakla-chandradwip": 0,
+   "patna": 0
+  },
+  "farmProductionDay": {
+   "dhaka": 0,
+   "sonargaon": 0,
+   "kasimbazar": 0,
+   "chittagong": 0,
+   "sylhet": 0,
+   "hooghly": 0,
+   "satgaon": 0,
+   "rajmahal": 0,
+   "tanda": 0,
+   "malda": 0,
+   "balasore": 0,
+   "jessore": 0,
+   "sandwip": 0,
+   "bakla-chandradwip": 0,
+   "patna": 0
+  },
+  "warehouseStock": {
+   "dhaka": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sonargaon": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "kasimbazar": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "chittagong": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sylhet": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "hooghly": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "satgaon": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "rajmahal": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "tanda": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "malda": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "balasore": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "jessore": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sandwip": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "bakla-chandradwip": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "patna": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   }
+  },
+  "warehouseAveragePurchasePrice": {
+   "dhaka": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sonargaon": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "kasimbazar": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "chittagong": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sylhet": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "hooghly": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "satgaon": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "rajmahal": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "tanda": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "malda": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "balasore": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "jessore": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "sandwip": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "bakla-chandradwip": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   },
+   "patna": {
+    "rice": 0,
+    "muslin": 0,
+    "salt": 0,
+    "silk": 0,
+    "sugar": 0,
+    "saltpetre": 0,
+    "opium": 0,
+    "lac": 0
+   }
+  },
+  "currentTown": "dhaka",
+  "selectedTown": "sonargaon",
+  "fleet": [
+   {
+    "id": "player-ship-1",
+    "name": "Recorded's Boat",
+    "currentPort": "dhaka",
+    "shipHull": 8,
+    "upgrades": {
+     "cannon": 0,
+     "hull": 0,
+     "hold": 0
+    },
+    "cargoCapacity": 12,
+    "cargo": {
+     "rice": 2,
+     "salt": 0,
+     "muslin": 1,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "averagePurchasePrice": {
+     "rice": 9,
+     "muslin": 18,
+     "salt": 0,
+     "silk": 0,
+     "sugar": 0,
+     "saltpetre": 0,
+     "opium": 0,
+     "lac": 0
+    },
+    "sailingSpeed": 1,
+    "vesselClass": "river-boat",
+    "automatedRoute": null,
+    "automationLog": [],
+    "returnOrder": null
+   }
+  ],
+  "selectedShipId": "player-ship-1",
+  "cargo": {
+   "rice": 2,
+   "salt": 0,
+   "muslin": 1,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "averagePurchasePrice": {
+   "rice": 9,
+   "muslin": 18,
+   "salt": 0,
+   "silk": 0,
+   "sugar": 0,
+   "saltpetre": 0,
+   "opium": 0,
+   "lac": 0
+  },
+  "marketStock": {
+   "dhaka": {
+    "rice": 20,
+    "muslin": 24,
+    "salt": 20,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "sonargaon": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "kasimbazar": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 24,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "chittagong": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "sylhet": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "hooghly": {
+    "rice": 24,
+    "muslin": 24,
+    "salt": 20,
+    "silk": 24,
+    "sugar": 24,
+    "saltpetre": 24,
+    "opium": 24,
+    "lac": 20
+   },
+   "satgaon": {
+    "rice": 16,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 20,
+    "sugar": 16,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 16
+   },
+   "rajmahal": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 16,
+    "sugar": 20,
+    "saltpetre": 16,
+    "opium": 20,
+    "lac": 20
+   },
+   "tanda": {
+    "rice": 16,
+    "muslin": 16,
+    "salt": 20,
+    "silk": 16,
+    "sugar": 16,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "malda": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 16,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 16
+   },
+   "balasore": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 16,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "jessore": {
+    "rice": 24,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "sandwip": {
+    "rice": 16,
+    "muslin": 20,
+    "salt": 16,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 20
+   },
+   "bakla-chandradwip": {
+    "rice": 24,
+    "muslin": 20,
+    "salt": 16,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 20,
+    "opium": 20,
+    "lac": 16
+   },
+   "patna": {
+    "rice": 20,
+    "muslin": 20,
+    "salt": 20,
+    "silk": 20,
+    "sugar": 20,
+    "saltpetre": 24,
+    "opium": 24,
+    "lac": 20
+   }
+  },
+  "navigationConditions": {},
+  "shipHull": 8,
+  "upgrades": {
+   "cannon": 0,
+   "hull": 0,
+   "hold": 0
+  },
+  "sailingDay": 0,
+  "sailingSpeed": 1,
+  "voyage": null,
+  "encounterPending": false,
+  "chittagongIntroductionSeen": false,
+  "lastMessage": ""
+ },
+ "commands": [
+  {
+   "seq": 1,
+   "at": 1800000000000,
+   "command": {
+    "type": "tradeWithMerchant",
+    "merchantId": "abdul-rahman",
+    "good": "rice"
+   }
+  },
+  {
+   "seq": 2,
+   "at": 1800000000000,
+   "command": {
+    "type": "buyGood",
+    "good": "muslin",
+    "quantity": 4
+   }
+  },
+  {
+   "seq": 3,
+   "at": 1800000000000,
+   "command": {
+    "type": "sellGood",
+    "good": "rice",
+    "quantity": 1
+   }
+  },
+  {
+   "seq": 4,
+   "at": 1800000000000,
+   "command": {
+    "type": "buyUpgrade",
+    "upgrade": "hold"
+   }
+  },
+  {
+   "seq": 5,
+   "at": 1800000000000,
+   "command": {
+    "type": "buyUpgrade",
+    "upgrade": "cannon"
+   }
+  },
+  {
+   "seq": 6,
+   "at": 1800000000000,
+   "command": {
+    "type": "buyUpgrade",
+    "upgrade": "hull"
+   }
+  },
+  {
+   "seq": 7,
+   "at": 1800000000000,
+   "command": {
+    "type": "buyWarehouse"
+   }
+  },
+  {
+   "seq": 8,
+   "at": 1800000000000,
+   "command": {
+    "type": "storeGood",
+    "good": "muslin"
+   }
+  },
+  {
+   "seq": 9,
+   "at": 1800000000000,
+   "command": {
+    "type": "storeGood",
+    "good": "muslin"
+   }
+  },
+  {
+   "seq": 10,
+   "at": 1800000000000,
+   "command": {
+    "type": "retrieveGood",
+    "good": "muslin"
+   }
+  },
+  {
+   "seq": 11,
+   "at": 1800000000000,
+   "command": {
+    "type": "buyFarm"
+   }
+  },
+  {
+   "seq": 12,
+   "at": 1800000000000,
+   "command": {
+    "type": "buyResidence"
+   }
+  },
+  {
+   "seq": 13,
+   "at": 1800000000000,
+   "command": {
+    "type": "marry"
+   }
+  },
+  {
+   "seq": 14,
+   "at": 1800000000000,
+   "command": {
+    "type": "acceptMission",
+    "missionId": "dhaka:visit"
+   }
+  },
+  {
+   "seq": 15,
+   "at": 1800000000000,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 16,
+   "at": 1800000000000,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 17,
+   "at": 1800000000000,
+   "command": {
+    "type": "changeVoyageSpeed",
+    "speed": 2
+   }
+  },
+  {
+   "seq": 18,
+   "at": 1800021630000,
+   "command": {
+    "type": "resumeVoyage",
+    "pausedAt": 1800000030000
+   }
+  },
+  {
+   "seq": 19,
+   "at": 1800021630000,
+   "command": {
+    "type": "changeVoyageSpeed",
+    "speed": 1
+   }
+  },
+  {
+   "seq": 20,
+   "at": 1800021695478,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 21,
+   "at": 1800021695478,
+   "command": {
+    "type": "sellGood",
+    "good": "muslin",
+    "quantity": 4
+   }
+  },
+  {
+   "seq": 22,
+   "at": 1800021695478,
+   "command": {
+    "type": "buyShip",
+    "vesselClass": "bora"
+   }
+  },
+  {
+   "seq": 23,
+   "at": 1800021695478,
+   "command": {
+    "type": "buyShip",
+    "vesselClass": "patello"
+   }
+  },
+  {
+   "seq": 24,
+   "at": 1800021695478,
+   "command": {
+    "type": "selectDestination",
+    "town": "balasore"
+   }
+  },
+  {
+   "seq": 25,
+   "at": 1800021695478,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 26,
+   "at": 1800021848520,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 27,
+   "at": 1800021848520,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 28,
+   "at": 1800021848520,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 29,
+   "at": 1800022000199,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 30,
+   "at": 1800022000199,
+   "command": {
+    "type": "configureRoute",
+    "shipId": "player-ship-2",
+    "destination": "balasore",
+    "rules": [
+     {
+      "good": "sugar",
+      "buyAtOrigin": true,
+      "sellAtDestination": true
+     }
+    ],
+    "initialCapital": 150
+   }
+  },
+  {
+   "seq": 31,
+   "at": 1800022000199,
+   "command": {
+    "type": "selectDestination",
+    "town": "chittagong"
+   }
+  },
+  {
+   "seq": 32,
+   "at": 1800022000199,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 33,
+   "at": 1800022236026,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 34,
+   "at": 1800022236026,
+   "command": {
+    "type": "resolveEncounter"
+   }
+  },
+  {
+   "seq": 35,
+   "at": 1800022236026,
+   "command": {
+    "type": "repairShip"
+   }
+  },
+  {
+   "seq": 36,
+   "at": 1800022236026,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 37,
+   "at": 1800022236026,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 38,
+   "at": 1800022410490,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 39,
+   "at": 1800022410490,
+   "command": {
+    "type": "selectDestination",
+    "town": "satgaon"
+   }
+  },
+  {
+   "seq": 40,
+   "at": 1800022410490,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 41,
+   "at": 1800022449309,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 42,
+   "at": 1800022449309,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 43,
+   "at": 1800022449309,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 44,
+   "at": 1800022488128,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 45,
+   "at": 1800022488128,
+   "command": {
+    "type": "selectDestination",
+    "town": "satgaon"
+   }
+  },
+  {
+   "seq": 46,
+   "at": 1800022488128,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 47,
+   "at": 1800022526947,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 48,
+   "at": 1800022526947,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 49,
+   "at": 1800022526947,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 50,
+   "at": 1800022565766,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 51,
+   "at": 1800022565766,
+   "command": {
+    "type": "selectDestination",
+    "town": "satgaon"
+   }
+  },
+  {
+   "seq": 52,
+   "at": 1800022565766,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 53,
+   "at": 1800022604585,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 54,
+   "at": 1800022604585,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 55,
+   "at": 1800022604585,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 56,
+   "at": 1800022643404,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 57,
+   "at": 1800022643404,
+   "command": {
+    "type": "selectDestination",
+    "town": "satgaon"
+   }
+  },
+  {
+   "seq": 58,
+   "at": 1800022643404,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 59,
+   "at": 1800022682223,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 60,
+   "at": 1800022682223,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 61,
+   "at": 1800022682223,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 62,
+   "at": 1800022721042,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 63,
+   "at": 1800022721042,
+   "command": {
+    "type": "setRouteStatus",
+    "shipId": "player-ship-2",
+    "status": "paused"
+   }
+  },
+  {
+   "seq": 64,
+   "at": 1800022721042,
+   "command": {
+    "type": "setRouteStatus",
+    "shipId": "player-ship-2",
+    "status": "running"
+   }
+  },
+  {
+   "seq": 65,
+   "at": 1800022721042,
+   "command": {
+    "type": "cancelRoute",
+    "shipId": "player-ship-2"
+   }
+  },
+  {
+   "seq": 66,
+   "at": 1800022721042,
+   "command": {
+    "type": "selectShip",
+    "shipId": "player-ship-3"
+   }
+  },
+  {
+   "seq": 67,
+   "at": 1800022721042,
+   "command": {
+    "type": "orderShipReturn",
+    "shipId": "player-ship-2"
+   }
+  },
+  {
+   "seq": 68,
+   "at": 1800022721042,
+   "command": {
+    "type": "configureRoute",
+    "shipId": "player-ship-1",
+    "destination": "satgaon",
+    "rules": [
+     {
+      "good": "sugar",
+      "buyAtOrigin": true,
+      "sellAtDestination": true
+     }
+    ],
+    "initialCapital": 200
+   }
+  },
+  {
+   "seq": 69,
+   "at": 1800022721042,
+   "command": {
+    "type": "buyGood",
+    "good": "salt",
+    "quantity": 6
+   }
+  },
+  {
+   "seq": 70,
+   "at": 1800022721042,
+   "command": {
+    "type": "selectDestination",
+    "town": "dhaka"
+   }
+  },
+  {
+   "seq": 71,
+   "at": 1800022721042,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 72,
+   "at": 1800022877889,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 73,
+   "at": 1800022877889,
+   "command": {
+    "type": "collectFarm"
+   }
+  },
+  {
+   "seq": 74,
+   "at": 1800022877889,
+   "command": {
+    "type": "sellGood",
+    "good": "rice",
+    "quantity": 20
+   }
+  },
+  {
+   "seq": 75,
+   "at": 1800022877889,
+   "command": {
+    "type": "acceptMission",
+    "missionId": "dhaka:purchase-delivery"
+   }
+  },
+  {
+   "seq": 76,
+   "at": 1800022877889,
+   "command": {
+    "type": "buyGood",
+    "good": "silk",
+    "quantity": 2
+   }
+  },
+  {
+   "seq": 77,
+   "at": 1800022877889,
+   "command": {
+    "type": "selectDestination",
+    "town": "sonargaon"
+   }
+  },
+  {
+   "seq": 78,
+   "at": 1800022877889,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 79,
+   "at": 1800022968342,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 80,
+   "at": 1800022968342,
+   "command": {
+    "type": "acceptMission",
+    "missionId": "sonargaon:profitable-trade"
+   }
+  },
+  {
+   "seq": 81,
+   "at": 1800022968342,
+   "command": {
+    "type": "selectDestination",
+    "town": "hooghly"
+   }
+  },
+  {
+   "seq": 82,
+   "at": 1800022968342,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 83,
+   "at": 1800023212996,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 84,
+   "at": 1800023212996,
+   "command": {
+    "type": "buyGood",
+    "good": "opium",
+    "quantity": 1
+   }
+  },
+  {
+   "seq": 85,
+   "at": 1800023212996,
+   "command": {
+    "type": "selectDestination",
+    "town": "sonargaon"
+   }
+  },
+  {
+   "seq": 86,
+   "at": 1800023212996,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 87,
+   "at": 1800023457650,
+   "command": {
+    "type": "arrive"
+   }
+  },
+  {
+   "seq": 88,
+   "at": 1800023457650,
+   "command": {
+    "type": "sellGood",
+    "good": "opium",
+    "quantity": 1
+   }
+  },
+  {
+   "seq": 89,
+   "at": 1800023457650,
+   "command": {
+    "type": "sellGood",
+    "good": "salt",
+    "quantity": 2
+   }
+  },
+  {
+   "seq": 90,
+   "at": 1800023457650,
+   "command": {
+    "type": "buyGood",
+    "good": "sugar",
+    "quantity": 3
+   }
+  },
+  {
+   "seq": 91,
+   "at": 1800023457650,
+   "command": {
+    "type": "selectDestination",
+    "town": "dhaka"
+   }
+  },
+  {
+   "seq": 92,
+   "at": 1800023457650,
+   "command": {
+    "type": "startVoyage"
+   }
+  },
+  {
+   "seq": 93,
+   "at": 1800023497650,
+   "command": {
+    "type": "changeVoyageSpeed",
+    "speed": 2
+   }
+  }
+ ],
+ "steps": [
+  {
+   "seq": 0,
+   "gold": 4000,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 400,
+   "cargoCostBasis": 36,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 3
+  },
+  {
+   "seq": 1,
+   "gold": 3991,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 45,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 4
+  },
+  {
+   "seq": 2,
+   "gold": 3915,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 121,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 3,
+   "gold": 3921,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 112,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 7
+  },
+  {
+   "seq": 4,
+   "gold": 3896,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 112,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 7
+  },
+  {
+   "seq": 5,
+   "gold": 3861,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 112,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 7
+  },
+  {
+   "seq": 6,
+   "gold": 3826,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 112,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 7
+  },
+  {
+   "seq": 7,
+   "gold": 3676,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 112,
+   "warehouseCostBasis": 0,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 7
+  },
+  {
+   "seq": 8,
+   "gold": 3676,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 9,
+   "gold": 3676,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 74.4,
+   "warehouseCostBasis": 37.6,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 5
+  },
+  {
+   "seq": 10,
+   "gold": 3676,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 11,
+   "gold": 3476,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 12,
+   "gold": 3226,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 13,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 14,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 15,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 16,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 17,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 409,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 18,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 245,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 19,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 245,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 0,
+   "reputation": 0,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 20,
+   "gold": 3126,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 274,
+   "cargoCostBasis": 93.2,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 2.0912850536364327,
+   "reputation": 1,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 21,
+   "gold": 3195,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 274,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 2.0912850536364327,
+   "reputation": 1,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 22,
+   "gold": 2845,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 274,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 2.0912850536364327,
+   "reputation": 1,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 23,
+   "gold": 1945,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 274,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 2.0912850536364327,
+   "reputation": 1,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 24,
+   "gold": 1945,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 274,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 2.0912850536364327,
+   "reputation": 1,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 25,
+   "gold": 1945,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 274,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 2.0912850536364327,
+   "reputation": 1,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 26,
+   "gold": 1945,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 354,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 4.641975002939629,
+   "reputation": 2,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 27,
+   "gold": 1945,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 354,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 4.641975002939629,
+   "reputation": 2,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 28,
+   "gold": 1945,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 354,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 4.641975002939629,
+   "reputation": 2,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 29,
+   "gold": 1945,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 300,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 7.169951845092212,
+   "reputation": 2,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 30,
+   "gold": 1795,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 300,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 7.169951845092212,
+   "reputation": 2,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 31,
+   "gold": 1795,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 300,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 7.169951845092212,
+   "reputation": 2,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 32,
+   "gold": 1795,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 300,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 7.169951845092212,
+   "reputation": 2,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 33,
+   "gold": 1795,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 222,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 11.100392987688586,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 34,
+   "gold": 1795,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 222,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 11.100392987688586,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 35,
+   "gold": 1793,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 222,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 11.100392987688586,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 36,
+   "gold": 1793,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 222,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 11.100392987688586,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 37,
+   "gold": 1793,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 222,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 11.100392987688586,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 38,
+   "gold": 1793,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 313,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 14.008121023134349,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 39,
+   "gold": 1793,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 313,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 14.008121023134349,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 40,
+   "gold": 1793,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 313,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 14.008121023134349,
+   "reputation": 3,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 41,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 313,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 14.65510308736587,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 42,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 313,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 14.65510308736587,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 43,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 313,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 14.65510308736587,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 44,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 304,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 15.30208515159739,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 45,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 304,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 15.30208515159739,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 46,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 304,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 15.30208515159739,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 47,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 304,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 15.949067215828912,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 48,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 304,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 15.949067215828912,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 49,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 150,
+   "npcPurses": 304,
+   "cargoCostBasis": 18,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 15.949067215828912,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 50,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 260,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 16.59604928006043,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 51,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 260,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 16.59604928006043,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 52,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 260,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 16.59604928006043,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 53,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 266,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 17.24303134429195,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 54,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 266,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 17.24303134429195,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 55,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 266,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 17.24303134429195,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 56,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 266,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 17.89001340852347,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 57,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 266,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 17.89001340852347,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 58,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 266,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 17.89001340852347,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 59,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 317,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 18.536995472754988,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 60,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 317,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 18.536995472754988,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 61,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 317,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 18.536995472754988,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 62,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 209,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 63,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 209,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 64,
+   "gold": 1811,
+   "highestGold": 4000,
+   "routeCapital": 139,
+   "npcPurses": 209,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 65,
+   "gold": 1950,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 209,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 2
+  },
+  {
+   "seq": 66,
+   "gold": 1950,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 209,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 0
+  },
+  {
+   "seq": 67,
+   "gold": 1950,
+   "highestGold": 4000,
+   "routeCapital": 0,
+   "npcPurses": 209,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 0
+  },
+  {
+   "seq": 68,
+   "gold": 1750,
+   "highestGold": 4000,
+   "routeCapital": 200,
+   "npcPurses": 209,
+   "cargoCostBasis": 29,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 0
+  },
+  {
+   "seq": 69,
+   "gold": 1659,
+   "highestGold": 4000,
+   "routeCapital": 200,
+   "npcPurses": 209,
+   "cargoCostBasis": 120,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 70,
+   "gold": 1659,
+   "highestGold": 4000,
+   "routeCapital": 200,
+   "npcPurses": 209,
+   "cargoCostBasis": 120,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 71,
+   "gold": 1659,
+   "highestGold": 4000,
+   "routeCapital": 200,
+   "npcPurses": 209,
+   "cargoCostBasis": 120,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 19.183977536986507,
+   "reputation": 6,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 72,
+   "gold": 1659,
+   "highestGold": 4000,
+   "routeCapital": 189,
+   "npcPurses": 261,
+   "cargoCostBasis": 131,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 21.798083854032047,
+   "reputation": 6,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 73,
+   "gold": 1659,
+   "highestGold": 4000,
+   "routeCapital": 189,
+   "npcPurses": 261,
+   "cargoCostBasis": 131,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 21.798083854032047,
+   "reputation": 6,
+   "cargoUnits": 26
+  },
+  {
+   "seq": 74,
+   "gold": 1742,
+   "highestGold": 4000,
+   "routeCapital": 189,
+   "npcPurses": 261,
+   "cargoCostBasis": 131,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 21.798083854032047,
+   "reputation": 7,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 75,
+   "gold": 1742,
+   "highestGold": 4000,
+   "routeCapital": 189,
+   "npcPurses": 261,
+   "cargoCostBasis": 131,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 21.798083854032047,
+   "reputation": 7,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 76,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 189,
+   "npcPurses": 261,
+   "cargoCostBasis": 196,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 21.798083854032047,
+   "reputation": 7,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 77,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 189,
+   "npcPurses": 261,
+   "cargoCostBasis": 196,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 21.798083854032047,
+   "reputation": 7,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 78,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 189,
+   "npcPurses": 261,
+   "cargoCostBasis": 196,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 21.798083854032047,
+   "reputation": 7,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 79,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 205,
+   "npcPurses": 170,
+   "cargoCostBasis": 185,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 23.305630152205467,
+   "reputation": 8,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 80,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 205,
+   "npcPurses": 170,
+   "cargoCostBasis": 185,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 23.305630152205467,
+   "reputation": 8,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 81,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 205,
+   "npcPurses": 170,
+   "cargoCostBasis": 185,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 23.305630152205467,
+   "reputation": 8,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 82,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 205,
+   "npcPurses": 170,
+   "cargoCostBasis": 185,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 23.305630152205467,
+   "reputation": 8,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 83,
+   "gold": 1677,
+   "highestGold": 4000,
+   "routeCapital": 210,
+   "npcPurses": 326,
+   "cargoCostBasis": 185,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 27.383192475084172,
+   "reputation": 8,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 84,
+   "gold": 1647,
+   "highestGold": 4000,
+   "routeCapital": 210,
+   "npcPurses": 326,
+   "cargoCostBasis": 215,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 27.383192475084172,
+   "reputation": 8,
+   "cargoUnits": 9
+  },
+  {
+   "seq": 85,
+   "gold": 1647,
+   "highestGold": 4000,
+   "routeCapital": 210,
+   "npcPurses": 326,
+   "cargoCostBasis": 215,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 27.383192475084172,
+   "reputation": 8,
+   "cargoUnits": 9
+  },
+  {
+   "seq": 86,
+   "gold": 1647,
+   "highestGold": 4000,
+   "routeCapital": 210,
+   "npcPurses": 326,
+   "cargoCostBasis": 215,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 27.383192475084172,
+   "reputation": 8,
+   "cargoUnits": 9
+  },
+  {
+   "seq": 87,
+   "gold": 1647,
+   "highestGold": 4000,
+   "routeCapital": 215,
+   "npcPurses": 203,
+   "cargoCostBasis": 215,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 0,
+   "sailingDay": 31.460754797962878,
+   "reputation": 8,
+   "cargoUnits": 9
+  },
+  {
+   "seq": 88,
+   "gold": 1684,
+   "highestGold": 4000,
+   "routeCapital": 215,
+   "npcPurses": 203,
+   "cargoCostBasis": 185,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 7,
+   "sailingDay": 31.460754797962878,
+   "reputation": 9,
+   "cargoUnits": 8
+  },
+  {
+   "seq": 89,
+   "gold": 1705,
+   "highestGold": 4000,
+   "routeCapital": 215,
+   "npcPurses": 203,
+   "cargoCostBasis": 154.66666666666666,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 7,
+   "sailingDay": 31.460754797962878,
+   "reputation": 9,
+   "cargoUnits": 6
+  },
+  {
+   "seq": 90,
+   "gold": 1662,
+   "highestGold": 4000,
+   "routeCapital": 215,
+   "npcPurses": 203,
+   "cargoCostBasis": 197.66666666666666,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 7,
+   "sailingDay": 31.460754797962878,
+   "reputation": 9,
+   "cargoUnits": 9
+  },
+  {
+   "seq": 91,
+   "gold": 1662,
+   "highestGold": 4000,
+   "routeCapital": 215,
+   "npcPurses": 203,
+   "cargoCostBasis": 197.66666666666666,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 7,
+   "sailingDay": 31.460754797962878,
+   "reputation": 9,
+   "cargoUnits": 9
+  },
+  {
+   "seq": 92,
+   "gold": 1662,
+   "highestGold": 4000,
+   "routeCapital": 215,
+   "npcPurses": 203,
+   "cargoCostBasis": 197.66666666666666,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 7,
+   "sailingDay": 31.460754797962878,
+   "reputation": 9,
+   "cargoUnits": 9
+  },
+  {
+   "seq": 93,
+   "gold": 1662,
+   "highestGold": 4000,
+   "routeCapital": 204,
+   "npcPurses": 228,
+   "cargoCostBasis": 208.66666666666666,
+   "warehouseCostBasis": 18.8,
+   "contractRewards": 1410,
+   "contractProfitProgress": 7,
+   "sailingDay": 31.460754797962878,
+   "reputation": 9,
+   "cargoUnits": 9
+  }
+ ]
+}

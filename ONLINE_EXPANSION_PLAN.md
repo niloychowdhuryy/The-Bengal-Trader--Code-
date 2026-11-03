@@ -65,7 +65,7 @@ Its own commit, passing tests, type-check and production build, and a report of 
 | Ports are never route waypoints | Measured: no route between the starting five passes through another port, for any vessel | Locks only need checking at destinations, so locked cities can't be reached indirectly |
 | Starting five are connected for all vessels | Measured for River boat, Bora and Patello | Early game works without changing routes |
 | Patello access already matches Part 13 | All except Sylhet and Balasore since Stage 13 | No change needed beyond keeping tests |
-| One trade route dominates | Measured: Hooghly → Satgaon takes 0.39 days and earns 38 gold on a full 12-unit hold, or 97 gold per day. Most other starting routes earn 9–12 per day | The new starting economy would be solved on day one unless the market is rebalanced |
+| One trade route dominates | Measured before the navigation rebuild: Hooghly → Satgaon takes 0.39 days and earns 38 gold on a full 12-unit hold, or 97 gold per day. Most other starting routes earn 9–12 per day. **Superseded by `ECONOMY_BASELINE.md`:** first trips still vary about 20×, but repeated play only about 2× | The new starting economy would be solved on day one unless the market is rebalanced |
 | Sell price is a flat 3 gold below buy | `MARKET_SELL_SPREAD` | Cheap goods lose half their value, expensive goods almost nothing. Must become a percentage |
 | Gold appears throughout | 57 mentions in `model.ts`, 72 in `App.tsx`, 16 in `storage.ts` | Conversion is a real migration, not a label change |
 | No backend tools on this machine | No Docker, Supabase CLI, Deno or psql | Database rules can be tested here with PGlite (Postgres in Node). A live end-to-end test needs your Supabase project |
@@ -264,6 +264,12 @@ Manual trading · automated routes · farm-focused · warehouse-focused · mixed
 
 **Reported:** wealth curves, profit per voyage and per real minute, farm and warehouse return on investment, repair costs, mission income, inflation, stock depletion, recovery speed, ad share of income, and time to each city unlock.
 
+**Balance requirements set by the owner** (also in `ROADMAP.md`, with baseline figures), checked from the stage that changes each system and met by the full balancing pass:
+
+- Automated trading is profitable and useful, but doesn't outperform active trading so far that manual play becomes pointless.
+- Delivery contracts have a proper profitability and risk model, giving a genuine financial incentive to accept suitable ones.
+- Farms stay a viable investment, but don't dominate trading through excessive or effectively free production.
+
 **Automated failure conditions, run with the normal tests:**
 
 - Buying and selling in a loop at one port never profits.
@@ -285,7 +291,7 @@ Your order is kept, with these adjustments: the command layer went first because
 | 2 | Google login and profiles — **implemented; login tested locally against the live project** | Code yes; live login needs your setup |
 | N | Correct water and land navigation, version 20 save, map fix, collapsible port panel (Part 15) — **implemented and committed** | Yes |
 | 3 | Cloud saves, linking, conflict handling, multi-tab safety | Logic yes; live sync needs your setup |
-| 4 | Coins, version 21 migration, simulation harness | Yes |
+| 4 | Coins, version 21 migration, simulation harness — **harness and baseline done; see Economy Plan steps in `ROADMAP.md`** | Yes |
 | 5 | Dynamic markets, and at least 25 active NPC traders (owner's requirement; 4 exist) | Yes |
 | 6 | Farm production orders | Yes |
 | 7 | Warehouse network | Yes |
@@ -337,6 +343,9 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` i
 | 2 Nov 2026 | Repository is public | Owner's choice, because Vercel's free plan blocked a private repository's commits from another identity. A history scan found no secrets |
 | 2 Nov 2026 | Profiles change through a database function rather than an Edge Function | It uses the caller's verified identity, and needs no deployment step |
 | 2 Nov 2026 | Public names are chosen by players and never copied from Google; age is a self-declared 13+ check | Privacy, and the plan's age decision. Legal review is still required |
+| 3 Nov 2026 | The simulation harness uses the proposed net worth formula as its own estimate, with goods at 80% of base price rather than 100% | So buying goods can't instantly raise a rank. Step 5 builds the real shared valuation |
+| 3 Nov 2026 | Automated trading, delivery contracts and farms each have a balance requirement for later simulations | Owner's decision after the baseline showed all three out of balance, so they aren't forgotten when NPCs and leaderboards arrive |
+| 3 Nov 2026 | Time-away progression stays unapproved, and the world stays paused while the game is closed | Owner's decision until Economy Plan Step 6 reviews it |
 | 2 Nov 2026 | Added Milestones S, N and T as essential work | Owner's requirement |
 | 2 Nov 2026 | The port panel floats over the map, the camera can move past the south edge, and phones drag in all directions | Stops the panel hiding ports without shrinking the map. Moved up from Stage 8 at the owner's request |
 | 2 Nov 2026 | The map stays mounted but hidden in town, and failed art retries with a message | Rebuilding it lost the camera and could show a broken image |
