@@ -124,13 +124,13 @@ export function summariseFirstTrips(): VesselRouteSummary[] {
 export interface SustainedRoute {
   first: TownId;
   second: TownId;
-  goldPerDay: number;
+  coinsPerDay: number;
   /** Earnings per day late in the run against early on. Below 1 means the route tired. */
   lateVsEarly: number;
 }
 
 /** Runs every pair of ports as a real two-port loop, through commands. */
-export function measureSustainedRoutes(days = 90): SustainedRoute[] {
+export function measureSustainedRoutes(days = 90, base = createNewGame("Simulated")): SustainedRoute[] {
   const results: SustainedRoute[] = [];
   const early = Math.round(days / 3);
   for (let i = 0; i < TOWNS.length; i += 1) {
@@ -139,20 +139,20 @@ export function measureSustainedRoutes(days = 90): SustainedRoute[] {
       const second = TOWNS[j].id;
       const { result } = runStrategy(
         { id: `${first}-${second}`, strategy: () => twoPort(first, second), noise: 0, speed: 1 },
-        { days: [early, days] },
+        { days: [early, days], base },
       );
       const [start, end] = result.snapshots;
-      const earlyRate = (start.gold - 90) / start.sailingDay;
-      const lateRate = (end.gold - start.gold) / (end.sailingDay - start.sailingDay);
+      const earlyRate = (start.coins - base.coins) / start.sailingDay;
+      const lateRate = (end.coins - start.coins) / (end.sailingDay - start.sailingDay);
       results.push({
         first,
         second,
-        goldPerDay: round((end.gold - 90) / end.sailingDay),
+        coinsPerDay: round((end.coins - base.coins) / end.sailingDay),
         lateVsEarly: earlyRate > 0 ? round(lateRate / earlyRate) : 0,
       });
     }
   }
-  return results.sort((a, b) => b.goldPerDay - a.goldPerDay);
+  return results.sort((a, b) => b.coinsPerDay - a.coinsPerDay);
 }
 
 // ---- Stock recovery ----
@@ -206,7 +206,7 @@ export interface RouteShipReturn {
   route: string;
   capitalStart: number;
   capitalEnd: number;
-  goldPerDay: number;
+  coinsPerDay: number;
   paybackDays: number | null;
 }
 
@@ -217,8 +217,8 @@ export function measureRouteShip(
   destination: TownId = "tanda",
   days = 200,
 ): RouteShipReturn {
-  const capitalStart = 300;
-  const sim = createSim({ ...createNewGame("Simulated"), gold: 5_000, highestGold: 5_000 });
+  const capitalStart = 15_000;
+  const sim = createSim({ ...createNewGame("Simulated"), coins: 250_000, highestCoins: 250_000 });
   sail(sim, destination);
   sail(sim, origin);
   send(sim, { type: "buyShip", vesselClass: vessel });
@@ -243,19 +243,19 @@ export function measureRouteShip(
     route: `${origin}>${destination}`,
     capitalStart,
     capitalEnd,
-    goldPerDay: round(perDay),
+    coinsPerDay: round(perDay),
     paybackDays: perDay > 0 ? round(VESSEL_CLASSES[vessel].price / perDay, 0) : null,
   };
 }
 
 /** Days for one farm to repay its price, selling each day's free rice at a typical price. */
-export function measureFarmPayback(): { riceSellMedian: number; goldPerDay: number; paybackDays: number } {
+export function measureFarmPayback(): { riceSellMedian: number; coinsPerDay: number; paybackDays: number } {
   const start = createInitialMarketStock();
   const riceSellMedian = median(
     MARKET_PORTS.map((port) => getGoodPrice(port.id, "rice", "sell", false, start[port.id].rice)),
   );
-  const goldPerDay = riceSellMedian * FARM_DAILY_OUTPUT;
-  return { riceSellMedian, goldPerDay, paybackDays: round(FARM_PRICE / goldPerDay, 0) };
+  const coinsPerDay = riceSellMedian * FARM_DAILY_OUTPUT;
+  return { riceSellMedian, coinsPerDay, paybackDays: round(FARM_PRICE / coinsPerDay, 0) };
 }
 
 export interface ContractValue {
@@ -280,9 +280,9 @@ export function measureContracts(): ContractValue[] {
     return {
       type,
       count: missions.length,
-      averageReward: round(missions.reduce((total, mission) => total + mission.rewardGold, 0) / missions.length),
+      averageReward: round(missions.reduce((total, mission) => total + mission.rewardCoins, 0) / missions.length),
       averageGoodsCost: round(costs.reduce((total, cost) => total + cost, 0) / missions.length),
-      worthDoing: missions.filter((mission, index) => mission.rewardGold > costs[index]).length,
+      worthDoing: missions.filter((mission, index) => mission.rewardCoins > costs[index]).length,
     };
   });
 }
@@ -444,10 +444,10 @@ export interface SamePortDemo {
   port: MarketPortId;
   good: GoodId;
   dayStarted: number;
-  goldBeforeDraining: number;
+  coinsBeforeDraining: number;
   unitsBought: number;
   loops: number;
-  goldGained: number;
+  coinsGained: number;
   gainPerLoop: number;
   inGameDaysUsed: number;
   commandsRejected: number;
@@ -457,23 +457,23 @@ export interface SamePortDemo {
  * Proves the loop in real play: a new game trades up to the money it needs, sails there,
  * drains the stall, then buys and sells back through normal commands. No state is edited.
  */
-export function demonstrateSamePortLoop(loops = 200): SamePortDemo | null {
+export function demonstrateSamePortLoop(loops = 200, base = createNewGame("Simulated")): SamePortDemo | null {
   const reachable = findSamePortLoops().filter((stall) => stall.unitsToDrain <= VESSEL_CLASSES["river-boat"].baseHold);
   const target = reachable[0];
   if (!target) return null;
 
   const { sim } = runStrategy(
     { id: "exploit-setup", strategy: () => manual, noise: 0, speed: 1 },
-    { days: [1] },
+    { days: [1], base },
   );
   const context = { random: () => 0.5, noise: 0, reserved: {} };
-  const goldNeeded = target.costToDrain + 60;
+  const coinsNeeded = target.costToDrain + 3_000;
   let guard = 0;
-  while (sim.state.gold < goldNeeded && guard < 2_000) {
+  while (sim.state.coins < coinsNeeded && guard < 2_000) {
     manual(sim, context);
     guard += 1;
   }
-  if (sim.state.gold < goldNeeded) return null;
+  if (sim.state.coins < coinsNeeded) return null;
 
   // Empty the hold so the whole drain fits, and never sell into the target stall first.
   for (const { id: good } of GOODS) {
@@ -492,7 +492,7 @@ export function demonstrateSamePortLoop(loops = 200): SamePortDemo | null {
   }
 
   const dayStarted = round(sim.state.sailingDay);
-  const goldBeforeDraining = sim.state.gold;
+  const coinsBeforeDraining = sim.state.coins;
   // Buy down to the stock where the loop first pays, however far time has moved it.
   let unitsBought = 0;
   while (true) {
@@ -507,23 +507,23 @@ export function demonstrateSamePortLoop(loops = 200): SamePortDemo | null {
     unitsBought += 1;
   }
 
-  const goldAtLoopStart = sim.state.gold;
+  const coinsAtLoopStart = sim.state.coins;
   const dayAtLoopStart = sim.state.sailingDay;
   const refusedBefore = sim.refused.length;
   for (let loop = 0; loop < loops; loop += 1) {
     send(sim, { type: "buyGood", good: target.good, quantity: 1 });
     send(sim, { type: "sellGood", good: target.good, quantity: 1 });
   }
-  const goldGained = sim.state.gold - goldAtLoopStart;
+  const coinsGained = sim.state.coins - coinsAtLoopStart;
   return {
     port: target.port,
     good: target.good,
     dayStarted,
-    goldBeforeDraining,
+    coinsBeforeDraining,
     unitsBought,
     loops,
-    goldGained,
-    gainPerLoop: round(goldGained / loops),
+    coinsGained,
+    gainPerLoop: round(coinsGained / loops),
     inGameDaysUsed: round(sim.state.sailingDay - dayAtLoopStart),
     commandsRejected: sim.refused.length - refusedBefore,
   };
@@ -534,25 +534,25 @@ export function measureLoopAtLowStock(
   port: MarketPortId,
   good: GoodId,
   stocks: readonly number[] = [20, 12, 8, 5, 2],
-): { stock: number; goldPer100Loops: number }[] {
+): { stock: number; coinsPer100Loops: number }[] {
   return stocks.map((stock) => {
     const fresh = createNewGame("Simulated");
     let state: GameState = {
       ...fresh,
-      gold: 100_000,
-      highestGold: 100_000,
+      coins: 5_000_000,
+      highestCoins: 5_000_000,
       currentTown: port,
       selectedTown: port,
       visitedTowns: [...new Set([...fresh.visitedTowns, port])],
       fleet: fresh.fleet.map((ship) => ({ ...ship, currentPort: port })),
       marketStock: { ...fresh.marketStock, [port]: { ...fresh.marketStock[port], [good]: stock } },
     };
-    const startGold = state.gold;
+    const startCoins = state.coins;
     for (let loop = 0; loop < 100; loop += 1) {
       state = applyCommand(state, { type: "buyGood", good, quantity: 1 }, 0).state;
       state = applyCommand(state, { type: "sellGood", good, quantity: 1 }, 0).state;
     }
-    return { stock, goldPer100Loops: state.gold - startGold };
+    return { stock, coinsPer100Loops: state.coins - startCoins };
   });
 }
 

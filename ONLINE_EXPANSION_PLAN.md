@@ -104,7 +104,7 @@ Server:  replay queued commands from the last verified state → accept or rejec
 
 | Situation | Behaviour |
 |---|---|
-| Version 19 save | Migrates to version 20 on the device, with the original kept as a backup slot |
+| Older saves | Migrate on the device, with the original kept as a local backup (from version 21) |
 | Guest game started on version 20+ | Keeps a command log. Linking replays it and the account is ranked if it passes |
 | Old save linked to an account | Fully playable, but marked `imported` and left off leaderboards, because its history can't be verified |
 | Local and cloud both have progress | Server detects a revision mismatch. **Nothing is overwritten:** the player sees both summaries and chooses. The other copy stays as a backup |
@@ -291,7 +291,7 @@ Your order is kept, with these adjustments: the command layer went first because
 | 2 | Google login and profiles — **implemented; login tested locally against the live project** | Code yes; live login needs your setup |
 | N | Correct water and land navigation, version 20 save, map fix, collapsible port panel (Part 15) — **implemented and committed** | Yes |
 | 3 | Cloud saves, linking, conflict handling, multi-tab safety | Logic yes; live sync needs your setup |
-| 4 | Coins, version 21 migration, simulation harness — **harness and baseline done; see Economy Plan steps in `ROADMAP.md`** | Yes |
+| 4 | Coins, version 21 migration, simulation harness — **harness and baseline done; Coins and save backup done. See Economy Plan steps in `ROADMAP.md`** | Yes |
 | 5 | Dynamic markets, and at least 25 active NPC traders (owner's requirement; 4 exist) | Yes |
 | 6 | Farm production orders | Yes |
 | 7 | Warehouse network | Yes |
@@ -345,6 +345,9 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` i
 | 2 Nov 2026 | Public names are chosen by players and never copied from Google; age is a self-declared 13+ check | Privacy, and the plan's age decision. Legal review is still required |
 | 3 Nov 2026 | The simulation harness uses the proposed net worth formula as its own estimate, with goods at 80% of base price rather than 100% | So buying goods can't instantly raise a rank. Step 5 builds the real shared valuation |
 | 3 Nov 2026 | Automated trading, delivery contracts and farms each have a balance requirement for later simulations | Owner's decision after the baseline showed all three out of balance, so they aren't forgotten when NPCs and leaderboards arrive |
+| 3 Nov 2026 | Market quotes move in steps of 50 Coins for now | Keeps every price exactly 50× its gold price. Step 3's pricing replaces it |
+| 3 Nov 2026 | Short price labels use "c", such as "700c", and the top bar shortens balances from 100,000 ("174k", "1.23M"), rounding down | Keeps phone layouts unchanged, without overstating a balance. The full amount is available to screen readers |
+| 3 Nov 2026 | A backup is written in the same transaction as the upgraded save, not as a separate step before it | Either both are stored or the original stays as it was, so no half-finished state can exist |
 | 3 Nov 2026 | Time-away progression stays unapproved, and the world stays paused while the game is closed | Owner's decision until Economy Plan Step 6 reviews it |
 | 2 Nov 2026 | Added Milestones S, N and T as essential work | Owner's requirement |
 | 2 Nov 2026 | The port panel floats over the map, the camera can move past the south edge, and phones drag in all directions | Stops the panel hiding ports without shrinking the map. Moved up from Stage 8 at the owner's request |

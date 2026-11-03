@@ -19,6 +19,7 @@ import {
   SHIPYARD_PORTS,
   checkpointVoyageProgress,
   createNewGame,
+  formatCoins,
   getCargoCapacity,
   getCargoUsed,
   getWarehouseCapacity,
@@ -64,7 +65,9 @@ import {
 import { createAccountService, type AccountStatus } from "./online/account";
 import { APP_VERSION, getOnlineConfig, getProblemReportUrl } from "./online/config";
 import { applyCommand, type CommandResult, type GameCommand, type RecordedCommand } from "./game/commands";
-import { commitGame, openGameSession, startCommandLog } from "./game/storage";
+import { NewerSaveError } from "./game/save-format";
+import { commitGame, openGameSession, readRawSave, startCommandLog } from "./game/storage";
+import { SaveBackupPanel, downloadJson } from "./components/SaveBackupPanel";
 import {
   formatInGameDays,
   formatTravelDuration,
@@ -76,7 +79,14 @@ import {
 
 type SaveStatus = "loading" | "ready" | "saved" | "saving" | "error";
 
-function GoldCoin() {
+// The top bar stays narrow on phones, so large balances round down rather than overstate.
+function formatCoinsCompact(amount: number): string {
+  if (amount < 100_000) return formatCoins(amount);
+  if (amount < 1_000_000) return `${Math.floor(amount / 1_000)}k`;
+  return `${Math.floor(amount / 10_000) / 100}M`;
+}
+
+function CoinIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="9" fill="#d9b866" stroke="#986c36" strokeWidth="1.5" />
@@ -605,10 +615,10 @@ function MarketPanel({
   const eventIsActive =
     state.currentTown === "chittagong" &&
     isHistoricalRouteAlertActive(state);
-  const formatGold = (amount: number) =>
+  const formatPrice = (amount: number) =>
     `${new Intl.NumberFormat(undefined, {
-      maximumFractionDigits: 2,
-    }).format(amount)}g`;
+      maximumFractionDigits: 0,
+    }).format(amount)}c`;
 
   return (
     <section className="feature-panel" aria-label={`Market at ${getTown(state.currentTown).name}`}>
@@ -630,7 +640,7 @@ function MarketPanel({
         <span className="cargo-summary-label">
           <CargoMark /> Your cargo
         </span>
-        <strong>{state.gold} gold <span>· {cargoUsed}/{cargoLimit} hold</span></strong>
+        <strong>{formatCoins(state.coins)} Coins <span>· {cargoUsed}/{cargoLimit} hold</span></strong>
       </div>
       <div className="good-list">
         {CURRENT_MARKET_GOODS.map((good) => {
@@ -666,7 +676,7 @@ function MarketPanel({
           const canBuy =
             Boolean(buyQuote) &&
             quantity <= cargoLimit - cargoUsed &&
-            buyQuote!.total <= state.gold;
+            buyQuote!.total <= state.coins;
           const canSell =
             Boolean(sellQuote) &&
             quantity <= owned &&
@@ -690,8 +700,8 @@ function MarketPanel({
                   <h3>{good.name}</h3>
                   <p>{good.description}</p>
                   <div className="good-prices">
-                    <span>Buy <b>{formatGold(buyPrice)}</b></span>
-                    <span>Sell <b>{formatGold(sellPrice)}</b></span>
+                    <span>Buy <b>{formatPrice(buyPrice)}</b></span>
+                    <span>Sell <b>{formatPrice(sellPrice)}</b></span>
                   </div>
                   <span className="stock-meter" aria-hidden="true">
                     <i style={{ width: `${(marketStock / MARKET_MAX_STOCK) * 100}%` }} />
@@ -701,7 +711,7 @@ function MarketPanel({
                   </span>
                   {owned > 0 && (
                     <span className={`inventory-return${estimatedProfit >= 0 ? " return-positive" : " return-negative"}`}>
-                      Avg cost {formatGold(averageCost)} · Sell est. {formatGold(estimatedSellingValue)} ({estimatedProfit >= 0 ? "+" : ""}{formatGold(estimatedProfit)})
+                      Avg cost {formatPrice(averageCost)} · Sell est. {formatPrice(estimatedSellingValue)} ({estimatedProfit >= 0 ? "+" : ""}{formatPrice(estimatedProfit)})
                     </span>
                   )}
                 </div>
@@ -723,7 +733,7 @@ function MarketPanel({
                     />
                   </label>
                   <button
-                    aria-label={`Buy ${good.name} for ${buyPrice} gold`}
+                    aria-label={`Buy ${good.name} for ${formatCoins(buyPrice)} Coins`}
                     className="trade-button buy-button"
                     disabled={!canBuy}
                     onClick={() =>
@@ -740,7 +750,7 @@ function MarketPanel({
                     Buy
                   </button>
                   <button
-                    aria-label={`Sell ${good.name} for ${sellPrice} gold`}
+                    aria-label={`Sell ${good.name} for ${formatCoins(sellPrice)} Coins`}
                     className="trade-button sell-button"
                     disabled={!canSell}
                     onClick={() =>
@@ -756,14 +766,14 @@ function MarketPanel({
                   <p>
                     {pendingTrade.action === "buy" ? "Buy" : "Sell"}{" "}
                     <strong>{pendingTrade.quantity} {good.name}</strong> for{" "}
-                    <strong>{formatGold(pendingQuote.total)}</strong>?
+                    <strong>{formatPrice(pendingQuote.total)}</strong>?
                   </p>
                   <div>
                     <button
                       className="trade-confirm-button"
                       disabled={
                         pendingTrade.action === "buy"
-                          ? pendingQuote.total > state.gold ||
+                          ? pendingQuote.total > state.coins ||
                             pendingTrade.quantity > cargoLimit - cargoUsed
                           : pendingTrade.quantity > owned ||
                             pendingTrade.quantity > MARKET_MAX_STOCK - marketStock
@@ -777,7 +787,7 @@ function MarketPanel({
                         setPendingTrade(null);
                       }}
                     >
-                      Confirm {pendingTrade.action} · {formatGold(pendingQuote.total)}
+                      Confirm {pendingTrade.action} · {formatPrice(pendingQuote.total)}
                     </button>
                     <button
                       className="trade-cancel-button"
@@ -840,7 +850,7 @@ function DockPanel({
       <div className="feature-heading dock-heading">
         <span className="eyebrow">SHIPYARD · {getTown(state.currentTown).name}</span>
         <h2>Shipyard repairs & upgrades</h2>
-        <p>{vessel.name}: repair for {vessel.repairCostPerHull} gold per missing hull. Upgrade costs and new stats are shown before fitting.</p>
+        <p>{vessel.name}: repair for {formatCoins(vessel.repairCostPerHull)} Coins per missing hull. Upgrade costs and new stats are shown before fitting.</p>
       </div>
       <div className="ship-hero">
         <VesselPortrait vesselClass={vessel.id} />
@@ -900,24 +910,24 @@ function DockPanel({
                       ? `Defence ${stats.defence} → ${stats.defence + 1} · Hull ${state.shipHull}/${maximumHull} → ${state.shipHull + (level === 0 ? 2 : 1)}/${maximumHull + vessel.hullPerUpgrade}`
                       : `Hold ${stats.hold} → ${stats.hold + vessel.holdPerUpgrade} spaces`}
                 </span>
-                <span className="upgrade-cost">Next fit · {price} gold</span>
+                <span className="upgrade-cost">Next fit · {formatCoins(price)} Coins</span>
               </div>
               <button
                 aria-label={
                   maxed
                     ? `${upgrade.name} fully upgraded`
-                    : `Upgrade ${upgrade.name} for ${price} gold`
+                    : `Upgrade ${upgrade.name} for ${formatCoins(price)} Coins`
                 }
                 className="upgrade-buy"
                 disabled={
                   maxed ||
-                  state.gold < price ||
+                  state.coins < price ||
                   Boolean(state.voyage) ||
                   state.encounterPending
                 }
                 onClick={() => onUpgrade(upgrade.id)}
               >
-                {maxed ? <span>Done</span> : <><strong>{price}g</strong><span>Fit</span></>}
+                {maxed ? <span>Done</span> : <><strong>{formatCoins(price)}c</strong><span>Fit</span></>}
               </button>
             </article>
           );
@@ -928,20 +938,20 @@ function DockPanel({
           <strong>Hull {state.shipHull}/{maximumHull}</strong>
           <p>
             {hullToRepair > 0
-              ? `Restore ${hullToRepair} hull · ${repairCost} gold total (${vessel.repairCostPerHull} per hull).`
+              ? `Restore ${hullToRepair} hull · ${formatCoins(repairCost)} Coins total (${vessel.repairCostPerHull} per hull).`
               : "Your ship is fully repaired."}
           </p>
         </div>
         <button
           aria-label={
             hullToRepair > 0
-              ? `Repair ship for ${repairCost} gold`
+              ? `Repair ship for ${formatCoins(repairCost)} Coins`
               : "Ship fully repaired"
           }
           className="repair-button"
           disabled={
             hullToRepair === 0 ||
-            state.gold < repairCost ||
+            state.coins < repairCost ||
             Boolean(state.voyage) ||
             state.encounterPending
           }
@@ -949,9 +959,9 @@ function DockPanel({
         >
           {hullToRepair === 0
             ? "Fully repaired"
-            : state.gold < repairCost
-              ? `Need ${repairCost}g`
-              : `Repair · ${repairCost}g`}
+            : state.coins < repairCost
+              ? `Need ${formatCoins(repairCost)}c`
+              : `Repair · ${formatCoins(repairCost)}c`}
         </button>
       </div>
       <div className="ship-purchase-panel">
@@ -980,7 +990,7 @@ function DockPanel({
                   <li>Hold <b>{shipClass.baseHold}</b></li>
                   <li>Hull <b>{shipClass.baseHull}</b></li>
                   <li>Speed <b>{getVesselSpeedLabel(shipClass)}</b></li>
-                  <li>Repair <b>{shipClass.repairCostPerHull}g</b> per hull</li>
+                  <li>Repair <b>{formatCoins(shipClass.repairCostPerHull)}c</b> per hull</li>
                   <li>Route trade <b>{shipClass.routeUnitsPerGood}</b> per good</li>
                 </ul>
                 <p className={`ship-class-reach${classId === "patello" ? " ship-class-reach-limited" : ""}`}>{portLimit}</p>
@@ -991,7 +1001,7 @@ function DockPanel({
                     aria-label="Buy ship confirmation"
                   >
                     <p>
-                      Buy an empty {shipClass.name} for {shipClass.price} gold?
+                      Buy an empty {shipClass.name} for {formatCoins(shipClass.price)} Coins?
                       {classId === "patello" ? " It cannot reach Sylhet or Balasore." : ""}
                     </p>
                     <div>
@@ -1002,7 +1012,7 @@ function DockPanel({
                           setConfirmingShipClass(null);
                         }}
                       >
-                        Confirm · {shipClass.price}g
+                        Confirm · {formatCoins(shipClass.price)}c
                       </button>
                       <button
                         className="ship-cancel-button"
@@ -1014,16 +1024,16 @@ function DockPanel({
                   </div>
                 ) : (
                   <button
-                    aria-label={`Buy ${shipClass.name} for ${shipClass.price} gold`}
+                    aria-label={`Buy ${shipClass.name} for ${formatCoins(shipClass.price)} Coins`}
                     className="ship-buy-button"
-                    disabled={!canBuyShipHere || state.gold < shipClass.price}
+                    disabled={!canBuyShipHere || state.coins < shipClass.price}
                     onClick={() => setConfirmingShipClass(classId)}
                   >
                     {state.fleet.length >= MAX_PLAYER_SHIPS
                       ? "Fleet full"
-                      : state.gold < shipClass.price
-                        ? `Need ${shipClass.price}g`
-                        : `Buy · ${shipClass.price}g`}
+                      : state.coins < shipClass.price
+                        ? `Need ${formatCoins(shipClass.price)}c`
+                        : `Buy · ${formatCoins(shipClass.price)}c`}
                   </button>
                 )}
               </article>
@@ -1219,7 +1229,7 @@ function AutomatedRoutePanel({
       ? existingRoute?.destination ?? availableDestinations[0] ?? ""
       : availableDestinations[0] ?? "",
   );
-  const [capital, setCapital] = useState("500");
+  const [capital, setCapital] = useState("25000");
   const [rules, setRules] = useState<
     Record<GoodId, { enabled: boolean; buyAtOrigin: boolean; sellAtDestination: boolean }>
   >(() => {
@@ -1264,7 +1274,7 @@ function AutomatedRoutePanel({
     (Number.isSafeInteger(capitalAmount) &&
       capitalAmount > 0 &&
       capitalAmount <= MAX_AUTOMATED_ROUTE_CAPITAL &&
-      capitalAmount <= state.gold);
+      capitalAmount <= state.coins);
   const validRules =
     selectedRules.length > 0 &&
     selectedRules.some((rule) => rule.buyAtOrigin) &&
@@ -1330,7 +1340,7 @@ function AutomatedRoutePanel({
               ? ` · heading to ${getTown(existingRoute.destinationPort).name}`
               : ` · at ${getTown(ship.currentPort).name}`}
           </p>
-          <p>Route capital: {existingRoute.capital} gold</p>
+          <p>Route capital: {formatCoins(existingRoute.capital)} Coins</p>
           <p>
             Rules: {existingRoute.rules.map((rule) => {
               const good = CURRENT_MARKET_GOODS.find((entry) => entry.id === rule.good);
@@ -1465,7 +1475,7 @@ function AutomatedRoutePanel({
           </div>
           {needsDeposit && (
             <label className="route-capital-field">
-              <span>Starting trade capital (max {MAX_AUTOMATED_ROUTE_CAPITAL})</span>
+              <span>Starting trade capital (max {formatCoins(MAX_AUTOMATED_ROUTE_CAPITAL)})</span>
               <input
                 inputMode="numeric"
                 min="1"
@@ -1478,7 +1488,7 @@ function AutomatedRoutePanel({
           )}
           {existingRoute && (
             <p className="route-capital-note">
-              Editing keeps the current {existingRoute.capital} gold route capital.
+              Editing keeps the current {formatCoins(existingRoute.capital)} Coins route capital.
             </p>
           )}
           <div className="automated-route-actions">
@@ -1503,7 +1513,7 @@ function AutomatedRoutePanel({
           </div>
           {!existingRoute && (
             <p className="route-capital-note">
-              Your purse has {state.gold} gold. Starting capital is transferred
+              Your purse has {formatCoins(state.coins)} Coins. Starting capital is transferred
               to the route.
               {" "}
               Sales go into route capital, not your purse, until you cancel the
@@ -1814,7 +1824,7 @@ function missionDescription(mission: Mission): string {
   if (mission.type === "visit") {
     return `Visit ${destination} before the deadline.`;
   }
-  return `Earn ${mission.targetProfit} gold profit selling ${good} in ${destination}.`;
+  return `Earn ${formatCoins(mission.targetProfit)} Coins profit selling ${good} in ${destination}.`;
 }
 
 function missionProgressLabel(mission: Mission): string {
@@ -1825,7 +1835,7 @@ function missionProgressLabel(mission: Mission): string {
     return `${mission.purchasedQuantity}/${mission.quantity} bought · ${mission.progress}/${mission.quantity} delivered`;
   }
   if (mission.type === "visit") return `${mission.progress}/1 port visited`;
-  return `${Math.floor(mission.progress)}/${mission.targetProfit} gold profit`;
+  return `${Math.floor(mission.progress)}/${formatCoins(mission.targetProfit)} Coins profit`;
 }
 
 function MissionBoardPanel({
@@ -1859,7 +1869,7 @@ function MissionBoardPanel({
           <p>{mission.deadlineDays} in-game days after acceptance · one-time reward</p>
         )}
         <p className="mission-reward">
-          Reward: {mission.rewardGold} gold · +2 global reputation · +5 local standing in{" "}
+          Reward: {formatCoins(mission.rewardCoins)} Coins · +2 global reputation · +5 local standing in{" "}
           {getTown(mission.origin).name}
         </p>
         {mission.status !== "completed" &&
@@ -2065,7 +2075,7 @@ function CityBuildingPanel({
                         <div className="npc-port-details">
                           <p>{getNpcTradingIntent(merchant)}</p>
                           <p>
-                            Capital: {merchant.budget} gold · Goods carried:{" "}
+                            Capital: {formatCoins(merchant.budget)} Coins · Goods carried:{" "}
                             {carriedGoods.length
                               ? carriedGoods
                                   .map(
@@ -2088,12 +2098,12 @@ function CityBuildingPanel({
                                 className="npc-port-trade"
                                 key={good.id}
                                 disabled={
-                                  state.gold < price ||
+                                  state.coins < price ||
                                   getCargoUsed(state) >= getCargoCapacity(state)
                                 }
                                 onClick={() => onTradeWithNpc(merchant.id, good.id)}
                               >
-                                Trade · Buy 1 {good.name} · {price} gold
+                                Trade · Buy 1 {good.name} · {formatCoins(price)} Coins
                               </button>
                             );
                           })}
@@ -2171,17 +2181,17 @@ function CityBuildingPanel({
           {buildingId === "warehouse"
             ? ownsWarehouse
               ? `Owned here · ${getWarehouseUsed(state, state.currentTown)}/${getWarehouseCapacity(state, state.currentTown)} storage spaces used. Your ship carries ${getCargoUsed(state)}/${getCargoCapacity(state)}.`
-              : `No warehouse is owned here. Purchase one for ${WAREHOUSE_PRICE} gold to add ${WAREHOUSE_CAPACITY} local storage spaces.`
+              : `No warehouse is owned here. Purchase one for ${formatCoins(WAREHOUSE_PRICE)} Coins to add ${WAREHOUSE_CAPACITY} local storage spaces.`
             : buildingId === "farm"
               ? ownsFarm
                 ? `Owned here · ${state.farmOutput[state.currentTown]}/${FARM_OUTPUT_CAPACITY} Rice in local farm storage. Produces ${FARM_DAILY_OUTPUT} Rice per full in-game sailing day while the game is active.`
-                : `No farm is owned here. Purchase one for ${FARM_PRICE} gold. It produces ${FARM_DAILY_OUTPUT} Rice per full in-game sailing day into its own local storage, up to ${FARM_OUTPUT_CAPACITY}.`
+                : `No farm is owned here. Purchase one for ${formatCoins(FARM_PRICE)} Coins. It produces ${FARM_DAILY_OUTPUT} Rice per full in-game sailing day into its own local storage, up to ${FARM_OUTPUT_CAPACITY}.`
               : buildingId === "home"
                 ? ownsResidence
                   ? "Your residence is established in this port. Ownership is saved; household and dynasty features are not included in this stage."
                   : residenceTown
                     ? `Your one residence is in ${residenceTown}. You cannot purchase an additional home in this stage.`
-                    : `Establish your residence here for ${RESIDENCE_PRICE} gold. No reputation requirement applies; household features are not included in this stage.`
+                    : `Establish your residence here for ${formatCoins(RESIDENCE_PRICE)} Coins. No reputation requirement applies; household features are not included in this stage.`
                 : buildingId === "mosque"
                   ? "A shared place of worship in the town. This is a general game scene, not a reconstruction of a specific building."
                   : buildingId === "workshop"
@@ -2192,13 +2202,13 @@ function CityBuildingPanel({
       {buildingId === "home" && !state.residenceTown && (
         <button
           className="primary-button city-building-action"
-          disabled={state.gold < RESIDENCE_PRICE}
+          disabled={state.coins < RESIDENCE_PRICE}
           onClick={onBuyResidence}
         >
           <span>
-            {state.gold < RESIDENCE_PRICE
-              ? `Residence · ${RESIDENCE_PRICE} gold (need ${RESIDENCE_PRICE - state.gold} more)`
-              : `Establish residence · ${RESIDENCE_PRICE} gold`}
+            {state.coins < RESIDENCE_PRICE
+              ? `Residence · ${formatCoins(RESIDENCE_PRICE)} Coins (need ${formatCoins(RESIDENCE_PRICE - state.coins)} more)`
+              : `Establish residence · ${formatCoins(RESIDENCE_PRICE)} Coins`}
           </span>
           <span aria-hidden="true">→</span>
         </button>
@@ -2211,17 +2221,17 @@ function CityBuildingPanel({
           </div>
         ) : (
           <div className="household-home-status">
-            <p>Marriage requires your residence and 100 gold to establish the household.</p>
+            <p>Marriage requires your residence and {formatCoins(MARRIAGE_HOUSEHOLD_COST)} Coins to establish the household.</p>
             <p>This cost is a gameplay rule, not a historical ceremony fee.</p>
             <button
               className="primary-button city-building-action"
-              disabled={state.gold < MARRIAGE_HOUSEHOLD_COST}
+              disabled={state.coins < MARRIAGE_HOUSEHOLD_COST}
               onClick={onMarry}
             >
               <span>
-                {state.gold < MARRIAGE_HOUSEHOLD_COST
-                  ? `Establish household · ${MARRIAGE_HOUSEHOLD_COST} gold (need ${MARRIAGE_HOUSEHOLD_COST - state.gold} more)`
-                  : `Establish marriage · ${MARRIAGE_HOUSEHOLD_COST} gold`}
+                {state.coins < MARRIAGE_HOUSEHOLD_COST
+                  ? `Establish household · ${formatCoins(MARRIAGE_HOUSEHOLD_COST)} Coins (need ${formatCoins(MARRIAGE_HOUSEHOLD_COST - state.coins)} more)`
+                  : `Establish marriage · ${formatCoins(MARRIAGE_HOUSEHOLD_COST)} Coins`}
               </span>
               <span aria-hidden="true">→</span>
             </button>
@@ -2234,13 +2244,13 @@ function CityBuildingPanel({
       {buildingId === "farm" && !ownsFarm && (
         <button
           className="primary-button city-building-action"
-          disabled={state.gold < FARM_PRICE}
+          disabled={state.coins < FARM_PRICE}
           onClick={onBuyFarm}
         >
           <span>
-            {state.gold < FARM_PRICE
-              ? `Farm · ${FARM_PRICE} gold (need ${FARM_PRICE - state.gold} more)`
-              : `Buy farm · ${FARM_PRICE} gold`}
+            {state.coins < FARM_PRICE
+              ? `Farm · ${formatCoins(FARM_PRICE)} Coins (need ${formatCoins(FARM_PRICE - state.coins)} more)`
+              : `Buy farm · ${formatCoins(FARM_PRICE)} Coins`}
           </span>
           <span aria-hidden="true">→</span>
         </button>
@@ -2299,10 +2309,10 @@ function CityBuildingPanel({
         ) : (
           <button
             className="primary-button city-building-action"
-            disabled={state.gold < WAREHOUSE_PRICE}
+            disabled={state.coins < WAREHOUSE_PRICE}
             onClick={onBuyWarehouse}
           >
-            <span>Buy warehouse · {WAREHOUSE_PRICE} gold</span>
+            <span>Buy warehouse · {formatCoins(WAREHOUSE_PRICE)} Coins</span>
             <span aria-hidden="true">→</span>
           </button>
         )
@@ -2330,6 +2340,7 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [saveIsNewer, setSaveIsNewer] = useState(false);
   const [accountService] = useState(() => {
     const config = getOnlineConfig();
     return config ? createAccountService(config) : null;
@@ -2366,6 +2377,7 @@ export default function App() {
       })
       .catch((error: unknown) => {
         if (!active) return;
+        setSaveIsNewer(error instanceof NewerSaveError);
         setSaveError(
           error instanceof Error ? error.message : "Your offline save could not be loaded.",
         );
@@ -2547,7 +2559,7 @@ export default function App() {
   const handleBuy = useCallback(
     (good: GoodId, quantity: number) => {
       runCommand({ type: "buyGood", good, quantity }, {
-        gold: "Not enough gold yet. Try selling a good first.",
+        coins: "Not enough Coins yet. Try selling a good first.",
         space: "Your cargo hold is full. Sell something first.",
         "out-of-stock": "This stall has sold out. Try another port.",
       });
@@ -2560,7 +2572,7 @@ export default function App() {
       unavailable: "Ships can only be purchased while docked and clear of an encounter.",
       "not-shipyard": "New ships are available at Dhaka, Chittagong, and Hooghly.",
       "fleet-full": `You can own up to ${MAX_PLAYER_SHIPS} ships in this stage.`,
-      gold: `A new ${VESSEL_CLASSES[vesselClass].name} costs ${VESSEL_CLASSES[vesselClass].price} gold.`,
+      coins: `A new ${VESSEL_CLASSES[vesselClass].name} costs ${formatCoins(VESSEL_CLASSES[vesselClass].price)} Coins.`,
     });
   }, [runCommand]);
 
@@ -2606,7 +2618,7 @@ export default function App() {
         "no-route": "There is no open connected river route between those ports.",
         "too-large": "This ship is too large for the channels to that port.",
         "invalid-rules": "Choose at least one good to buy and one good to sell.",
-        gold: "Your purse does not have enough gold for that route capital.",
+        coins: "Your purse does not have enough Coins for that route capital.",
       });
     },
     [runCommand],
@@ -2642,7 +2654,7 @@ export default function App() {
         "not-at-port": "Dock at a port before trading with a merchant.",
         "not-present": "That merchant is no longer at this port.",
         "no-cargo": "That merchant no longer has this good to sell.",
-        gold: "You do not have enough gold for that trade.",
+        coins: "You do not have enough Coins for that trade.",
         space: "Your cargo hold is full; make room before trading.",
       });
     },
@@ -2661,21 +2673,21 @@ export default function App() {
 
   const handleBuyWarehouse = useCallback(() => {
     runCommand({ type: "buyWarehouse" }, {
-      gold: `A warehouse costs ${WAREHOUSE_PRICE} gold. Earn more before purchasing.`,
+      coins: `A warehouse costs ${formatCoins(WAREHOUSE_PRICE)} Coins. Earn more before purchasing.`,
       "already-owned": "You already own a warehouse in this port.",
     });
   }, [runCommand]);
 
   const handleBuyResidence = useCallback(() => {
     runCommand({ type: "buyResidence" }, {
-      gold: `A residence costs ${RESIDENCE_PRICE} gold. Earn more before purchasing.`,
+      coins: `A residence costs ${formatCoins(RESIDENCE_PRICE)} Coins. Earn more before purchasing.`,
       "already-owned": "You already have a residence in another port.",
     });
   }, [runCommand]);
 
   const handleBuyFarm = useCallback(() => {
     runCommand({ type: "buyFarm" }, {
-      gold: `A farm costs ${FARM_PRICE} gold. Earn more before purchasing.`,
+      coins: `A farm costs ${formatCoins(FARM_PRICE)} Coins. Earn more before purchasing.`,
       "already-owned": "You already own a farm in this port.",
     });
   }, [runCommand]);
@@ -2685,7 +2697,7 @@ export default function App() {
       "no-residence": "Establish a residence before starting a household.",
       "away-from-residence": "Return to your residence to establish a household.",
       "already-married": "Your household is already established.",
-      gold: `Establishing a household costs ${MARRIAGE_HOUSEHOLD_COST} gold.`,
+      coins: `Establishing a household costs ${formatCoins(MARRIAGE_HOUSEHOLD_COST)} Coins.`,
     });
   }, [runCommand]);
 
@@ -2714,7 +2726,7 @@ export default function App() {
   const handleUpgrade = useCallback(
     (upgrade: UpgradeId) => {
       runCommand({ type: "buyUpgrade", upgrade }, {
-        gold: "Save a little more gold for this ship upgrade.",
+        coins: "Save a few more Coins for this ship upgrade.",
         "max-level": "This upgrade is already at its best.",
         unavailable: "You can only upgrade while docked and clear of an encounter.",
       });
@@ -2735,14 +2747,32 @@ export default function App() {
 
   if (saveStatus === "loading") return <LoadingScreen />;
 
+  if (saveIsNewer) {
+    return (
+      <div className="game-background">
+        <div className="save-error-banner" role="alert">
+          <span>{saveError}</span>
+          <button onClick={() => window.location.reload()}>Reload the game</button>
+        </div>
+      </div>
+    );
+  }
+
   if (!game) {
     return (
       <div className="game-background">
         {saveError && (
           <div className="save-error-banner" role="alert">
             <span>{saveError}</span>
+            <button
+              onClick={() => {
+                void readRawSave().then((save) => downloadJson("bengal-trader-save.json", save));
+              }}
+            >
+              Download a copy of your save
+            </button>
             <button onClick={() => { setSaveError(""); setSaveStatus("ready"); }}>
-              Start a fresh voyage
+              Start a fresh voyage (your old save is kept as a backup)
             </button>
           </div>
         )}
@@ -2776,6 +2806,7 @@ export default function App() {
     missions: "Mission board",
     properties: "Properties",
     notifications: "Notices",
+    backups: "Save backups",
     account: "Account",
   };
 
@@ -2825,10 +2856,10 @@ export default function App() {
               <h1>The Bengal Trader</h1>
             </div>
           </div>
-          <div className="quick-stats" aria-label={`Gold ${game.gold}; cargo ${cargoUsed} of ${getCargoCapacity(game)}`}>
-            <div className="quick-stat gold-stat">
-              <GoldCoin />
-              <span><span className="value-pulse" key={game.gold}>{game.gold}</span><small>gold</small></span>
+          <div className="quick-stats" aria-label={`Coins ${formatCoins(game.coins)}; cargo ${cargoUsed} of ${getCargoCapacity(game)}`}>
+            <div className="quick-stat coins-stat">
+              <CoinIcon />
+              <span><span className="value-pulse" key={game.coins}>{formatCoinsCompact(game.coins)}</span><small>Coins</small></span>
             </div>
             <div className="quick-stat cargo-stat">
               <CargoMark />
@@ -2978,7 +3009,7 @@ export default function App() {
                 <DockPanel
                   onRepair={() => {
                     runCommand({ type: "repairShip" }, {
-                      gold: "Earn a little more gold before repairing your ship.",
+                      coins: "Earn a few more Coins before repairing your ship.",
                       unavailable: "You can only repair while docked and clear of an encounter.",
                     });
                   }}
@@ -2989,6 +3020,9 @@ export default function App() {
               )}
               {screen === "progress" && <ProgressPanel state={game} />}
               {screen === "family" && <HouseholdPanel state={game} />}
+              {screen === "backups" && (
+                <SaveBackupPanel onRestored={() => window.location.reload()} />
+              )}
               {screen === "account" && accountService && (
                 <AccountPanel service={accountService} status={accountStatus} />
               )}
@@ -3086,6 +3120,7 @@ export default function App() {
                 ["family", "Household"],
                 ["properties", "Properties"],
                 ["notifications", "Notifications"],
+                ["backups", "Save backups"],
                 ...(accountService ? ([["account", "Account"]] as const) : []),
               ] as const).map(([destination, label]) => (
                 <button

@@ -129,7 +129,7 @@ describe("city economic identity data", () => {
         false,
         initialStock.dhaka.muslin,
       ),
-    ).toBe(18);
+    ).toBe(900);
     expect(
       getGoodPrice(
         "kasimbazar",
@@ -138,7 +138,7 @@ describe("city economic identity data", () => {
         false,
         initialStock.kasimbazar.silk,
       ),
-    ).toBe(24);
+    ).toBe(1200);
     expect(
       getGoodPrice(
         "patna",
@@ -147,7 +147,7 @@ describe("city economic identity data", () => {
         false,
         initialStock.patna.saltpetre,
       ),
-    ).toBe(16);
+    ).toBe(800);
     expect(
       getGoodPrice(
         "hooghly",
@@ -156,9 +156,9 @@ describe("city economic identity data", () => {
         false,
         initialStock.hooghly.saltpetre,
       ),
-    ).toBe(16);
+    ).toBe(800);
     expect(
       getGoodPrice("chittagong", "salt", "buy", true),
-    ).toBe(20);
+    ).toBe(1000);
   });
 });

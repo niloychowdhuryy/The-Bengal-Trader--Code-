@@ -38,7 +38,7 @@ async function expectLogMatchesSave(commandCount: number): Promise<GameState> {
     expect(replay.status).toBe("accepted");
     if (replay.status !== "accepted") return;
     expect(replay.lastSeq).toBe(log!.meta.nextSeq - 1);
-    expect(replay.state.gold).toBe(saved!.gold);
+    expect(replay.state.coins).toBe(saved!.coins);
     expect(replay.state.cargo).toEqual(saved!.cargo);
     expect(replay.state.upgrades).toEqual(saved!.upgrades);
     expect(replay.state.marketStock).toEqual(saved!.marketStock);
@@ -67,7 +67,7 @@ describe("playing through the interface", () => {
     await screen.findByRole("heading", { name: "The Bengal Trader" });
 
     fireEvent.click(screen.getByRole("button", { name: "Open Dhaka market" }));
-    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 14 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 700 Coins" }));
     fireEvent.click(screen.getByRole("button", { name: /Confirm buy/ }));
     fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
     fireEvent.click(mapPort(/^Sylhet/));
@@ -82,7 +82,7 @@ describe("playing through the interface", () => {
   });
 
   it("records nothing for a refused action", async () => {
-    await saveGame({ ...createNewGame("Maya"), gold: 0, highestGold: 90 });
+    await saveGame({ ...createNewGame("Maya"), coins: 0, highestCoins: 4500 });
     render(<App />);
     await screen.findByRole("heading", { name: "The Bengal Trader" });
     await waitFor(async () => expect(await readCommandLog()).not.toBeNull());
@@ -93,7 +93,7 @@ describe("playing through the interface", () => {
   });
 
   it("keeps recording through a reload of an existing version 19 save", async () => {
-    await saveGame({ ...createNewGame("Maya"), gold: 3_000, highestGold: 3_000 });
+    await saveGame({ ...createNewGame("Maya"), coins: 150_000, highestCoins: 150_000 });
     const first = render(<App />);
     await screen.findByRole("heading", { name: "The Bengal Trader" });
     fireEvent.click(screen.getByRole("button", { name: "Open ship dock" }));

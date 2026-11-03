@@ -120,7 +120,7 @@ function repairIfNeeded(sim: Sim): void {
   const state = sim.state;
   const maximum = getShipMaximumHull(state);
   const cost = (maximum - state.shipHull) * getSelectedVesselClass(state).repairCostPerHull;
-  if (state.shipHull <= maximum / 2 && state.gold >= cost) {
+  if (state.shipHull <= maximum / 2 && state.coins >= cost) {
     send(sim, { type: "repairShip" });
   }
 }
@@ -129,7 +129,7 @@ function buyHoldUpgrade(sim: Sim, reserve: number): void {
   const state = sim.state;
   const hold = UPGRADES.find((upgrade) => upgrade.id === "hold")!;
   const cost = hold.baseCost * (state.upgrades.hold + 1);
-  if (state.upgrades.hold < hold.maxLevel && state.gold >= cost + reserve) {
+  if (state.upgrades.hold < hold.maxLevel && state.coins >= cost + reserve) {
     send(sim, { type: "buyUpgrade", upgrade: "hold" });
   }
 }
@@ -152,7 +152,7 @@ function bestDestination(
     if (town.id === state.currentTown) continue;
     const time = getShipRoutePreview(state, town.id).travelTime;
     if (!time) continue;
-    const plan = planCargo(state, state.currentTown, town.id, room(state), state.gold);
+    const plan = planCargo(state, state.currentTown, town.id, room(state), state.coins);
     const judged = 1 + context.noise * (context.random() - 0.5) * 2;
     const value = ((plan.profit + bonus(town.id)) * judged) /
       Math.max(MIN_DAYS_FOR_VALUE, time.durationDays);
@@ -194,7 +194,7 @@ export function twoPort(first: TownId, second: TownId): Strategy {
     const destination = state.currentTown === first ? second : first;
     buyPlan(
       sim,
-      planCargo(sim.state, sim.state.currentTown, destination, room(sim.state), sim.state.gold),
+      planCargo(sim.state, sim.state.currentTown, destination, room(sim.state), sim.state.coins),
     );
     goTo(sim, destination);
   };
@@ -204,12 +204,12 @@ export function twoPort(first: TownId, second: TownId): Strategy {
 export const manual: Strategy = (sim, context) => {
   sellCargo(sim, context);
   repairIfNeeded(sim);
-  buyHoldUpgrade(sim, 60);
+  buyHoldUpgrade(sim, 3_000);
   tradeAndSail(sim, context);
 };
 
-const ROUTE_CAPITAL = 300;
-const ROUTE_SHIP_RESERVE = 100;
+const ROUTE_CAPITAL = 15_000;
+const ROUTE_SHIP_RESERVE = 5_000;
 
 export function routeRules(state: GameState, origin: TownId, destination: TownId): AutomatedTradeRule[] {
   return GOODS.flatMap((good) => {
@@ -226,7 +226,7 @@ function buyRouteShip(sim: Sim): boolean {
   const state = sim.state;
   if (!SHIPYARD_PORTS.includes(state.currentTown)) return false;
   const vessel = VESSEL_CLASSES.patello;
-  if (state.gold < vessel.price + ROUTE_CAPITAL + ROUTE_SHIP_RESERVE) return false;
+  if (state.coins < vessel.price + ROUTE_CAPITAL + ROUTE_SHIP_RESERVE) return false;
 
   let bestPort: TownId | null = null;
   let bestRules: AutomatedTradeRule[] = [];
@@ -264,7 +264,7 @@ function buyRouteShip(sim: Sim): boolean {
 function wantsRouteShip(state: GameState, limit: number): boolean {
   return (
     state.fleet.length - 1 < limit &&
-    state.gold >= VESSEL_CLASSES.patello.price + ROUTE_CAPITAL + ROUTE_SHIP_RESERVE
+    state.coins >= VESSEL_CLASSES.patello.price + ROUTE_CAPITAL + ROUTE_SHIP_RESERVE
   );
 }
 
@@ -273,7 +273,7 @@ export function automated(shipLimit = 2): Strategy {
   return (sim, context) => {
     sellCargo(sim, context);
     repairIfNeeded(sim);
-    buyHoldUpgrade(sim, 60);
+    buyHoldUpgrade(sim, 3_000);
     if (wantsRouteShip(sim.state, shipLimit)) {
       if (!buyRouteShip(sim) && !SHIPYARD_PORTS.includes(sim.state.currentTown)) {
         goTo(sim, "hooghly");
@@ -284,7 +284,7 @@ export function automated(shipLimit = 2): Strategy {
   };
 }
 
-const WAREHOUSE_RESERVE = 100;
+const WAREHOUSE_RESERVE = 5_000;
 const WAREHOUSE_BUY_PER_VISIT = 4;
 
 /**
@@ -304,7 +304,7 @@ export function warehouseRoute(first: TownId, second: TownId): Strategy {
 
     if (
       !sim.state.ownedWarehouses.includes(here) &&
-      sim.state.gold >= WAREHOUSE_PRICE + WAREHOUSE_RESERVE
+      sim.state.coins >= WAREHOUSE_PRICE + WAREHOUSE_RESERVE
     ) {
       send(sim, { type: "buyWarehouse" });
     }
@@ -316,13 +316,13 @@ export function warehouseRoute(first: TownId, second: TownId): Strategy {
         }
       }
     }
-    buyPlan(sim, planCargo(sim.state, here, destination, room(sim.state), sim.state.gold));
+    buyPlan(sim, planCargo(sim.state, here, destination, room(sim.state), sim.state.coins));
 
     if (sim.state.ownedWarehouses.includes(here)) {
       for (let unit = 0; unit < WAREHOUSE_BUY_PER_VISIT; unit += 1) {
         const state = sim.state;
         if (getWarehouseUsed(state, here) >= 20) break;
-        const stored = planCargo(state, here, destination, 1, state.gold);
+        const stored = planCargo(state, here, destination, 1, state.coins);
         const good = (Object.keys(stored.units) as GoodId[])[0];
         if (!good || state.marketStock[here][good] < MARKET_TARGET_STOCK) break;
         // A full hold leaves nowhere to put a purchase on its way to the warehouse.
@@ -341,14 +341,14 @@ export function warehouseRoute(first: TownId, second: TownId): Strategy {
 }
 
 const MAX_FARMS = 6;
-const FARM_RESERVE = 100;
+const FARM_RESERVE = 5_000;
 
 function workFarm(sim: Sim, reserve: number, limit: number): void {
   const state = sim.state;
   if (
     state.ownedFarms.length < limit &&
     !state.ownedFarms.includes(state.currentTown) &&
-    state.gold >= FARM_PRICE + reserve
+    state.coins >= FARM_PRICE + reserve
   ) {
     send(sim, { type: "buyFarm" });
   }
@@ -376,7 +376,7 @@ function contractBonus(state: GameState, port: TownId): number {
     .filter((mission) =>
       mission.good === null || state.cargo[mission.good] >= mission.quantity - mission.progress,
     )
-    .reduce((total, mission) => total + mission.rewardGold, 0);
+    .reduce((total, mission) => total + mission.rewardCoins, 0);
 }
 
 function takeContracts(sim: Sim, context: BotContext): void {
@@ -392,9 +392,9 @@ function takeContracts(sim: Sim, context: BotContext): void {
     }
     if (mission.good !== null) {
       const quote = getTradeQuote(sim.state, mission.origin, mission.good, "buy", mission.quantity);
-      if (!quote || quote.total >= sim.state.gold || room(sim.state) < mission.quantity) continue;
+      if (!quote || quote.total >= sim.state.coins || room(sim.state) < mission.quantity) continue;
       // The goods are handed over, so the reward has to cover them.
-      if (mission.rewardGold <= quote.total) continue;
+      if (mission.rewardCoins <= quote.total) continue;
     }
     send(sim, { type: "acceptMission", missionId: mission.id });
     if (mission.good !== null) {
@@ -416,14 +416,14 @@ export const mixed: Strategy = (sim, context) => {
   takeContracts(sim, context);
   sellCargo(sim, context);
   repairIfNeeded(sim);
-  buyHoldUpgrade(sim, 60);
+  buyHoldUpgrade(sim, 3_000);
   if (wantsRouteShip(sim.state, 1)) {
     if (!buyRouteShip(sim) && !SHIPYARD_PORTS.includes(sim.state.currentTown)) {
       goTo(sim, "hooghly");
       return;
     }
   }
-  if (sim.state.fleet.length > 1) workFarm(sim, 300, 2);
+  if (sim.state.fleet.length > 1) workFarm(sim, 15_000, 2);
   takeContracts(sim, context);
   tradeAndSail(sim, context, (port) => contractBonus(sim.state, port));
 };

@@ -11,9 +11,9 @@
 **Read this first:**
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
-- Saves are now version 20. Older saves migrate on load.
-- The economy has a simulation harness and a recorded baseline (Economy Plan Step 1, approved and committed locally, not pushed). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
-- Most of the planned commercial game is **not built**. In particular, the currency is still Gold, markets are simple, and there are no ads or leaderboards.
+- Saves are now version 21, counting in Coins. Older saves convert at exactly ×50 on load, keeping the original as a backup (Economy Plan Step 2, committed locally, not pushed).
+- The economy has a simulation harness and a recorded baseline (Economy Plan Step 1). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
+- Most of the planned commercial game is **not built**. In particular, markets are simple, and there are no ads or leaderboards.
 
 ## 1. The game
 
@@ -47,11 +47,10 @@
 | Feature | Status | Notes |
 |---|---|---|
 | Eight goods at all 15 ports | Implemented | Rice, cotton textiles, salt, raw silk, sugar, saltpetre, opium, lac resin |
-| Finite stock with stock-sensitive prices | Implemented | Stock 0–40, buy price 1–156 gold |
+| Finite stock with stock-sensitive prices | Implemented | Stock 0–40, buy price 50–7,800 Coins |
 | Weighted-average cargo cost and profit estimates | Implemented | |
 | Daily stock recovery toward each port's baseline | Implemented | One unit per sailing day |
-| Currency | Implemented as Gold | Coins are planned (below) |
-| Coins at 50×, 5,000 starting balance | Planned | Stage 4 |
+| Coins at 50×, 5,000 starting balance | Implemented | Older saves convert at exactly ×50 |
 | Dynamic market (production, shortages, events, explained prices) | Partially implemented | Only stock movement and one fixed Chittagong salt event exist |
 | Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`. Balance targets are not met yet |
 
@@ -59,10 +58,10 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| River boat, Bora, Patello with distinct stats | Implemented | Prices are 500, 350 and 900 gold, with Coins not yet applied |
+| River boat, Bora, Patello with distinct stats | Implemented | Prices are 25,000, 17,500 and 45,000 Coins |
 | Vessel access rules | Implemented | See section 8 |
 | Up to three ships, each with its own cargo and hull | Implemented | Sold at Dhaka, Chittagong and Hooghly |
-| Cannon, hull and hold upgrades; paid repairs | Implemented | Repair is 2 gold per hull, 3 for Patello |
+| Cannon, hull and hold upgrades; paid repairs | Implemented | Repair is 100 Coins per hull, 150 for Patello |
 | Automated two-port trade routes | Implemented | Patello trades up to 4 units per good per call, others 1 |
 | Return orders for out-of-reach ships | Implemented | Free, and only for ships that can't otherwise be reached |
 | Distinct art per vessel, plus a bullock cart | Implemented | |
@@ -71,16 +70,16 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| 4 named merchants who travel and trade | Implemented | Shared market stock, 3-item holds, budgets capped at 180 gold |
+| 4 named merchants who travel and trade | Implemented | Shared market stock, 3-item holds, budgets capped at 9,000 Coins |
 | At least 25 active NPC traders | Planned | Owner's requirement. Save validation currently assumes exactly the 4 existing merchants, so this needs a migration and performance testing |
 
 ### Property, family and progress
 
 | Feature | Status | Notes |
 |---|---|---|
-| Warehouses | Partially implemented | One per port, 150 gold, 20 spaces, one-unit transfers. No reputation unlocks, capacity upgrades or network view |
-| Farms | Partially implemented | One per port, 200 gold. They produce free rice by sailing day, which the plan replaces with paid, timed orders of several goods |
-| Residence | Implemented as a location | One, for 250 gold, with no other effect |
+| Warehouses | Partially implemented | One per port, 7,500 Coins, 20 spaces, one-unit transfers. No reputation unlocks, capacity upgrades or network view |
+| Farms | Partially implemented | One per port, 10,000 Coins. They produce free rice by sailing day, which the plan replaces with paid, timed orders of several goods |
+| Residence | Implemented as a location | One, for 12,500 Coins, with no other effect |
 | Marriage and household screen | Partially implemented | One-time action. Children, aging and inheritance don't exist |
 | Reputation | Partially implemented | One global score, plus a 0–100 standing per city that has no effects yet |
 | Reputation levels and political favours | Planned | Stage 8 |
@@ -147,11 +146,11 @@
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
 
-**Tests:** 420 passing across 18 test files, plus a passing type-check and production build, at the navigation commit. Economy Plan Step 1 adds a simulation harness and its tests.
+**Tests:** 478 passing across 22 test files, plus a passing type-check and production build, at the Economy Plan Step 2 checkpoint.
 
 ## 4. Saves
 
-**Current format:** version 20. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
+**Current format:** version 21. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
 
 | Version | Added |
 |---|---|
@@ -165,10 +164,11 @@
 | 17–18 | Player fleet, automated routes |
 | 19 | Vessel classes, return orders |
 | 20 | New route network. Voyages move to it at the same percentage of progress |
+| 21 | Coins. Every amount of money ×50, and gold fields renamed |
 
 A repair on load also fixes saves affected by an earlier gold-peak bug. After a migration, the command log restarts and the game is marked `imported`, because old commands used old rules.
 
-**Planned:** Coins would be version 21.
+**Backups:** before an upgrade, the original save and its command log are kept on the device, written in the same database transaction as the upgraded save. **More → Save backups** can download or restore them. Clearing the browser's site data removes them too, and a downloaded copy can't yet be imported.
 
 ## 5. Navigation rebuild: implemented and committed, phone testing still to come
 
@@ -211,7 +211,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `4645376` | Staging, navigation and town plans | Yes |
 | `7f1fa25` | Online Stage 2: Google sign-in and profiles | Yes |
 | `d45a93d` | Navigation rebuild, map fix and port panel, save version 20 | Yes |
-| Latest | Economy Plan Step 1: simulation harness and baseline | **No, awaiting the owner's instruction** |
+| `c01862b` | Economy Plan Step 1: simulation harness and baseline | Yes |
+| Latest | Economy Plan Step 2: Coins and save backup, save version 21 | **No, awaiting the owner's instruction** |
 
 | Service | Status |
 |---|---|
@@ -230,7 +231,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | Distinct identity for all 15 towns | Partially implemented | Plan in `TOWN_IDENTITY_PLAN.md`. Today's towns fail its acceptance test. Religious placements and several town histories still need research |
 | At least 25 active NPC traders | Planned | 4 exist. Not yet in a numbered stage |
 | Dynamic markets | Partially implemented | Stage 5 |
-| Coins (50×) | Planned | Stage 4 |
+| Coins (50×) | Implemented | Economy Plan Step 2 |
 | Paid farm production orders | Planned | Stage 6. Needs a trusted clock for real-time timers, which is weak until cloud saves exist |
 | Warehouse network | Partially implemented | Stage 7 |
 | City unlocks and reputation levels | Planned | Stage 8 |
@@ -272,11 +273,10 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 - The Fleet card still says "At sea" for a ship on a cart.
 - The welcome notice covers the top of the More menu on phones.
 - On landscape phones, two map labels overlap something.
-- A failed load always says "unsupported version", whatever the real cause.
 - Button names read by screen readers sometimes differ from visible text.
 
 **Incomplete work:**
-- No save backup or export exists, and there is no way back from a bad migration.
+- Save backups can be downloaded, but a downloaded file can't be imported yet.
 - Two open tabs can overwrite each other's save and mix up the command log. This must be fixed before cloud saves.
 - `BengalWorldArt.tsx` is unused. Parts of `ARCHITECTURE.md`, `GAME_DESIGN.md` and `FULL_GAME_PLAN_AUDIT.md` are out of date.
 - The Edge Function still uses Supabase's retiring key name.
@@ -299,8 +299,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Coins** (Stage 4, Economy Plan Step 2), once the owner approves it. Whether staging runs `d45a93d` is still unconfirmed.
-2. **Pricing, stock and the world tick** (Economy Plan Step 3). Later balance depends on it.
+1. **Pricing, stock and the world tick** (Economy Plan Step 3), once the owner approves it. Which commit staging runs is still unconfirmed.
+2. **Farms, automated trading and contracts stay on the balance list** (see `ROADMAP.md`). Later balance depends on it.
 3. **The 25+ NPC traders, then offline leaderboards** (Stage 5, Economy Plan Steps 4–5). Traders are the main force on stock and prices, so they should be built and balanced together.
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.
 5. **City unlocks and reputation** (Stage 8).

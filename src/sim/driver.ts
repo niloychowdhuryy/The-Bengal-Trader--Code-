@@ -83,7 +83,7 @@ export function send(sim: Sim, command: GameCommand): CommandResult {
   if (command.type === "sellGood" && sim.currentLeg) {
     const leg = sim.legs.get(sim.currentLeg);
     if (leg) {
-      leg.profit += result.state.gold - before.gold -
+      leg.profit += result.state.coins - before.coins -
         before.averagePurchasePrice[command.good] * command.quantity;
     }
   }

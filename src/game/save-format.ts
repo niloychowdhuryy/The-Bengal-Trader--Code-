@@ -5,6 +5,8 @@ import {
   GOODS,
   MILESTONES,
   MARKET_PORTS,
+  PROSPEROUS_MERCHANT_COINS,
+  SAVE_VERSION,
   MAX_PLAYER_SHIPS,
   TOWNS,
   UPGRADES,
@@ -24,6 +26,7 @@ import {
   getVesselMaximumHull,
   FARM_OUTPUT_CAPACITY,
   MAX_AUTOMATED_ROUTE_CAPITAL,
+  formatCoins,
   getGoodPrice,
   getShipRouteConditions,
   getShipRouteDays,
@@ -53,6 +56,25 @@ import {
   SAILING_SPEEDS,
   type SailingSpeed,
 } from "./travel-time";
+
+const COINS_PER_GOLD = 50;
+
+/** The save was written by a later version of the game, so this one can't read it. */
+export class NewerSaveError extends Error {
+  constructor() {
+    super("Your save is from a newer version of the game. Reload the page to update, and your progress will be there.");
+    this.name = "NewerSaveError";
+  }
+}
+
+export function isNewerSave(value: unknown): boolean {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    typeof (value as { version?: unknown }).version === "number" &&
+    (value as { version: number }).version > SAVE_VERSION
+  );
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -304,7 +326,7 @@ function isValidMissions(value: unknown, sailingDay: number): value is Mission[]
         mission.good !== template.good ||
         mission.quantity !== template.quantity ||
         mission.targetProfit !== template.targetProfit ||
-        mission.rewardGold !== template.rewardGold ||
+        mission.rewardCoins !== template.rewardCoins ||
         mission.deadlineDays !== template.deadlineDays ||
         (mission.status !== "available" &&
           mission.status !== "active" &&
@@ -898,16 +920,16 @@ export function isValidGameState(value: unknown): value is GameState {
   );
 
   if (
-    value.version !== 20 ||
+    value.version !== SAVE_VERSION ||
     (value.residenceTown !== null && !isTownId(value.residenceTown)) ||
     !isSailingSpeed(value.sailingSpeed) ||
     typeof value.captainName !== "string" ||
     value.captainName.length > 18 ||
-    typeof value.gold !== "number" ||
-    !Number.isSafeInteger(value.gold) ||
-    value.gold < 0 ||
-    !isNonnegativeInteger(value.highestGold) ||
-    value.highestGold < value.gold ||
+    typeof value.coins !== "number" ||
+    !Number.isSafeInteger(value.coins) ||
+    value.coins < 0 ||
+    !isNonnegativeInteger(value.highestCoins) ||
+    value.highestCoins < value.coins ||
     !isNonnegativeInteger(value.reputation) ||
     value.reputation >
       MARKET_PORTS.length * (GOODS.length + 1) +
@@ -997,6 +1019,112 @@ export function isValidGameState(value: unknown): value is GameState {
   }
 
   return true;
+}
+
+// Saves older than version 21 count in gold, and the Coins step converts them at the end
+// of the chain. Steps before it that add today's templates must add them in gold too, or
+// those amounts would be converted twice.
+function createGoldMissionBoard(): Record<string, unknown>[] {
+  return createMissionBoard().map(({ rewardCoins, targetProfit, ...mission }) => ({
+    ...mission,
+    rewardGold: rewardCoins / COINS_PER_GOLD,
+    targetProfit: targetProfit / COINS_PER_GOLD,
+  }));
+}
+
+function createGoldNpcMerchants(): NpcMerchant[] {
+  return createNpcMerchants().map((merchant) => ({
+    ...merchant,
+    budget: merchant.budget / COINS_PER_GOLD,
+  }));
+}
+
+function goldToCoins(value: unknown): unknown {
+  return typeof value === "number" ? value * COINS_PER_GOLD : value;
+}
+
+function recordGoldToCoins(value: unknown): unknown {
+  return isRecord(value)
+    ? Object.fromEntries(Object.entries(value).map(([key, amount]) => [key, goldToCoins(amount)]))
+    : value;
+}
+
+// Old messages keep their wording, with the amount restated as it would be today.
+function messageGoldToCoins(value: unknown): unknown {
+  return typeof value === "string"
+    ? value.replace(/(\d+) gold\b/g, (_match, amount: string) =>
+        `${formatCoins(Number(amount) * COINS_PER_GOLD)} Coins`,
+      )
+    : value;
+}
+
+// Every amount of money becomes ×50. Nothing else in the save changes.
+function migrateToCoins(save: Record<string, unknown>): Record<string, unknown> {
+  const { gold, highestGold, ...rest } = save;
+
+  const fleet = Array.isArray(save.fleet)
+    ? save.fleet.map((ship) => {
+        if (!isRecord(ship)) return ship;
+        return {
+          ...ship,
+          averagePurchasePrice: recordGoldToCoins(ship.averagePurchasePrice),
+          automatedRoute: isRecord(ship.automatedRoute)
+            ? { ...ship.automatedRoute, capital: goldToCoins(ship.automatedRoute.capital) }
+            : ship.automatedRoute,
+          automationLog: Array.isArray(ship.automationLog)
+            ? ship.automationLog.map((entry) =>
+                isRecord(entry) ? { ...entry, message: messageGoldToCoins(entry.message) } : entry,
+              )
+            : ship.automationLog,
+        };
+      })
+    : save.fleet;
+
+  const missions = Array.isArray(save.missions)
+    ? save.missions.map((mission) => {
+        if (!isRecord(mission)) return mission;
+        const { rewardGold, ...other } = mission;
+        return {
+          ...other,
+          rewardCoins: goldToCoins(rewardGold),
+          targetProfit: goldToCoins(mission.targetProfit),
+          // Progress means goods for other contracts, and only money for this one.
+          progress:
+            mission.type === "profitable_trade" ? goldToCoins(mission.progress) : mission.progress,
+        };
+      })
+    : save.missions;
+
+  const npcMerchants = Array.isArray(save.npcMerchants)
+    ? save.npcMerchants.map((merchant) =>
+        isRecord(merchant)
+          ? {
+              ...merchant,
+              budget: goldToCoins(merchant.budget),
+              cargoCost: recordGoldToCoins(merchant.cargoCost),
+            }
+          : merchant,
+      )
+    : save.npcMerchants;
+
+  const warehouses = save.warehouseAveragePurchasePrice;
+
+  return {
+    ...rest,
+    version: 21,
+    coins: goldToCoins(gold),
+    highestCoins: goldToCoins(highestGold),
+    averagePurchasePrice: recordGoldToCoins(save.averagePurchasePrice),
+    warehouseAveragePurchasePrice: isRecord(warehouses)
+      ? Object.fromEntries(
+          Object.entries(warehouses).map(([port, prices]) => [port, recordGoldToCoins(prices)]),
+        )
+      : warehouses,
+    fleet,
+    missions,
+    npcMerchants,
+    lastMessage: messageGoldToCoins(save.lastMessage),
+  };
 }
 
 // Journeys under way move onto the rebuilt network, keeping how far along they were.
@@ -1303,7 +1431,7 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
               isNonnegativeInteger(portStock[good.id])
                 ? Number(portStock[good.id])
                 : createInitialMarketStock()[port][good.id],
-            )
+            ) / COINS_PER_GOLD
           : 0,
       ]),
     );
@@ -1390,7 +1518,7 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     save = {
       ...save,
       version: 14,
-      missions: createMissionBoard(),
+      missions: createGoldMissionBoard(),
       localStanding: createEmptyLocalStanding(),
       voyagesStarted: 0,
       voyage,
@@ -1401,7 +1529,7 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     save = {
       ...save,
       version: 15,
-      npcMerchants: createNpcMerchants(),
+      npcMerchants: createGoldNpcMerchants(),
       npcActivity: [],
       npcSimulationDay: isNonnegativeInteger(save.sailingDay)
         ? Number(save.sailingDay)
@@ -1503,27 +1631,38 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     save = migrateToTransportNetwork(save, now);
   }
 
-  return save.version === 20
-    ? reanchorPausedVoyage(repairGoldPeak(save), now)
+  // The peak repair for gold saves checks a gold amount, so it has to run before Coins.
+  if (save.version === 20) {
+    save = migrateToCoins(repairPeak(save, "gold", "highestGold", 250));
+  }
+
+  return save.version === SAVE_VERSION
+    ? reanchorPausedVoyage(
+        repairPeak(save, "coins", "highestCoins", PROSPEROUS_MERCHANT_COINS),
+        now,
+      )
     : save;
 }
 
 // Cancelling a profitable route once added capital without raising the peak.
-function repairGoldPeak(save: Record<string, unknown>): Record<string, unknown> {
-  if (
-    !isNonnegativeInteger(save.gold) ||
-    !isNonnegativeInteger(save.highestGold) ||
-    save.gold <= save.highestGold
-  ) {
+function repairPeak(
+  save: Record<string, unknown>,
+  moneyField: "gold" | "coins",
+  peakField: "highestGold" | "highestCoins",
+  milestoneAmount: number,
+): Record<string, unknown> {
+  const money = save[moneyField];
+  const peak = save[peakField];
+  if (!isNonnegativeInteger(money) || !isNonnegativeInteger(peak) || money <= peak) {
     return save;
   }
   const completed = save.completedMilestones;
   return {
     ...save,
-    highestGold: save.gold,
+    [peakField]: money,
     completedMilestones:
       Array.isArray(completed) &&
-      save.gold >= 250 &&
+      money >= milestoneAmount &&
       !completed.includes("prosperous_merchant")
         ? [...completed, "prosperous_merchant"]
         : completed,
@@ -1531,9 +1670,10 @@ function repairGoldPeak(save: Record<string, unknown>): Record<string, unknown> 
 }
 
 export function validateSave(value: unknown, now = Date.now()): GameState {
+  if (isNewerSave(value)) throw new NewerSaveError();
   const migrated = migrateLegacySave(value, now);
   if (!isValidGameState(migrated)) {
-    throw new Error("Your saved voyage is from an unsupported version.");
+    throw new Error("Your saved voyage could not be loaded. It has not been changed.");
   }
 
   return migrated;

@@ -77,7 +77,7 @@ describe("first playable journey", () => {
     const game = createNewGame("Maya");
     expect(game.captainName).toBe("Maya");
     expect(game.currentTown).toBe("dhaka");
-    expect(game.gold).toBe(90);
+    expect(game.coins).toBe(5_000);
     expect(getCargoUsed(game)).toBe(3);
   });
 
@@ -123,7 +123,7 @@ describe("first playable journey", () => {
         expect(
           Object.values(traveling.cargo).reduce((sum, quantity) => sum + quantity, 0),
         ).toBeLessThanOrEqual(traveling.cargoCapacity);
-        expect(firstDay.npcMerchants.every((entry) => entry.budget <= 180)).toBe(true);
+        expect(firstDay.npcMerchants.every((entry) => entry.budget <= 9_000)).toBe(true);
 
         let arrived = firstDay;
         const daysToArrival = traveling.travelDaysRemaining;
@@ -134,7 +134,7 @@ describe("first playable journey", () => {
         expect(traderAfterSale.currentPort).toBe(traveling.destinationPort);
         expect(traderAfterSale.phase).toBe("docked");
         expect(traderAfterSale.cargo.rice).toBe(0);
-        expect(traderAfterSale.budget).toBeLessThanOrEqual(180);
+        expect(traderAfterSale.budget).toBeLessThanOrEqual(9_000);
         expect(arrived.marketStock[traveling.destinationPort].rice).toBeGreaterThan(
           firstDay.marketStock[traveling.destinationPort].rice,
         );
@@ -148,7 +148,7 @@ describe("first playable journey", () => {
         expect(
           arrived.npcMerchants.every(
             (entry) =>
-              entry.budget <= 180 &&
+              entry.budget <= 9_000 &&
               Object.values(entry.cargo).reduce(
                 (sum, quantity) => sum + quantity,
                 0,
@@ -202,12 +202,12 @@ describe("first playable journey", () => {
         const dockedMerchant = {
           ...specialist,
           cargo: { ...specialist.cargo, rice: 1 },
-          cargoCost: { ...specialist.cargoCost, rice: 5 },
-          budget: 179,
+          cargoCost: { ...specialist.cargoCost, rice: 250 },
+          budget: 8_950,
         };
         const atPort = {
           ...game,
-          gold: 500,
+          coins: 25_000,
           npcMerchants: [dockedMerchant, ...game.npcMerchants.slice(1)],
         };
         const price = getGoodPrice(
@@ -219,20 +219,20 @@ describe("first playable journey", () => {
         );
         const traded = tradeWithNpcMerchant(atPort, specialist.id, "rice");
         expect(traded.error).toBeUndefined();
-        expect(traded.state.gold).toBe(500 - price);
+        expect(traded.state.coins).toBe(25_000 - price);
         expect(traded.state.cargo.rice).toBe(game.cargo.rice + 1);
         expect(getNpcMerchant(traded.state, specialist.id)?.cargo.rice).toBe(0);
-        expect(getNpcMerchant(traded.state, specialist.id)?.budget).toBe(180);
+        expect(getNpcMerchant(traded.state, specialist.id)?.budget).toBe(9_000);
         expect(traded.state.marketStock).toEqual(atPort.marketStock);
         expect(tradeWithNpcMerchant(traded.state, specialist.id, "rice").error)
           .toBe("no-cargo");
         expect(
           tradeWithNpcMerchant(
-            { ...atPort, gold: 0 },
+            { ...atPort, coins: 0 },
             specialist.id,
             "rice",
           ).error,
-        ).toBe("gold");
+        ).toBe("coins");
         expect(
           tradeWithNpcMerchant(
             {
@@ -306,17 +306,17 @@ describe("first playable journey", () => {
       expect(arrival.missions.find((mission) => mission.id === offer.id)?.status)
         .toBe("completed");
       expect(arrival.cargo.muslin).toBe(0);
-      expect(arrival.gold).toBe(base.gold + offer.rewardGold);
+      expect(arrival.coins).toBe(base.coins + offer.rewardCoins);
       expect(arrival.reputation).toBe(3);
       expect(arrival.localStanding.dhaka).toBe(5);
-      expect(arriveAtDestination(arrival).gold).toBe(arrival.gold);
+      expect(arriveAtDestination(arrival).coins).toBe(arrival.coins);
     });
 
     it("tracks merchant purchases and requires the purchased quantity for delivery", () => {
       const base = {
         ...createNewGame("Maya"),
-        gold: 500,
-        highestGold: 500,
+        coins: 25_000,
+        highestCoins: 25_000,
       };
       const offer = base.missions.find((mission) => mission.id === "dhaka:purchase-delivery")!;
       const accepted = acceptMission(base, offer.id).state;
@@ -378,7 +378,7 @@ describe("first playable journey", () => {
       const expired = arriveAtDestination(startVoyage(nearDeadline, 1000));
       expect(expired.missions.find((mission) => mission.id === offer.id)?.status)
         .toBe("expired");
-      expect(expired.gold).toBe(game.gold);
+      expect(expired.coins).toBe(game.coins);
     });
 
     it("caps local standing at 100 when a contract is completed", () => {
@@ -581,27 +581,27 @@ describe("first playable journey", () => {
   it("buys and sells goods with the displayed local prices", () => {
     const game = createNewGame("Maya");
     const bought = buyGood(game, "salt");
-    expect(bought.state.gold).toBe(76);
+    expect(bought.state.coins).toBe(4_300);
     expect(bought.state.cargo.salt).toBe(1);
     const sold = sellGood(bought.state, "salt");
-    expect(sold.state.gold).toBe(87);
+    expect(sold.state.coins).toBe(4_850);
     expect(sold.state.cargo.salt).toBe(0);
-    expect(getGoodPrice("dhaka", "salt", "sell", false, 19)).toBe(11);
+    expect(getGoodPrice("dhaka", "salt", "sell", false, 19)).toBe(550);
     expect(sellGood(game, "salt").error).toBe("empty");
   });
 
   it("allows one affordable warehouse per port and adds local storage capacity", () => {
     const newGame = createNewGame("Maya");
-    expect(buyWarehouse(newGame).error).toBe("gold");
+    expect(buyWarehouse(newGame).error).toBe("coins");
 
     const richGame = {
       ...newGame,
-      gold: WAREHOUSE_PRICE * 2,
-      highestGold: WAREHOUSE_PRICE * 2,
+      coins: WAREHOUSE_PRICE * 2,
+      highestCoins: WAREHOUSE_PRICE * 2,
     };
     const purchased = buyWarehouse(richGame);
     expect(purchased.error).toBeUndefined();
-    expect(purchased.state.gold).toBe(WAREHOUSE_PRICE);
+    expect(purchased.state.coins).toBe(WAREHOUSE_PRICE);
     expect(purchased.state.ownedWarehouses).toEqual(["dhaka"]);
     expect(getWarehouseCapacity(purchased.state, "dhaka")).toBe(
       WAREHOUSE_CAPACITY,
@@ -622,16 +622,16 @@ describe("first playable journey", () => {
   it("allows one affordable persistent residence at the player's chosen port", () => {
     const newGame = createNewGame("Maya");
     expect(newGame.residenceTown).toBeNull();
-    expect(buyResidence(newGame).error).toBe("gold");
+    expect(buyResidence(newGame).error).toBe("coins");
 
     const richGame = {
       ...newGame,
-      gold: RESIDENCE_PRICE + 40,
-      highestGold: RESIDENCE_PRICE + 40,
+      coins: RESIDENCE_PRICE + 2000,
+      highestCoins: RESIDENCE_PRICE + 2000,
     };
     const purchased = buyResidence(richGame);
     expect(purchased.error).toBeUndefined();
-    expect(purchased.state.gold).toBe(40);
+    expect(purchased.state.coins).toBe(2000);
     expect(purchased.state.residenceTown).toBe("dhaka");
     expect(purchased.state.lastMessage).toContain("Dhaka");
     expect(buyResidence(purchased.state).error).toBe("already-owned");
@@ -646,16 +646,16 @@ describe("first playable journey", () => {
 
   it("allows one affordable farm in each chosen port without locking content", () => {
     const newGame = createNewGame("Maya");
-    expect(buyFarm(newGame).error).toBe("gold");
+    expect(buyFarm(newGame).error).toBe("coins");
 
     const richGame = {
       ...newGame,
-      gold: FARM_PRICE * 2,
-      highestGold: FARM_PRICE * 2,
+      coins: FARM_PRICE * 2,
+      highestCoins: FARM_PRICE * 2,
     };
     const purchased = buyFarm(richGame);
     expect(purchased.error).toBeUndefined();
-    expect(purchased.state.gold).toBe(FARM_PRICE);
+    expect(purchased.state.coins).toBe(FARM_PRICE);
     expect(purchased.state.ownedFarms).toEqual(["dhaka"]);
     expect(purchased.state.farmProductionDay.dhaka).toBe(0);
     expect(buyFarm(purchased.state).error).toBe("already-owned");
@@ -670,37 +670,37 @@ describe("first playable journey", () => {
     expect(GOODS).toHaveLength(8);
   });
 
-  it("requires the owned residence and enough gold before marriage can be established", () => {
+  it("requires the owned residence and enough coins before marriage can be established", () => {
     const newGame = createNewGame("Maya");
     expect(marryAtResidence(newGame).error).toBe("no-residence");
 
     const withResidence = {
       ...newGame,
       residenceTown: "dhaka" as const,
-      gold: MARRIAGE_HOUSEHOLD_COST - 1,
+      coins: MARRIAGE_HOUSEHOLD_COST - 1,
       sailingDay: 2.5,
     };
-    expect(marryAtResidence(withResidence).error).toBe("gold");
+    expect(marryAtResidence(withResidence).error).toBe("coins");
 
     const awayFromHome = {
       ...withResidence,
       currentTown: "patna" as const,
       selectedTown: "patna" as const,
-      gold: MARRIAGE_HOUSEHOLD_COST,
+      coins: MARRIAGE_HOUSEHOLD_COST,
     };
     expect(marryAtResidence(awayFromHome).error).toBe("away-from-residence");
     const underway = startVoyage({
       ...withResidence,
-      gold: MARRIAGE_HOUSEHOLD_COST,
+      coins: MARRIAGE_HOUSEHOLD_COST,
     }, 1_000);
     expect(marryAtResidence(underway).error).toBe("away-from-residence");
 
     const married = marryAtResidence({
       ...withResidence,
-      gold: MARRIAGE_HOUSEHOLD_COST + 20,
+      coins: MARRIAGE_HOUSEHOLD_COST + 1000,
     });
     expect(married.error).toBeUndefined();
-    expect(married.state.gold).toBe(20);
+    expect(married.state.coins).toBe(1000);
     expect(married.state.household.spouse).toEqual({
       status: "married",
       marriedAtSailingDay: 2.5,
@@ -713,8 +713,8 @@ describe("first playable journey", () => {
   it("produces one Rice per full in-game sailing day and preserves partial days", () => {
     const purchased = buyFarm({
       ...createNewGame("Maya"),
-      gold: FARM_PRICE,
-      highestGold: FARM_PRICE,
+      coins: FARM_PRICE,
+      highestCoins: FARM_PRICE,
     }).state;
     const route = getTownRoute("dhaka", "sonargaon");
     expect(route).not.toBeNull();
@@ -774,7 +774,7 @@ describe("first playable journey", () => {
   it("caps farm output and discards production while local storage is full", () => {
     const purchased = buyFarm({
       ...createNewGame("Maya"),
-      gold: FARM_PRICE,
+      coins: FARM_PRICE,
     }).state;
     const nearlyFull = {
       ...purchased,
@@ -792,7 +792,7 @@ describe("first playable journey", () => {
   it("collects farm output into ship cargo only up to free capacity", () => {
     const purchased = buyFarm({
       ...createNewGame("Maya"),
-      gold: FARM_PRICE,
+      coins: FARM_PRICE,
     }).state;
     const ready = {
       ...purchased,
@@ -825,7 +825,7 @@ describe("first playable journey", () => {
   it("stores and retrieves warehouse goods within local capacity and preserves cost basis", () => {
     const purchased = buyWarehouse({
       ...createNewGame("Maya"),
-      gold: WAREHOUSE_PRICE,
+      coins: WAREHOUSE_PRICE,
     }).state;
     const withCargo = {
       ...purchased,
@@ -951,8 +951,8 @@ describe("first playable journey", () => {
 
     game = {
       ...game,
-      gold: 249,
-      highestGold: 249,
+      coins: 12_450,
+      highestCoins: 12_450,
       cargo: { ...game.cargo, rice: 1 },
       averagePurchasePrice: { ...game.averagePurchasePrice, rice: 1 },
     };
@@ -961,9 +961,9 @@ describe("first playable journey", () => {
       getMilestoneProgress(firstSale).find(
         (milestone) => milestone.id === "prosperous_merchant",
       ),
-    ).toMatchObject({ current: 250, completed: true });
+    ).toMatchObject({ current: 12_500, completed: true });
     const afterSpending = buyGood(
-      { ...firstSale, gold: firstSale.gold - 100 },
+      { ...firstSale, coins: firstSale.coins - 5_000 },
       "salt",
     ).state;
     expect(afterSpending.completedMilestones).toContain("prosperous_merchant");
@@ -1036,7 +1036,7 @@ describe("first playable journey", () => {
       for (const good of GOODS) {
         const initial = {
           ...createNewGame("Maya"),
-          gold: 1_000,
+          coins: 50_000,
           cargo: emptyCargo,
         };
         const bought = buyGoodAtPort(initial, port.id, good.id);
@@ -1052,13 +1052,13 @@ describe("first playable journey", () => {
         expect(sold.state.marketStock[port.id][good.id]).toBe(
           initial.marketStock[port.id][good.id],
         );
-        expect(sold.state.gold).toBeLessThan(initial.gold);
+        expect(sold.state.coins).toBeLessThan(initial.coins);
       }
     }
   });
 
   it("prices bulk trades unit by unit and tracks weighted purchase cost", () => {
-    let game = { ...createNewGame("Maya"), gold: 1_000 };
+    let game = { ...createNewGame("Maya"), coins: 50_000 };
     const firstPurchase = buyGood(game, "salt");
     expect(firstPurchase.error).toBeUndefined();
     game = firstPurchase.state;
@@ -1092,7 +1092,7 @@ describe("first playable journey", () => {
 
   it("rejects unaffordable, oversized, invalid, and unavailable trades without changing state", () => {
     const game = createNewGame("Maya");
-    expect(buyGood({ ...game, gold: 0 }, "salt").error).toBe("gold");
+    expect(buyGood({ ...game, coins: 0 }, "salt").error).toBe("coins");
     expect(buyGood(game, "salt", 0).error).toBe("quantity");
     expect(buyGood(game, "salt", 1.5).error).toBe("quantity");
     expect(sellGood(game, "salt", 1).error).toBe("empty");
@@ -1287,7 +1287,7 @@ describe("first playable journey", () => {
     expect(isHistoricalRouteAlertActive(active)).toBe(true);
     expect(
       getGoodPrice("chittagong", "salt", "buy", true),
-    ).toBe(getGoodPrice("chittagong", "salt", "buy", false) + 6);
+    ).toBe(getGoodPrice("chittagong", "salt", "buy", false) + 300);
 
     const arrived = arriveAtDestination(startVoyage(active, 1_000));
     expect(arrived.sailingDay).toBeGreaterThanOrEqual(36);
@@ -1355,7 +1355,7 @@ describe("first playable journey", () => {
     }
 
     expect(market.marketStock.dhaka.rice).toBe(15);
-    expect(getGoodPrice("dhaka", "rice", "buy", false, 15)).toBe(11);
+    expect(getGoodPrice("dhaka", "rice", "buy", false, 15)).toBe(550);
 
     const seller = {
       ...createNewGame("Maya"),
@@ -1376,7 +1376,7 @@ describe("first playable journey", () => {
     }
 
     expect(afterSales.marketStock.dhaka.salt).toBe(25);
-    expect(getGoodPrice("dhaka", "salt", "sell", false, 25)).toBe(9);
+    expect(getGoodPrice("dhaka", "salt", "sell", false, 25)).toBe(450);
     expect(buyGood({ ...market, marketStock: { ...market.marketStock, dhaka: { ...market.marketStock.dhaka, rice: 0 } } }, "rice").error).toBe("out-of-stock");
   });
 
@@ -1408,11 +1408,11 @@ describe("first playable journey", () => {
   it("factors attack, defence, cost and cargo space into dock upgrades", () => {
     const game = createNewGame("Maya");
     const cannon = buyUpgrade(game, "cannon").state;
-    expect(cannon.gold).toBe(55);
+    expect(cannon.coins).toBe(3_250);
     expect(getShipAttack(cannon)).toBe(3);
 
     const hull = buyUpgrade(cannon, "hull").state;
-    expect(hull.gold).toBe(20);
+    expect(hull.coins).toBe(1_500);
     expect(getShipDefence(hull)).toBe(2);
     expect(hull.shipHull).toBe(10);
 
@@ -1421,20 +1421,20 @@ describe("first playable journey", () => {
   });
 
   it("enforces upgrade prices, affordability, and maximum levels", () => {
-    const poor = { ...createNewGame("Maya"), gold: 34 };
-    expect(buyUpgrade(poor, "cannon").error).toBe("gold");
+    const poor = { ...createNewGame("Maya"), coins: 1700 };
+    expect(buyUpgrade(poor, "cannon").error).toBe("coins");
     expect(buyUpgrade(poor, "cannon").state).toEqual(poor);
 
-    let ship = { ...createNewGame("Maya"), gold: 1_000 };
+    let ship = { ...createNewGame("Maya"), coins: 50_000 };
     for (let level = 0; level < 3; level += 1) {
       const result = buyUpgrade(ship, "cannon");
       expect(result.error).toBeUndefined();
-      expect(result.state.gold).toBe(ship.gold - 35 * (level + 1));
+      expect(result.state.coins).toBe(ship.coins - 1_750 * (level + 1));
       ship = result.state;
     }
     expect(buyUpgrade(ship, "cannon").error).toBe("max-level");
 
-    ship = { ...createNewGame("Maya"), gold: 1_000 };
+    ship = { ...createNewGame("Maya"), coins: 50_000 };
     for (let level = 0; level < 3; level += 1) {
       ship = buyUpgrade(ship, "hold").state;
     }
@@ -1469,7 +1469,7 @@ describe("first playable journey", () => {
     ).toBe(1);
   });
 
-  it("repairs battle damage at the dock with a clear gold cost", () => {
+  it("repairs battle damage at the dock with a clear coins cost", () => {
     const battered = {
       ...createNewGame("Maya"),
       shipHull: 6,
@@ -1478,11 +1478,11 @@ describe("first playable journey", () => {
 
     expect(repair.error).toBeUndefined();
     expect(repair.state.shipHull).toBe(8);
-    expect(repair.state.gold).toBe(86);
+    expect(repair.state.coins).toBe(4_800);
     expect(repairShip(repair.state).error).toBe("full-hull");
-    expect(repairShip({ ...battered, gold: 1 }).error).toBe("gold");
-    expect(repairShip({ ...battered, gold: 3 }).state.gold).toBe(3);
-    expect(repairShip({ ...battered, gold: 4 }).state.gold).toBe(0);
+    expect(repairShip({ ...battered, coins: 50 }).error).toBe("coins");
+    expect(repairShip({ ...battered, coins: 150 }).state.coins).toBe(150);
+    expect(repairShip({ ...battered, coins: 200 }).state.coins).toBe(0);
   });
 
   it("prevents repairs and upgrades while a voyage or encounter is active", () => {
@@ -1490,7 +1490,7 @@ describe("first playable journey", () => {
       ...createNewGame("Maya"),
       selectedTown: "sylhet" as const,
       shipHull: 6,
-      gold: 500,
+      coins: 25_000,
     };
     const underway = startVoyage(state, 1_000);
     expect(underway.voyage).not.toBeNull();
@@ -1511,14 +1511,14 @@ describe("first playable journey", () => {
   it("purchases ships only at major shipyards with a bounded fleet and clear cost", () => {
     const poor = {
       ...createNewGame("Maya"),
-      gold: ADDITIONAL_SHIP_PRICE - 1,
-      highestGold: ADDITIONAL_SHIP_PRICE - 1,
+      coins: ADDITIONAL_SHIP_PRICE - 1,
+      highestCoins: ADDITIONAL_SHIP_PRICE - 1,
     };
-    expect(buyPlayerShip(poor).error).toBe("gold");
+    expect(buyPlayerShip(poor).error).toBe("coins");
 
     const remotePort = {
       ...poor,
-      gold: ADDITIONAL_SHIP_PRICE,
+      coins: ADDITIONAL_SHIP_PRICE,
       currentTown: "patna" as const,
       selectedTown: "patna" as const,
     };
@@ -1526,12 +1526,12 @@ describe("first playable journey", () => {
 
     const ready = {
       ...createNewGame("Maya"),
-      gold: ADDITIONAL_SHIP_PRICE * 2,
-      highestGold: ADDITIONAL_SHIP_PRICE * 2,
+      coins: ADDITIONAL_SHIP_PRICE * 2,
+      highestCoins: ADDITIONAL_SHIP_PRICE * 2,
     };
     const purchased = buyPlayerShip(ready);
     expect(purchased.error).toBeUndefined();
-    expect(purchased.state.gold).toBe(ADDITIONAL_SHIP_PRICE);
+    expect(purchased.state.coins).toBe(ADDITIONAL_SHIP_PRICE);
     expect(purchased.state.fleet).toHaveLength(2);
     expect(purchased.state.fleet[1]).toMatchObject({
       id: "player-ship-2",
@@ -1550,8 +1550,8 @@ describe("first playable journey", () => {
   it("keeps cargo, upgrades, repairs, and trade attached to the selected ship", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: ADDITIONAL_SHIP_PRICE + 100,
-      highestGold: ADDITIONAL_SHIP_PRICE + 100,
+      coins: ADDITIONAL_SHIP_PRICE + 5000,
+      highestCoins: ADDITIONAL_SHIP_PRICE + 5000,
     }).state;
     const selected = selectPlayerShip(purchased, "player-ship-2").state;
     const traded = buyGood(selected, "salt").state;
@@ -1579,8 +1579,8 @@ describe("first playable journey", () => {
   it("locks selection and purchases during a voyage and keeps ships at separate ports", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: ADDITIONAL_SHIP_PRICE,
-      highestGold: ADDITIONAL_SHIP_PRICE,
+      coins: ADDITIONAL_SHIP_PRICE,
+      highestCoins: ADDITIONAL_SHIP_PRICE,
     }).state;
     const selected = selectPlayerShip(purchased, "player-ship-2").state;
     const sailing = startVoyage(
@@ -1617,8 +1617,8 @@ describe("first playable journey", () => {
     expect(travel.voyage?.durationDays).toBe(
       (travel.voyage!.arrivalAt - travel.voyage!.startedAt) / 60_000,
     );
-    expect(getGoodPrice("chittagong", "salt", "buy", true)).toBe(20);
-    expect(getGoodPrice("chittagong", "salt", "sell", true)).toBe(17);
+    expect(getGoodPrice("chittagong", "salt", "buy", true)).toBe(1_000);
+    expect(getGoodPrice("chittagong", "salt", "sell", true)).toBe(850);
 
     const alertOver = { ...game, sailingDay: 36 };
     expect(isHistoricalRouteAlertActive(alertOver)).toBe(false);
@@ -1676,7 +1676,7 @@ describe("first playable journey", () => {
   it("configures automated routes only for visited connected ports and non-selected ships", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 3_000,
+      coins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;
@@ -1686,15 +1686,15 @@ describe("first playable journey", () => {
       shipId,
       "sonargaon",
       rules,
-      500,
+      25_000,
     );
 
     expect(configured.error).toBeUndefined();
-    expect(configured.state.gold).toBe(3_000 - ADDITIONAL_SHIP_PRICE - 500);
+    expect(configured.state.coins).toBe(150_000 - ADDITIONAL_SHIP_PRICE - 25_000);
     expect(configured.state.fleet[1].automatedRoute).toMatchObject({
       origin: "dhaka",
       destination: "sonargaon",
-      capital: 500,
+      capital: 25_000,
       status: "running",
       phase: "docked",
     });
@@ -1710,13 +1710,13 @@ describe("first playable journey", () => {
     expect(selectPlayerShip(configured.state, shipId).error).toBe("automated");
     expect(
       configureAutomatedTradeRoute(
-        { ...purchased, gold: 100 },
+        { ...purchased, coins: 5000 },
         shipId,
         "sonargaon",
         rules,
-        500,
+        25_000,
       ).error,
-    ).toBe("gold");
+    ).toBe("coins");
 
     const closedRouteState = {
       ...purchased,
@@ -1752,7 +1752,7 @@ describe("first playable journey", () => {
   it("trades into the shared market, travels by sailing-day checkpoints, and stays deterministic", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 3_000,
+      coins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const configured = configureAutomatedTradeRoute(
@@ -1760,7 +1760,7 @@ describe("first playable journey", () => {
       purchased.fleet[1].id,
       "sonargaon",
       [{ good: "lac", buyAtOrigin: true, sellAtDestination: true }],
-      500,
+      25_000,
     ).state;
     const withoutAutomation = {
       ...configured,
@@ -1782,7 +1782,7 @@ describe("first playable journey", () => {
       false,
       configured.marketStock.dhaka.lac,
     );
-    expect(tradingShip.automatedRoute?.capital).toBe(500 - purchasePrice);
+    expect(tradingShip.automatedRoute?.capital).toBe(25_000 - purchasePrice);
     expect(firstTick.marketStock.dhaka.lac).toBe(
       baselineTick.marketStock.dhaka.lac - 1,
     );
@@ -1813,7 +1813,7 @@ describe("first playable journey", () => {
   it("pauses, resumes, edits, and cancels docked routes without bypassing travel", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 3_000,
+      coins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;
@@ -1858,7 +1858,7 @@ describe("first playable journey", () => {
 
     const cancelled = cancelAutomatedTradeRoute(paused, shipId);
     expect(cancelled.error).toBeUndefined();
-    expect(cancelled.state.gold).toBe(purchased.gold);
+    expect(cancelled.state.coins).toBe(purchased.coins);
     expect(cancelled.state.fleet[1].automatedRoute).toBeNull();
 
     const pausedEdit = configureAutomatedTradeRoute(
@@ -1874,8 +1874,8 @@ describe("first playable journey", () => {
   it("changes a docked automated ship's route while the player's ship is sailing", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 3_000,
-      highestGold: 3_000,
+      coins: 150_000,
+      highestCoins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;
@@ -1890,7 +1890,7 @@ describe("first playable journey", () => {
       400,
     );
     expect(assigned.error).toBeUndefined();
-    expect(assigned.state.gold).toBe(sailing.gold - 400);
+    expect(assigned.state.coins).toBe(sailing.coins - 400);
     expect(assigned.state.fleet[1].automatedRoute?.capital).toBe(400);
 
     const edited = configureAutomatedTradeRoute(
@@ -1903,7 +1903,7 @@ describe("first playable journey", () => {
     expect(edited.error).toBeUndefined();
     expect(edited.state.fleet[1].automatedRoute?.rules[0].good).toBe("lac");
     expect(edited.state.fleet[1].automatedRoute?.capital).toBe(400);
-    expect(edited.state.gold).toBe(assigned.state.gold);
+    expect(edited.state.coins).toBe(assigned.state.coins);
 
     const paused = setAutomatedTradeRouteStatus(edited.state, shipId, "paused");
     expect(paused.error).toBeUndefined();
@@ -1914,7 +1914,7 @@ describe("first playable journey", () => {
 
     const cancelled = cancelAutomatedTradeRoute(resumed.state, shipId);
     expect(cancelled.error).toBeUndefined();
-    expect(cancelled.state.gold).toBe(sailing.gold);
+    expect(cancelled.state.coins).toBe(sailing.coins);
     expect(cancelled.state.fleet[1].automatedRoute).toBeNull();
 
     for (const changed of [assigned, edited, paused, resumed, cancelled]) {
@@ -1927,11 +1927,11 @@ describe("first playable journey", () => {
     expect(arrived.fleet[1].currentPort).toBe("dhaka");
   });
 
-  it("keeps the gold peak and wealth milestone current when a route returns capital", () => {
+  it("keeps the coins peak and wealth milestone current when a route returns capital", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 1_000,
-      highestGold: 1_000,
+      coins: 50_000,
+      highestCoins: 50_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;
@@ -1940,12 +1940,12 @@ describe("first playable journey", () => {
       shipId,
       "sonargaon",
       [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
-      100,
+      5_000,
     ).state;
-    const withBalances = (gold: number, highestGold: number, capital: number) => ({
+    const withBalances = (coins: number, highestCoins: number, capital: number) => ({
       ...assigned,
-      gold,
-      highestGold,
+      coins,
+      highestCoins,
       completedMilestones: [],
       fleet: assigned.fleet.map((ship) =>
         ship.id === shipId
@@ -1955,35 +1955,35 @@ describe("first playable journey", () => {
     });
 
     const aboveMilestone = cancelAutomatedTradeRoute(
-      withBalances(100, 200, 180),
+      withBalances(5_000, 10_000, 9_000),
       shipId,
     ).state;
-    expect(aboveMilestone.gold).toBe(280);
-    expect(aboveMilestone.highestGold).toBe(280);
+    expect(aboveMilestone.coins).toBe(14_000);
+    expect(aboveMilestone.highestCoins).toBe(14_000);
     expect(aboveMilestone.completedMilestones).toContain("prosperous_merchant");
 
     const belowMilestone = cancelAutomatedTradeRoute(
-      withBalances(100, 120, 50),
+      withBalances(5_000, 6_000, 2_500),
       shipId,
     ).state;
-    expect(belowMilestone.gold).toBe(150);
-    expect(belowMilestone.highestGold).toBe(150);
+    expect(belowMilestone.coins).toBe(7500);
+    expect(belowMilestone.highestCoins).toBe(7500);
     expect(belowMilestone.completedMilestones).not.toContain("prosperous_merchant");
 
     const belowPeak = cancelAutomatedTradeRoute(
-      withBalances(100, 200, 50),
+      withBalances(5_000, 10_000, 2_500),
       shipId,
     ).state;
-    expect(belowPeak.gold).toBe(150);
-    expect(belowPeak.highestGold).toBe(200);
+    expect(belowPeak.coins).toBe(7500);
+    expect(belowPeak.highestCoins).toBe(10_000);
     expect(belowPeak.completedMilestones).not.toContain("prosperous_merchant");
   });
 
   it("still blocks route changes for encounters, the selected ship, and ships underway", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 3_000,
-      highestGold: 3_000,
+      coins: 150_000,
+      highestCoins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;
@@ -1993,7 +1993,7 @@ describe("first playable journey", () => {
       shipId,
       "sonargaon",
       rules,
-      400,
+      20_000,
     ).state;
 
     const inEncounter = { ...assigned, encounterPending: true };
@@ -2010,7 +2010,7 @@ describe("first playable journey", () => {
         sailing.selectedShipId,
         "sonargaon",
         rules,
-        100,
+        5_000,
       ).error,
     ).toBe("active-ship");
 
@@ -2027,7 +2027,7 @@ describe("first playable journey", () => {
   it("respects market stock, cargo capacity, and the route capital ceiling", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 3_000,
+      coins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;

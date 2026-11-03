@@ -1,6 +1,6 @@
 // `npm run sim` measures the economy as it is now and writes sim-reports/ (not committed).
 // `npm run sim:freeze` also records the baseline and test saves. It only works on the rules
-// they describe, so a later stage can't overwrite the record it's being compared against.
+// they describe, so it now refuses: the record stays as the gold economy it measured.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { applyCommand } from "../game/commands";

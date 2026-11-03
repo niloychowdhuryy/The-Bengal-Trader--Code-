@@ -63,21 +63,21 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open Dhaka market" }));
     expect(screen.getByRole("heading", { name: "Market at Dhaka" })).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 14 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 700 Coins" }));
     expect(screen.getByRole("group", { name: "Salt buy confirmation" })).toHaveTextContent(
-      "Buy 1 Salt for 14g?",
+      "Buy 1 Salt for 700c?",
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Confirm buy · 14g" }),
+      screen.getByRole("button", { name: "Confirm buy · 700c" }),
     );
-    expect(screen.getByLabelText("Gold 76; cargo 4 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 4,300; cargo 4 of 12")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Sell Salt for 11 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sell Salt for 550 Coins" }));
     fireEvent.click(
-      screen.getByRole("button", { name: "Confirm sell · 11g" }),
+      screen.getByRole("button", { name: "Confirm sell · 550c" }),
     );
     await waitFor(() => {
-      expect(screen.getByLabelText("Gold 87; cargo 3 of 12")).toBeInTheDocument();
+      expect(screen.getByLabelText("Coins 4,850; cargo 3 of 12")).toBeInTheDocument();
     });
   });
 
@@ -125,7 +125,7 @@ describe("first game screen", () => {
       .toHaveTextContent("Abdul Rahman");
     fireEvent.click(screen.getByRole("button", { name: "Inspect" }));
     expect(screen.getByText(/Specialises in Rice, Salt, Bengal cotton textiles/)).toBeVisible();
-    expect(screen.getByText(/Capital: 100 gold · Goods carried: Rice × 1/)).toBeVisible();
+    expect(screen.getByText(/Capital: 5,000 Coins · Goods carried: Rice × 1/)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /Buy 1 Rice ·/ }));
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Bought 1 Rice from Abdul Rahman",
@@ -156,8 +156,8 @@ describe("first game screen", () => {
   it("buys a warehouse in the current city and transfers cargo locally", async () => {
     await saveGame({
       ...createNewGame("Maya"),
-      gold: 200,
-      highestGold: 200,
+      coins: 10_000,
+      highestCoins: 10_000,
     });
     render(<App />);
 
@@ -166,11 +166,11 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Warehouse" }));
 
-    expect(screen.getByText(/Purchase one for 150 gold to add 20 local storage spaces/))
+    expect(screen.getByText(/Purchase one for 7,500 Coins to add 20 local storage spaces/))
       .toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Buy warehouse · 150 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy warehouse · 7,500 Coins" }));
     expect(await screen.findByText(/Owned here · 0\/20 storage spaces used/)).toBeVisible();
-    expect(screen.getByLabelText("Gold 50; cargo 3 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 2,500; cargo 3 of 12")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Store one Rice" }));
     expect(await screen.findByText(/Owned here · 1\/20 storage spaces used/)).toBeVisible();
@@ -180,15 +180,15 @@ describe("first game screen", () => {
     expect(await screen.findByText(/Owned here · 0\/20 storage spaces used/)).toBeVisible();
     expect(screen.getByRole("button", { name: "Retrieve one Rice" }).parentElement)
       .toHaveTextContent("Ship 2 · Stored 0");
-    expect(screen.queryByRole("button", { name: "Buy warehouse · 150 gold" }))
+    expect(screen.queryByRole("button", { name: "Buy warehouse · 7,500 Coins" }))
       .not.toBeInTheDocument();
   });
 
   it("shows town-centre standing, local property, and useful next actions", async () => {
     await saveGame({
       ...createNewGame("Maya"),
-      gold: 300,
-      highestGold: 300,
+      coins: 15_000,
+      highestCoins: 15_000,
       reputation: 4,
       ownedWarehouses: ["dhaka"],
       residenceTown: "patna",
@@ -239,15 +239,15 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Home" }));
 
     const unaffordableButton = screen.getByRole("button", {
-      name: "Residence · 250 gold (need 160 more)",
+      name: "Residence · 12,500 Coins (need 7,500 more)",
     });
     expect(unaffordableButton).toBeDisabled();
 
     cleanup();
     await saveGame({
       ...createNewGame("Maya"),
-      gold: 300,
-      highestGold: 300,
+      coins: 15_000,
+      highestCoins: 15_000,
     });
     render(<App />);
     await screen.findByRole("heading", { name: "The Bengal Trader" });
@@ -255,12 +255,12 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Home" }));
     fireEvent.click(
-      screen.getByRole("button", { name: "Establish residence · 250 gold" }),
+      screen.getByRole("button", { name: "Establish residence · 12,500 Coins" }),
     );
 
     expect(await screen.findByText(/Your residence is established in this port/))
       .toBeVisible();
-    expect(screen.getByLabelText("Gold 50; cargo 3 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 2,500; cargo 3 of 12")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Establish residence/ }))
       .not.toBeInTheDocument();
   });
@@ -268,8 +268,8 @@ describe("first game screen", () => {
   it("buys a farm locally and shows its output rate and storage", async () => {
     await saveGame({
       ...createNewGame("Maya"),
-      gold: FARM_PRICE + 100,
-      highestGold: FARM_PRICE + 100,
+      coins: FARM_PRICE + 5000,
+      highestCoins: FARM_PRICE + 5000,
     });
     render(<App />);
 
@@ -278,19 +278,19 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Farm" }));
     expect(screen.getByText(/produces 1 Rice per full in-game sailing day/i)).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Buy farm · 200 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy farm · 10,000 Coins" }));
 
     expect(await screen.findByText(/Owned here · 0\/20 Rice in local farm storage/))
       .toBeVisible();
     expect(screen.getByText(/Next Rice in 1.0 in-game sailing days/)).toBeVisible();
-    expect(screen.getByLabelText("Gold 100; cargo 3 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 5,000; cargo 3 of 12")).toBeInTheDocument();
   });
 
   it("collects farm output into the ship and reports remaining local storage", async () => {
     const purchased = buyFarm({
       ...createNewGame("Maya"),
-      gold: FARM_PRICE + 100,
-      highestGold: FARM_PRICE + 100,
+      coins: FARM_PRICE + 5000,
+      highestCoins: FARM_PRICE + 5000,
     }).state;
     await saveGame({
       ...purchased,
@@ -306,7 +306,7 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Collect up to 9 Rice" }));
 
     expect(await screen.findByText(/11\/20 Rice in local farm storage/)).toBeVisible();
-    expect(screen.getByLabelText("Gold 100; cargo 12 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 5,000; cargo 12 of 12")).toBeInTheDocument();
     expect(screen.queryByText(/Storage is full/)).not.toBeInTheDocument();
   });
 
@@ -314,8 +314,8 @@ describe("first game screen", () => {
     await saveGame({
       ...createNewGame("Maya"),
       residenceTown: "dhaka",
-      gold: MARRIAGE_HOUSEHOLD_COST - 1,
-      highestGold: 200,
+      coins: MARRIAGE_HOUSEHOLD_COST - 1,
+      highestCoins: 10_000,
     });
     render(<App />);
 
@@ -324,25 +324,25 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Home" }));
     expect(screen.getByRole("button", {
-      name: /Establish household · 100 gold \(need 1 more\)/,
+      name: /Establish household · 5,000 Coins \(need 1 more\)/,
     })).toBeDisabled();
 
     cleanup();
     await saveGame({
       ...createNewGame("Maya"),
       residenceTown: "dhaka",
-      gold: MARRIAGE_HOUSEHOLD_COST,
-      highestGold: MARRIAGE_HOUSEHOLD_COST,
+      coins: MARRIAGE_HOUSEHOLD_COST,
+      highestCoins: MARRIAGE_HOUSEHOLD_COST,
     });
     render(<App />);
     await screen.findByRole("heading", { name: "The Bengal Trader" });
     fireEvent.click(getMapPort(/^Dhaka/));
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Home" }));
-    fireEvent.click(screen.getByRole("button", { name: "Establish marriage · 100 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Establish marriage · 5,000 Coins" }));
 
     expect(await screen.findByText("Your household is established here.")).toBeVisible();
-    expect(screen.getByLabelText("Gold 0; cargo 3 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 0; cargo 3 of 12")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Establish marriage/ }))
       .not.toBeInTheDocument();
 
@@ -363,16 +363,16 @@ describe("first game screen", () => {
 
     expect(screen.getByRole("heading", { name: "Shipyard repairs & upgrades" })).toBeVisible();
     expect(screen.getByText("Attack 2 → 3")).toBeVisible();
-    expect(screen.getAllByText(/Next fit · 35 gold/)).toHaveLength(2);
+    expect(screen.getAllByText(/Next fit · 1,750 Coins/)).toHaveLength(2);
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Upgrade Stronger bow cannon for 35 gold",
+        name: "Upgrade Stronger bow cannon for 1,750 Coins",
       }),
     );
 
     expect(screen.getByText("Attack").parentElement).toHaveTextContent("3");
     expect(screen.getByText("Attack 3 → 4")).toBeVisible();
-    expect(screen.getByLabelText("Gold 55; cargo 3 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 3,250; cargo 3 of 12")).toBeInTheDocument();
   });
 
   it("repairs a damaged ship for the displayed cost at a port shipyard", async () => {
@@ -386,30 +386,30 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open ship dock" }));
 
     expect(screen.getByText("Hull 6/8")).toBeVisible();
-    expect(screen.getByText("Restore 2 hull · 4 gold total (2 per hull)."))
+    expect(screen.getByText("Restore 2 hull · 200 Coins total (100 per hull)."))
       .toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Repair ship for 4 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Repair ship for 200 Coins" }));
     expect(await screen.findByText("Hull 8/8")).toBeVisible();
     expect(screen.getByRole("button", { name: "Ship fully repaired" }))
       .toBeDisabled();
-    expect(screen.getByLabelText("Gold 86; cargo 3 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 4,800; cargo 3 of 12")).toBeInTheDocument();
   });
 
   it("buys an additional ship at the shipyard and switches the managed vessel", async () => {
     await saveGame({
       ...createNewGame("Maya"),
-      gold: 700,
-      highestGold: 700,
+      coins: 35_000,
+      highestCoins: 35_000,
     });
     render(<App />);
 
     await screen.findByRole("heading", { name: "The Bengal Trader" });
     fireEvent.click(screen.getByRole("button", { name: "Open ship dock" }));
     expect(screen.getByRole("heading", { name: "River boat" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Buy River boat for 500 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy River boat for 25,000 Coins" }));
     expect(screen.getByRole("group", { name: "Buy ship confirmation" }))
-      .toHaveTextContent(/Buy an empty River boat for 500 gold/);
-    fireEvent.click(screen.getByRole("button", { name: "Confirm · 500g" }));
+      .toHaveTextContent(/Buy an empty River boat for 25,000 Coins/);
+    fireEvent.click(screen.getByRole("button", { name: "Confirm · 25,000c" }));
     expect(await screen.findByText("River Trader II has been purchased at Dhaka."))
       .toBeVisible();
 
@@ -423,14 +423,14 @@ describe("first game screen", () => {
       /Rice 0.*Salt 0.*Raw silk 0/,
     );
     expect(screen.getAllByText("Managing")).toHaveLength(1);
-    expect(screen.getByLabelText("Gold 200; cargo 0 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 10,000; cargo 0 of 12")).toBeInTheDocument();
   });
 
   it("shows a mobile-friendly automated route editor and starts a visited-port route", async () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 2_000,
-      highestGold: 2_000,
+      coins: 100_000,
+      highestCoins: 100_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     await saveGame(purchased);
@@ -443,8 +443,8 @@ describe("first game screen", () => {
     expect(screen.getByRole("heading", { name: "Set up an automated route" }))
       .toBeVisible();
     expect(screen.getByLabelText("Other visited port")).toBeVisible();
-    expect(screen.getByLabelText("Starting trade capital (max 5000)"))
-      .toHaveValue(500);
+    expect(screen.getByLabelText("Starting trade capital (max 250,000)"))
+      .toHaveValue(25_000);
     expect(screen.getByText(/Route progress advances only while your voyage is active/))
       .toBeVisible();
 
@@ -456,7 +456,7 @@ describe("first game screen", () => {
   });
 
   it("shows the three classes at the shipyard and states the Patello's limit before buying", async () => {
-    await saveGame({ ...createNewGame("Maya"), gold: 950, highestGold: 950 });
+    await saveGame({ ...createNewGame("Maya"), coins: 47_500, highestCoins: 47_500 });
     render(<App />);
 
     await screen.findByRole("heading", { name: "The Bengal Trader" });
@@ -467,17 +467,17 @@ describe("first game screen", () => {
     expect(screen.getByText(/stats, prices, shipyards and port limits are game rules/))
       .toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "Buy Patello for 900 gold" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy Patello for 45,000 Coins" }));
     expect(screen.getByRole("group", { name: "Buy ship confirmation" }))
-      .toHaveTextContent(/900 gold\? It cannot reach Sylhet or Balasore/);
-    fireEvent.click(screen.getByRole("button", { name: "Confirm · 900g" }));
+      .toHaveTextContent(/45,000 Coins\? It cannot reach Sylhet or Balasore/);
+    fireEvent.click(screen.getByRole("button", { name: "Confirm · 45,000c" }));
     expect(await screen.findByText("Patello II has been purchased at Dhaka.")).toBeVisible();
   });
 
   it("explains blocked and longer routes on a selected Patello", async () => {
     const patello = selectPlayerShip(
       buyPlayerShip(
-        { ...createNewGame("Maya"), gold: 2_000, highestGold: 2_000 },
+        { ...createNewGame("Maya"), coins: 100_000, highestCoins: 100_000 },
         "patello",
       ).state,
       "player-ship-2",
@@ -510,8 +510,8 @@ describe("first game screen", () => {
     const purchased = buyPlayerShip(
       {
         ...createNewGame("Maya"),
-        gold: 2_000,
-        highestGold: 2_000,
+        coins: 100_000,
+        highestCoins: 100_000,
         visitedTowns: ["dhaka", "sonargaon", "sylhet"],
       },
       "patello",
@@ -533,7 +533,7 @@ describe("first game screen", () => {
   it("offers a return order for a ship the selected ship cannot reach", async () => {
     const patello = selectPlayerShip(
       buyPlayerShip(
-        { ...createNewGame("Maya"), gold: 2_000, highestGold: 2_000 },
+        { ...createNewGame("Maya"), coins: 100_000, highestCoins: 100_000 },
         "patello",
       ).state,
       "player-ship-2",
@@ -558,8 +558,8 @@ describe("first game screen", () => {
   it("manages a docked automated ship's route from Fleet while the player's ship is sailing", async () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
-      gold: 2_000,
-      highestGold: 2_000,
+      coins: 100_000,
+      highestCoins: 100_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const assigned = configureAutomatedTradeRoute(
@@ -567,7 +567,7 @@ describe("first game screen", () => {
       purchased.fleet[1].id,
       "sonargaon",
       [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
-      300,
+      15_000,
     ).state;
     await saveGame(
       startVoyage({ ...assigned, selectedTown: "sonargaon" }, Date.now()),
@@ -591,7 +591,7 @@ describe("first game screen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel route" }));
     expect(await screen.findByText("No automated route")).toBeVisible();
-    expect(screen.getByText(/300 gold returned to your purse/)).toBeVisible();
+    expect(screen.getByText(/15,000 Coins returned to your purse/)).toBeVisible();
     expect(screen.getByText(/sailing to Sonargaon/)).toBeVisible();
   });
 
@@ -785,7 +785,7 @@ describe("first game screen", () => {
     fireEvent.click(getMapPort(/^Chittagong/));
     fireEvent.click(screen.getByRole("button", { name: "Show port details" }));
     expect(screen.getByText(/Direct waterway route/)).toBeVisible();
-    expect(screen.getByLabelText("Gold 90; cargo 3 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 5,000; cargo 3 of 12")).toBeInTheDocument();
   });
 
   it("moves the vessel only during a voyage and leaves it still after arrival", () => {

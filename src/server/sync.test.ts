@@ -59,12 +59,12 @@ function testClient(database: PGlite): SupabaseLike {
   };
 }
 
-async function seedPlayer(id: string, gold = 2_000) {
+async function seedPlayer(id: string, coins = 100_000) {
   await db.query("insert into auth.users (id) values ($1)", [id]);
   await db.query(
     `insert into public.game_states (player_id, state, schema_version, last_at, provenance)
      values ($1, $2::jsonb, 19, $3, 'verified')`,
-    [id, JSON.stringify({ ...createNewGame("Maya"), gold, highestGold: gold }), T0],
+    [id, JSON.stringify({ ...createNewGame("Maya"), coins, highestCoins: coins }), T0],
   );
 }
 
@@ -108,7 +108,7 @@ const send = (commands: unknown[], baseRevision = 0, batch = 1, player = ALICE) 
   handleSync(store, player, { batchId: uuid(batch), baseRevision, commands }, T0 + 3_600_000);
 
 async function row(player = ALICE) {
-  const result = await db.query<{ state: { gold: number }; revision: string; last_seq: string; last_at: string }>(
+  const result = await db.query<{ state: { coins: number }; revision: string; last_seq: string; last_at: string }>(
     "select state, revision, last_seq, last_at from public.game_states where player_id = $1",
     [player],
   );
@@ -120,7 +120,7 @@ describe("handleSync with the real database", () => {
     const result = await send([buy(1), buy(2)]);
     expect(result).toMatchObject({ status: "accepted", revision: 1, lastSeq: 2 });
     const saved = await row();
-    expect(saved.state.gold).toBeLessThan(2_000);
+    expect(saved.state.coins).toBeLessThan(100_000);
     expect(Number(saved.revision)).toBe(1);
     expect(Number(saved.last_seq)).toBe(2);
     expect(Number(saved.last_at)).toBe(T0 + 2_000);
@@ -132,25 +132,25 @@ describe("handleSync with the real database", () => {
     const result = await send([buy(1), { seq: 2, at: T0 + 2_000, command: { type: "sellGood", good: "opium", quantity: 9 } }]);
     expect(result).toMatchObject({ status: "rejected", reason: "command-refused", seq: 2 });
     expect(Number((await row()).revision)).toBe(0);
-    expect((await row()).state.gold).toBe(2_000);
+    expect((await row()).state.coins).toBe(100_000);
   });
 
   it("handles the same batch arriving twice without charging twice", async () => {
     await send([buy(1)]);
-    const gold = (await row()).state.gold;
+    const coins = (await row()).state.coins;
     const again = await send([buy(1)]);
     expect(again).toEqual({ status: "already-applied", revision: 1, lastSeq: 1 });
-    expect((await row()).state.gold).toBe(gold);
+    expect((await row()).state.coins).toBe(coins);
   });
 
   it("handles a retry under a new batch id, and only applies what's new", async () => {
     await send([buy(1), buy(2)]);
-    const goldAfterTwo = (await row()).state.gold;
+    const coinsAfterTwo = (await row()).state.coins;
     expect(await send([buy(1), buy(2)], 1, 2)).toMatchObject({ status: "already-applied" });
-    expect((await row()).state.gold).toBe(goldAfterTwo);
+    expect((await row()).state.coins).toBe(coinsAfterTwo);
     const result = await send([buy(2), buy(3)], 1, 3);
     expect(result).toMatchObject({ status: "accepted", lastSeq: 3, revision: 2 });
-    expect((await row()).state.gold).toBeLessThan(goldAfterTwo);
+    expect((await row()).state.coins).toBeLessThan(coinsAfterTwo);
   });
 
   it("refuses to rewrite a command already verified", async () => {
@@ -177,7 +177,7 @@ describe("handleSync with the real database", () => {
 
   it("keeps players separate", async () => {
     await send([buy(1)]);
-    expect((await row(BOB)).state.gold).toBe(2_000);
+    expect((await row(BOB)).state.coins).toBe(100_000);
     expect(await send([buy(1)], 0, 2, BOB)).toMatchObject({ status: "accepted", revision: 1 });
   });
 
@@ -207,7 +207,7 @@ describe("database access rules", () => {
       await db.exec("reset role;");
     }
   }
-  const gold = `state = '{"gold": 999999}'::jsonb`;
+  const coins = `state = '{"coins": 999999}'::jsonb`;
 
   it("lets players read only their own game", async () => {
     const rows = await as("authenticated", ALICE, "select player_id from public.game_states");
@@ -217,17 +217,17 @@ describe("database access rules", () => {
   });
 
   it.each([
-    ["editing their save", `update public.game_states set ${gold}`],
+    ["editing their save", `update public.game_states set ${coins}`],
     ["creating a save", `insert into public.game_states (player_id, state, schema_version, provenance) values ('${ALICE}', '{}', 19, 'verified')`],
     ["deleting their save", "delete from public.game_states"],
     ["editing their profile directly", "update public.profiles set display_name = 'Hacker'"],
     ["creating a backup", `insert into public.save_backups (player_id, state, revision, reason) values ('${ALICE}', '{}', 0, 'x')`],
     ["reading command history", "select * from public.command_batches"],
     ["writing command history", `insert into public.command_batches (player_id, batch_id, first_seq, last_seq, revision, commands) values ('${ALICE}', '${uuid(9)}', 1, 1, 1, '[]')`],
-    ["calling the save function", `select public.commit_sync('${ALICE}', 0, '{"gold": 999999}', 19, 1, 1, '${uuid(9)}', 1, '[]')`],
+    ["calling the save function", `select public.commit_sync('${ALICE}', 0, '{"coins": 999999}', 19, 1, 1, '${uuid(9)}', 1, '[]')`],
   ])("stops a signed-in player %s", async (_name, sql) => {
     await expect(as("authenticated", ALICE, sql)).rejects.toThrow(/permission denied/);
-    expect((await row()).state.gold).toBe(2_000);
+    expect((await row()).state.coins).toBe(100_000);
   });
 
   it.each([

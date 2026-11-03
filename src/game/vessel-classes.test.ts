@@ -1,3 +1,4 @@
+import { asGoldSave } from "../test/gold-save";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GOODS,
@@ -15,6 +16,7 @@ import {
   checkpointVoyageProgress,
   configureAutomatedTradeRoute,
   createNewGame,
+  formatCoins,
   getCargoCapacity,
   getGoodPrice,
   getShipMaximumHull,
@@ -43,8 +45,8 @@ import {
 } from "./travel-time";
 
 const RICH: Partial<GameState> = {
-  gold: 4_000,
-  highestGold: 4_000,
+  coins: 200_000,
+  highestCoins: 200_000,
   visitedTowns: ["dhaka", "sonargaon", "sylhet"],
 };
 
@@ -105,9 +107,9 @@ describe("vessel classes", () => {
       ];
     });
     expect(rows).toEqual([
-      [500, 12, 8, 2, 1, 1.4],
-      [350, 8, 6, 2, 0.8, 1.2],
-      [900, 30, 14, 3, 1.25, 1.5],
+      [25_000, 12, 8, 100, 1, 1.4],
+      [17_500, 8, 6, 100, 0.8, 1.2],
+      [45_000, 30, 14, 150, 1.25, 1.5],
     ]);
     const fullyUpgraded = { cannon: 3, hull: 2, hold: 3 };
     expect(VESSEL_CLASS_IDS.map((id) => getVesselCargoCapacity(id, fullyUpgraded)))
@@ -118,7 +120,7 @@ describe("vessel classes", () => {
 
   it("starts new games with an unchanged River boat", () => {
     const game = createNewGame("Maya");
-    expect(game.version).toBe(20);
+    expect(game.version).toBe(21);
     expect(game.fleet[0].vesselClass).toBe("river-boat");
     expect(getCargoCapacity(game)).toBe(12);
     expect(getShipMaximumHull(game)).toBe(8);
@@ -146,15 +148,15 @@ describe("vessel classes", () => {
         cargoCapacity: hold,
         shipHull: hull,
       });
-      expect(bought.state.gold).toBe(4_000 - VESSEL_CLASSES[vesselClass].price);
+      expect(bought.state.coins).toBe(200_000 - VESSEL_CLASSES[vesselClass].price);
     }
   });
 
   it("refuses a class the player cannot afford or a port without a shipyard", () => {
-    const poor = { ...createNewGame("Maya"), gold: 400, highestGold: 400 };
+    const poor = { ...createNewGame("Maya"), coins: 20_000, highestCoins: 20_000 };
     expect(buyPlayerShip(poor, "bora").error).toBeUndefined();
-    expect(buyPlayerShip(poor, "river-boat").error).toBe("gold");
-    expect(buyPlayerShip(poor, "patello").error).toBe("gold");
+    expect(buyPlayerShip(poor, "river-boat").error).toBe("coins");
+    expect(buyPlayerShip(poor, "patello").error).toBe("coins");
     expect(
       buyPlayerShip(
         syncSelectedShip({ ...createNewGame("Maya"), ...RICH, currentTown: "sylhet" }),
@@ -175,9 +177,9 @@ describe("vessel classes", () => {
     expect(getShipMaximumHull(buyUpgrade(patello, "hull").state)).toBe(17);
 
     const damaged = { ...patello, shipHull: 10 };
-    expect(repairShip(damaged).state.gold).toBe(damaged.gold - 12);
+    expect(repairShip(damaged).state.coins).toBe(damaged.coins - 600);
     const damagedBora = { ...bora, shipHull: 4 };
-    expect(repairShip(damagedBora).state.gold).toBe(damagedBora.gold - 4);
+    expect(repairShip(damagedBora).state.coins).toBe(damagedBora.coins - 200);
   });
 });
 
@@ -336,20 +338,19 @@ describe("automated routes by class", () => {
       withShip("patello"),
       shipId,
       "sylhet",
-      riceRule,
-      100,
+      riceRule, 5_000,
     );
     expect(result.error).toBe("too-large");
-    expect(result.state.gold).toBe(withShip("patello").gold);
+    expect(result.state.coins).toBe(withShip("patello").coins);
     expect(
-      configureAutomatedTradeRoute(withShip("river-boat"), shipId, "sylhet", riceRule, 100)
+      configureAutomatedTradeRoute(withShip("river-boat"), shipId, "sylhet", riceRule, 5_000)
         .error,
     ).toBeUndefined();
   });
 
   it("keeps River boats and Boras at one unit per good", () => {
     for (const vesselClass of ["river-boat", "bora"] as const) {
-      const assigned = assign(vesselClass, 500);
+      const assigned = assign(vesselClass, 25_000);
       const next = advanceNpcWorld(assigned, 1);
       expect(next.fleet[1].cargo.rice).toBe(1);
       expect(next.marketStock.dhaka.rice).toBe(assigned.marketStock.dhaka.rice - 1);
@@ -357,7 +358,7 @@ describe("automated routes by class", () => {
   });
 
   it("lets a Patello trade up to four units per good, repricing each one", () => {
-    const assigned = assign("patello", 1_000);
+    const assigned = assign("patello", 50_000);
     let stock = assigned.marketStock.dhaka.rice;
     let expectedCost = 0;
     for (let unit = 0; unit < 4; unit += 1) {
@@ -368,10 +369,10 @@ describe("automated routes by class", () => {
     const ship = bought.fleet[1];
     expect(ship.cargo.rice).toBe(4);
     expect(bought.marketStock.dhaka.rice).toBe(stock);
-    expect(ship.automatedRoute!.capital).toBe(1_000 - expectedCost);
+    expect(ship.automatedRoute!.capital).toBe(50_000 - expectedCost);
     expect(ship.averagePurchasePrice.rice).toBeCloseTo(expectedCost / 4);
     expect(ship.automationLog.at(-2)!.message).toBe(
-      `Bought 4 Rice for ${expectedCost} gold.`,
+      `Bought 4 Rice for ${formatCoins(expectedCost)} Coins.`,
     );
 
     let current = bought;
@@ -382,7 +383,7 @@ describe("automated routes by class", () => {
   });
 
   it("stops Patello trading at capital, stock, hold and market limits", () => {
-    const assigned = assign("patello", 1_000);
+    const assigned = assign("patello", 50_000);
 
     const priceOne = getGoodPrice("dhaka", "rice", "buy", true, assigned.marketStock.dhaka.rice);
     const lowCapital = updateShip(assigned, shipId, {
@@ -467,7 +468,7 @@ describe("automated routes by class", () => {
         }
       }
     }
-    expect(current.gold).toBe(assigned.gold);
+    expect(current.coins).toBe(assigned.coins);
   });
 
   it("uses class travel days for automated voyages", () => {
@@ -476,8 +477,7 @@ describe("automated routes by class", () => {
       withShip("bora"),
       shipId,
       "sylhet",
-      riceRule,
-      100,
+      riceRule, 5_000,
     ).state;
     expect(advanceNpcWorld(assigned, 1).fleet[1].automatedRoute!.travelDaysTotal).toBe(
       Math.ceil(getRouteTravelTime(route, false, 0.8).durationDays),
@@ -485,7 +485,7 @@ describe("automated routes by class", () => {
   });
 
   it("makes an incompatible saved route wait safely without trading", () => {
-    const assigned = assign("patello", 500);
+    const assigned = assign("patello", 25_000);
     const incompatible = updateShip(assigned, shipId, {
       automatedRoute: {
         ...assigned.fleet[1].automatedRoute!,
@@ -498,7 +498,7 @@ describe("automated routes by class", () => {
     const ship = current.fleet[1];
     expect(ship.currentPort).toBe("dhaka");
     expect(ship.automatedRoute!.phase).toBe("docked");
-    expect(ship.automatedRoute!.capital).toBe(500);
+    expect(ship.automatedRoute!.capital).toBe(25_000);
     expect(ship.cargo.rice).toBe(0);
     expect(ship.automationLog.map((entry) => entry.message)).toEqual([
       "Too large for the channels to Sylhet; waiting at port.",
@@ -506,7 +506,7 @@ describe("automated routes by class", () => {
 
     const cancelled = cancelAutomatedTradeRoute(current, shipId);
     expect(cancelled.error).toBeUndefined();
-    expect(cancelled.state.gold).toBe(incompatible.gold + 500);
+    expect(cancelled.state.coins).toBe(incompatible.coins + 25_000);
   });
 });
 
@@ -548,7 +548,7 @@ describe("return orders", () => {
     const plan = getShipReturnPlan(stranded, "player-ship-1")!;
     const ordered = orderShipReturn(stranded, "player-ship-1");
     expect(ordered.error).toBeUndefined();
-    expect(ordered.state.gold).toBe(stranded.gold);
+    expect(ordered.state.coins).toBe(stranded.coins);
     expect(ordered.state.fleet[0].returnOrder).toEqual({
       destination: "dhaka",
       travelDaysRemaining: plan.days,
@@ -603,7 +603,7 @@ describe("return orders", () => {
         destinationPort: "dhaka",
         travelDaysRemaining: 0,
         travelDaysTotal: 0,
-        capital: 50,
+        capital: 2_500,
       },
     });
     expect(isShipOutOfReach(stranded, "player-ship-1")).toBe(false);
@@ -636,10 +636,10 @@ describe("version 19 saves", () => {
   });
 
   function asVersion18(state: GameState): unknown {
+    const old = asGoldSave(state, 18);
     return {
-      ...state,
-      version: 18,
-      fleet: state.fleet.map(
+      ...old,
+      fleet: (old.fleet as GameState["fleet"]).map(
         ({ vesselClass: _vesselClass, returnOrder: _returnOrder, ...ship }) => ship,
       ),
     };
@@ -657,7 +657,7 @@ describe("version 19 saves", () => {
       "sonargaon",
       [{ good: "lac", buyAtOrigin: true, sellAtDestination: false },
         { good: "rice", buyAtOrigin: false, sellAtDestination: true }],
-      300,
+      15_000,
     ).state;
     const midRoute = advanceNpcWorld({ ...routed, sailingDay: 1 }, 1);
     const voyage = checkpointVoyageProgress(
@@ -669,9 +669,9 @@ describe("version 19 saves", () => {
 
     vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(20);
-    expect(restored.gold).toBe(voyage.gold);
-    expect(restored.highestGold).toBe(voyage.highestGold);
+    expect(restored.version).toBe(21);
+    expect(restored.coins).toBe(voyage.coins);
+    expect(restored.highestCoins).toBe(voyage.highestCoins);
     restored.fleet.forEach((ship, index) => {
       expect(ship).toEqual({
         ...voyage.fleet[index],
@@ -798,21 +798,21 @@ describe("version 19 saves", () => {
       })],
   ])("rejects %s", async (_label, corrupt) => {
     await writeRawSave(corrupt(withShip("patello")));
-    await expect(loadGame()).rejects.toThrow("unsupported version");
+    await expect(loadGame()).rejects.toThrow("could not be loaded");
   });
 
-  it("still repairs a gold peak on version 18 saves", async () => {
+  it("still repairs a coins peak on version 18 saves", async () => {
     await writeRawSave(
       asVersion18({
         ...createNewGame("Maya"),
-        gold: 280,
-        highestGold: 200,
+        coins: 14_000,
+        highestCoins: 10_000,
         completedMilestones: [],
       }),
     );
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(20);
-    expect(restored.highestGold).toBe(280);
+    expect(restored.version).toBe(21);
+    expect(restored.highestCoins).toBe(14_000);
     expect(restored.completedMilestones).toContain("prosperous_merchant");
   });
 });

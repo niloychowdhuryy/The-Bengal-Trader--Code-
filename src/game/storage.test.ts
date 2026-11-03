@@ -31,6 +31,7 @@ import {
   syncSelectedShip,
   type GameState,
 } from "./model";
+import { asGoldSave } from "../test/gold-save";
 import { loadGame, saveGame, whenStorageIdle } from "./storage";
 import {
   getRouteTravelTime,
@@ -39,7 +40,10 @@ import {
 } from "./travel-time";
 import { planRiverRoute, pointAlongRiverRoute } from "./navigation";
 
+// These tests describe older saves using today's field names and amounts.
 function writeLegacySave(value: unknown): Promise<void> {
+  const fields = value as { coins?: number; version: number };
+  const stored = fields.coins !== undefined && fields.version < 21 ? asGoldSave(fields, fields.version) : value;
   return new Promise((resolve, reject) => {
     const request = indexedDB.open("bengal-trader", 2);
     request.onerror = () => reject(request.error);
@@ -51,7 +55,7 @@ function writeLegacySave(value: unknown): Promise<void> {
     request.onsuccess = () => {
       const database = request.result;
       const transaction = database.transaction("save", "readwrite");
-      transaction.objectStore("save").put(value, "captain");
+      transaction.objectStore("save").put(stored, "captain");
       transaction.oncomplete = () => {
         database.close();
         resolve();
@@ -81,8 +85,8 @@ describe("IndexedDB offline saves", () => {
   it("migrates version 9 saves with existing property and progress intact", async () => {
     const game = buyWarehouse({
       ...createNewGame("Asha"),
-      gold: 400,
-      highestGold: 400,
+      coins: 20_000,
+      highestCoins: 20_000,
       reputation: 5,
       visitedTowns: ["dhaka", "patna"],
     }).state;
@@ -90,8 +94,8 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionNineState, version: 9 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(250);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(12_500);
     expect(migrated?.reputation).toBe(5);
     expect(migrated?.visitedTowns).toEqual(["dhaka", "patna"]);
     expect(migrated?.ownedWarehouses).toEqual(["dhaka"]);
@@ -101,8 +105,8 @@ describe("IndexedDB offline saves", () => {
   it("restores the latest game after a page reload", async () => {
     const game: GameState = {
       ...createNewGame("Isha"),
-      gold: 123,
-      highestGold: 123,
+      coins: 6150,
+      highestCoins: 6150,
       currentTown: "kasimbazar" as const,
       visitedTowns: ["dhaka", "kasimbazar"],
     };
@@ -151,8 +155,8 @@ describe("IndexedDB offline saves", () => {
   it("persists each player ship and the selected ship across reloads", async () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Isha"),
-      gold: ADDITIONAL_SHIP_PRICE + 40,
-      highestGold: ADDITIONAL_SHIP_PRICE + 40,
+      coins: ADDITIONAL_SHIP_PRICE + 2000,
+      highestCoins: ADDITIONAL_SHIP_PRICE + 2000,
     }).state;
     const selected = selectPlayerShip(purchased, "player-ship-2").state;
     const carryingCargo = buyGood(selected, "salt").state;
@@ -170,8 +174,8 @@ describe("IndexedDB offline saves", () => {
     const upgraded = buyUpgrade(
       {
         ...createNewGame("Isha"),
-        gold: 300,
-        highestGold: 300,
+        coins: 15_000,
+        highestCoins: 15_000,
       },
       "hold",
     ).state;
@@ -192,8 +196,8 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(275);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(13_750);
     expect(migrated?.cargo).toEqual(upgraded.cargo);
     expect(migrated?.upgrades.hold).toBe(1);
     expect(migrated?.fleet).toHaveLength(1);
@@ -224,10 +228,10 @@ describe("IndexedDB offline saves", () => {
     vi.spyOn(Date, "now").mockReturnValue(31_000);
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.missions).toEqual(current.missions);
     expect(migrated?.npcMerchants).toHaveLength(4);
-    expect(migrated?.npcMerchants.every((merchant) => merchant.budget === 100))
+    expect(migrated?.npcMerchants.every((merchant) => merchant.budget === 5_000))
       .toBe(true);
     expect(migrated?.npcActivity).toEqual([]);
     expect(migrated?.npcSimulationDay).toBe(0);
@@ -267,7 +271,7 @@ describe("IndexedDB offline saves", () => {
     vi.spyOn(Date, "now").mockReturnValue(25_000);
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect("npcEncounter" in (migrated ?? {})).toBe(false);
     expect(migrated?.npcMerchants[0].cargo.rice).toBe(1);
     expect(migrated?.npcMerchants[0].strategy).toBe("specialist");
@@ -277,7 +281,7 @@ describe("IndexedDB offline saves", () => {
 
   it("migrates version 13 saves without losing progress or voyage time", async () => {
     const sailing = startVoyage(
-      { ...createNewGame("Isha"), gold: 70, highestGold: 90, selectedTown: "patna" },
+      { ...createNewGame("Isha"), coins: 3500, highestCoins: 4500, selectedTown: "patna" },
       1000,
     );
     const voyage = sailing.voyage;
@@ -300,8 +304,8 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(70);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(3500);
     expect(migrated?.voyage?.elapsedMs).toBe(0);
     expect(migrated?.voyage?.travelEvent).toBeNull();
     expect(migrated?.missions).toHaveLength(60);
@@ -314,8 +318,8 @@ describe("IndexedDB offline saves", () => {
   it("persists reputation, milestone history, and completion after reload", async () => {
     const game: GameState = {
       ...createNewGame("Isha"),
-      gold: 280,
-      highestGold: 280,
+      coins: 14_000,
+      highestCoins: 14_000,
       reputation: 3,
       visitedTowns: ["dhaka", "sonargaon", "patna"],
       profitableTradeMarks: ["dhaka:rice", "patna:silk"],
@@ -329,8 +333,8 @@ describe("IndexedDB offline saves", () => {
   it("persists warehouse ownership, stock, and purchase basis after reload", async () => {
     const purchased = buyWarehouse({
       ...createNewGame("Isha"),
-      gold: 250,
-      highestGold: 250,
+      coins: 12_500,
+      highestCoins: 12_500,
     }).state;
     const carryingGoods = {
       ...purchased,
@@ -346,8 +350,8 @@ describe("IndexedDB offline saves", () => {
   it("persists residence ownership at the chosen port after reload", async () => {
     const purchased = buyResidence({
       ...createNewGame("Isha"),
-      gold: RESIDENCE_PRICE + 40,
-      highestGold: RESIDENCE_PRICE + 40,
+      coins: RESIDENCE_PRICE + 2000,
+      highestCoins: RESIDENCE_PRICE + 2000,
     }).state;
 
     await saveGame(purchased);
@@ -359,8 +363,8 @@ describe("IndexedDB offline saves", () => {
     const married = marryAtResidence({
       ...createNewGame("Isha"),
       residenceTown: "dhaka",
-      gold: MARRIAGE_HOUSEHOLD_COST + 30,
-      highestGold: MARRIAGE_HOUSEHOLD_COST + 30,
+      coins: MARRIAGE_HOUSEHOLD_COST + 1500,
+      highestCoins: MARRIAGE_HOUSEHOLD_COST + 1500,
       sailingDay: 3,
     }).state;
 
@@ -375,8 +379,8 @@ describe("IndexedDB offline saves", () => {
   it("persists farm ownership, output, and production checkpoint after reload", async () => {
     const purchased = buyFarm({
       ...createNewGame("Isha"),
-      gold: FARM_PRICE + 40,
-      highestGold: FARM_PRICE + 40,
+      coins: FARM_PRICE + 2000,
+      highestCoins: FARM_PRICE + 2000,
       sailingDay: 1.25,
     }).state;
     const producing = {
@@ -392,8 +396,8 @@ describe("IndexedDB offline saves", () => {
   it("migrates version 10 saves and initializes farms and household without losing existing ownership", async () => {
     const game = {
       ...createNewGame("Asha"),
-      gold: 320,
-      highestGold: 350,
+      coins: 16_000,
+      highestCoins: 17_500,
       ownedWarehouses: ["dhaka" as const],
       residenceTown: "patna" as const,
       reputation: 4,
@@ -407,8 +411,8 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionTenState, version: 10 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(320);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(16_000);
     expect(migrated?.ownedWarehouses).toEqual(["dhaka"]);
     expect(migrated?.residenceTown).toBe("patna");
     expect(migrated?.ownedFarms).toEqual([]);
@@ -422,8 +426,8 @@ describe("IndexedDB offline saves", () => {
   it("migrates a Stage 9 version 11 save to an empty household", async () => {
     const game = {
       ...createNewGame("Asha"),
-      gold: 215,
-      highestGold: 300,
+      coins: 10_750,
+      highestCoins: 15_000,
       ownedFarms: ["dhaka" as const],
       farmOutput: { ...createNewGame("Asha").farmOutput, dhaka: 4 },
       residenceTown: "dhaka" as const,
@@ -432,8 +436,8 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionElevenState, version: 11 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(215);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(10_750);
     expect(migrated?.ownedFarms).toEqual(["dhaka"]);
     expect(migrated?.farmOutput.dhaka).toBe(4);
     expect(migrated?.residenceTown).toBe("dhaka");
@@ -446,7 +450,7 @@ describe("IndexedDB offline saves", () => {
 
   it("persists shipyard upgrades, repaired hull, and paid costs after reload", async () => {
     const upgraded = buyUpgrade(
-      { ...createNewGame("Isha"), gold: 200, highestGold: 200 },
+      { ...createNewGame("Isha"), coins: 10_000, highestCoins: 10_000 },
       "hold",
     ).state;
     const repaired = repairShip({ ...upgraded, shipHull: 6 }).state;
@@ -456,7 +460,7 @@ describe("IndexedDB offline saves", () => {
     expect(restored).toEqual(repaired);
     expect(restored?.upgrades.hold).toBe(1);
     expect(restored?.shipHull).toBe(8);
-    expect(restored?.gold).toBe(171);
+    expect(restored?.coins).toBe(8550);
   });
 
   it("persists market stock and its derived price after a trade and reload", async () => {
@@ -531,7 +535,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.cargo.rice).toBe(4);
     expect(migrated?.averagePurchasePrice.rice).toBe(
       getGoodPrice("patna", "rice", "buy", false, marketStock.rice),
@@ -545,7 +549,7 @@ describe("IndexedDB offline saves", () => {
       ...createNewGame("Asha"),
       selectedTown: "sylhet" as const,
       sailingSpeed: 4 as const,
-      gold: 147,
+      coins: 7350,
     };
     const startedAt = 1_000;
     const elapsedMs = 32_000;
@@ -562,8 +566,8 @@ describe("IndexedDB offline saves", () => {
     const reopenedAt = 86_400_000_000;
     vi.spyOn(Date, "now").mockReturnValue(reopenedAt);
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(147);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(7350);
     expect(migrated?.cargo).toEqual(game.cargo);
     expect(migrated?.marketStock).toEqual(game.marketStock);
     expect(migrated?.chittagongIntroductionSeen).toBe(false);
@@ -579,7 +583,7 @@ describe("IndexedDB offline saves", () => {
     const game = {
       ...createNewGame("Asha"),
       selectedTown: "sylhet" as const,
-      gold: 275,
+      coins: 13_750,
       shipHull: 6,
       upgrades: { cannon: 1, hull: 0, hold: 1 },
     };
@@ -588,7 +592,7 @@ describe("IndexedDB offline saves", () => {
       11_000,
     );
     const {
-      highestGold: _highestGold,
+      highestCoins: _highestCoins,
       reputation: _reputation,
       visitedTowns: _visitedTowns,
       profitableTradeMarks: _profitableTradeMarks,
@@ -600,8 +604,8 @@ describe("IndexedDB offline saves", () => {
     const reopenedAt = 10_000_000;
     vi.spyOn(Date, "now").mockReturnValue(reopenedAt);
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(275);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(13_750);
     expect(migrated?.shipHull).toBe(6);
     expect(migrated?.upgrades).toEqual({ cannon: 1, hull: 0, hold: 1 });
     expect(migrated?.voyage?.elapsedMs).toBe(checkpointed.voyage?.elapsedMs);
@@ -614,7 +618,7 @@ describe("IndexedDB offline saves", () => {
     expect(migrated?.reputation).toBe(0);
     expect(migrated?.visitedTowns).toEqual(["dhaka"]);
     expect(migrated?.profitableTradeMarks).toEqual([]);
-    expect(migrated?.highestGold).toBe(275);
+    expect(migrated?.highestCoins).toBe(13_750);
     expect(migrated?.completedMilestones).toContain("prosperous_merchant");
     expect(migrated?.ownedWarehouses).toEqual([]);
     expect(migrated?.warehouseStock.dhaka.rice).toBe(0);
@@ -623,8 +627,8 @@ describe("IndexedDB offline saves", () => {
   it("migrates a version 8 progression save with empty warehouse inventory", async () => {
     const game = {
       ...createNewGame("Asha"),
-      gold: 180,
-      highestGold: 220,
+      coins: 9000,
+      highestCoins: 11_000,
       reputation: 4,
       visitedTowns: ["dhaka", "patna"],
       profitableTradeMarks: ["patna:silk"],
@@ -638,8 +642,8 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave({ ...versionEightState, version: 8 });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
-    expect(migrated?.gold).toBe(180);
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.coins).toBe(9000);
     expect(migrated?.reputation).toBe(4);
     expect(migrated?.visitedTowns).toEqual(["dhaka", "patna"]);
     expect(migrated?.profitableTradeMarks).toEqual(["patna:silk"]);
@@ -697,7 +701,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.encounterPending).toBe(true);
     expect(migrated?.chittagongIntroductionSeen).toBe(true);
   });
@@ -723,7 +727,7 @@ describe("IndexedDB offline saves", () => {
     const reopenedAt = 1_000_000_000;
     vi.spyOn(Date, "now").mockReturnValue(reopenedAt);
     const restored = await loadGame();
-    expect(restored?.version).toBe(20);
+    expect(restored?.version).toBe(21);
     expect(restored?.voyage).not.toBeNull();
     if (!restored?.voyage) return;
     expect(restored.voyage.elapsedMs).toBe(elapsedAtSave);
@@ -743,8 +747,8 @@ describe("IndexedDB offline saves", () => {
   it("migrates version 17 fleets without changing ships or active voyage progress", async () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Asha"),
-      gold: 2_000,
-      highestGold: 2_000,
+      coins: 100_000,
+      highestCoins: 100_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const underway = startVoyage(
@@ -763,8 +767,8 @@ describe("IndexedDB offline saves", () => {
     });
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(20);
-    expect(restored?.gold).toBe(purchased.gold);
+    expect(restored?.version).toBe(21);
+    expect(restored?.coins).toBe(purchased.coins);
     expect(restored?.fleet).toHaveLength(2);
     expect(restored?.fleet.map((ship) => ship.currentPort)).toEqual(
       elapsed.fleet.map((ship) => ship.currentPort),
@@ -778,8 +782,8 @@ describe("IndexedDB offline saves", () => {
   it("saves and reloads an automated ship mid-route without offline progress", async () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Asha"),
-      gold: 2_000,
-      highestGold: 2_000,
+      coins: 100_000,
+      highestCoins: 100_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const configured = configureAutomatedTradeRoute(
@@ -796,7 +800,7 @@ describe("IndexedDB offline saves", () => {
 
     vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
     const restored = await loadGame();
-    expect(restored?.version).toBe(20);
+    expect(restored?.version).toBe(21);
     expect(restored?.npcSimulationDay).toBe(traveling.npcSimulationDay);
     expect(restored?.fleet[1]).toEqual(savedShip);
     expect(restored?.marketStock).toEqual(traveling.marketStock);
@@ -805,8 +809,8 @@ describe("IndexedDB offline saves", () => {
   it("reloads a route changed while the player's ship is sailing", async () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Asha"),
-      gold: 2_000,
-      highestGold: 2_000,
+      coins: 100_000,
+      highestCoins: 100_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const sailing = startVoyage({ ...purchased, selectedTown: "sonargaon" }, 1_000);
@@ -825,7 +829,7 @@ describe("IndexedDB offline saves", () => {
     expect(restored?.fleet[1].automatedRoute).toEqual(
       changed.fleet[1].automatedRoute,
     );
-    expect(restored?.gold).toBe(changed.gold);
+    expect(restored?.coins).toBe(changed.coins);
     expect(restored?.voyage?.destination).toBe("sonargaon");
     expect(restored?.voyage?.elapsedMs).toBe(changed.voyage?.elapsedMs);
   });
@@ -833,8 +837,8 @@ describe("IndexedDB offline saves", () => {
   it("reloads a game after a profitable route is cancelled", async () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Asha"),
-      gold: 1_000,
-      highestGold: 1_000,
+      coins: 50_000,
+      highestCoins: 50_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;
@@ -843,14 +847,14 @@ describe("IndexedDB offline saves", () => {
       shipId,
       "sonargaon",
       [{ good: "lac", buyAtOrigin: true, sellAtDestination: true }],
-      300,
+      15_000,
     ).state;
     const cancelled = cancelAutomatedTradeRoute(
       {
         ...assigned,
         fleet: assigned.fleet.map((ship) =>
           ship.id === shipId
-            ? { ...ship, automatedRoute: { ...ship.automatedRoute!, capital: 1_500 } }
+            ? { ...ship, automatedRoute: { ...ship.automatedRoute!, capital: 75_000 } }
             : ship,
         ),
       },
@@ -859,25 +863,25 @@ describe("IndexedDB offline saves", () => {
     await saveGame(cancelled);
 
     const restored = await loadGame();
-    expect(restored?.gold).toBe(1_700);
-    expect(restored?.highestGold).toBe(1_700);
+    expect(restored?.coins).toBe(85_000);
+    expect(restored?.highestCoins).toBe(85_000);
   });
 
-  describe("saves with gold above the recorded peak", () => {
-    function affectedSave(gold: number, highestGold: number): GameState {
-      return { ...createNewGame("Asha"), gold, highestGold, completedMilestones: [] };
+  describe("saves with coins above the recorded peak", () => {
+    function affectedSave(coins: number, highestCoins: number): GameState {
+      return { ...createNewGame("Asha"), coins, highestCoins, completedMilestones: [] };
     }
 
     it("repairs the peak and completes the wealth milestone it reached", async () => {
       const save = {
-        ...affectedSave(280, 200),
+        ...affectedSave(14_000, 10_000),
         completedMilestones: ["river_explorer" as const],
       };
       await writeLegacySave(save);
 
       const restored = await loadGame();
-      expect(restored?.gold).toBe(280);
-      expect(restored?.highestGold).toBe(280);
+      expect(restored?.coins).toBe(14_000);
+      expect(restored?.highestCoins).toBe(14_000);
       expect(restored?.completedMilestones).toEqual([
         "river_explorer",
         "prosperous_merchant",
@@ -891,10 +895,10 @@ describe("IndexedDB offline saves", () => {
     });
 
     it("does not award the wealth milestone below its target", async () => {
-      await writeLegacySave(affectedSave(150, 120));
+      await writeLegacySave(affectedSave(7_500, 6_000));
 
       const restored = await loadGame();
-      expect(restored?.highestGold).toBe(150);
+      expect(restored?.highestCoins).toBe(7500);
       expect(restored?.completedMilestones).toEqual([]);
     });
 
@@ -903,47 +907,46 @@ describe("IndexedDB offline saves", () => {
         { ...createNewGame("Asha"), selectedTown: "sonargaon" },
         1_000,
       );
-      await writeLegacySave({ ...sailing, gold: 280, highestGold: 200 });
+      await writeLegacySave({ ...sailing, coins: 14_000, highestCoins: 10_000 });
 
       vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
       const restored = await loadGame();
-      expect(restored?.highestGold).toBe(280);
+      expect(restored?.highestCoins).toBe(14_000);
       expect(restored?.voyage?.elapsedMs).toBe(sailing.voyage?.elapsedMs);
       expect(restored?.voyage?.destination).toBe("sonargaon");
     });
 
     it("leaves a valid peak unchanged", async () => {
-      await writeLegacySave(affectedSave(100, 900));
+      await writeLegacySave(affectedSave(5_000, 45_000));
 
       const restored = await loadGame();
-      expect(restored?.gold).toBe(100);
-      expect(restored?.highestGold).toBe(900);
+      expect(restored?.coins).toBe(5000);
+      expect(restored?.highestCoins).toBe(45_000);
       expect(restored?.completedMilestones).toEqual([]);
     });
 
     it.each<[string, Record<string, unknown>]>([
-      ["fractional gold", { gold: 280.5, highestGold: 200 }],
-      ["negative gold", { gold: -1, highestGold: -5 }],
-      ["a missing peak", { gold: 280, highestGold: undefined }],
-      ["a non-numeric peak", { gold: 280, highestGold: "200" }],
-      ["a negative peak", { gold: 280, highestGold: -1 }],
-      ["unrelated invalid reputation", { gold: 280, highestGold: 200, reputation: -1 }],
-      ["unrelated invalid hull", { gold: 280, highestGold: 200, shipHull: 999 }],
-      ["unrelated invalid milestones", { gold: 280, highestGold: 200, completedMilestones: ["not-a-milestone"] }],
-      ["malformed milestones", { gold: 280, highestGold: 200, completedMilestones: "none" }],
-      ["an unknown save version", { gold: 280, highestGold: 200, version: 99 }],
+      ["fractional coins", { coins: 14_000.5, highestCoins: 10_000 }],
+      ["negative coins", { coins: -1, highestCoins: -5 }],
+      ["a missing peak", { coins: 14_000, highestCoins: undefined }],
+      ["a non-numeric peak", { coins: 14_000, highestCoins: "200" }],
+      ["a negative peak", { coins: 14_000, highestCoins: -1 }],
+      ["unrelated invalid reputation", { coins: 14_000, highestCoins: 10_000, reputation: -1 }],
+      ["unrelated invalid hull", { coins: 14_000, highestCoins: 10_000, shipHull: 999 }],
+      ["unrelated invalid milestones", { coins: 14_000, highestCoins: 10_000, completedMilestones: ["not-a-milestone"] }],
+      ["malformed milestones", { coins: 14_000, highestCoins: 10_000, completedMilestones: "none" }],
     ])("still rejects %s", async (_label, overrides) => {
-      await writeLegacySave({ ...affectedSave(280, 200), ...overrides });
+      await writeLegacySave({ ...affectedSave(14_000, 10_000), ...overrides });
 
-      await expect(loadGame()).rejects.toThrow("unsupported version");
+      await expect(loadGame()).rejects.toThrow("could not be loaded");
     });
   });
 
   it("does not produce farm goods from wall-clock time while the game is closed", async () => {
     const purchased = buyFarm({
       ...createNewGame("Asha"),
-      gold: FARM_PRICE,
-      highestGold: FARM_PRICE,
+      coins: FARM_PRICE,
+      highestCoins: FARM_PRICE,
       selectedTown: "sylhet",
     }).state;
     const route = getTownRoute("dhaka", "sylhet");
@@ -1010,7 +1013,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave(legacySave);
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(20);
+    expect(restored?.version).toBe(21);
     expect(restored?.marketStock.dhaka.rice).toBe(20);
     expect(restored?.captainName).toBe("Noor");
     expect(restored?.averagePurchasePrice.rice).toBeGreaterThan(0);
@@ -1041,7 +1044,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(20);
+    expect(restored?.version).toBe(21);
     expect(restored?.voyage).not.toBeNull();
     const restoredVoyage = restored?.voyage;
     if (!restoredVoyage) return;
@@ -1119,7 +1122,7 @@ describe("IndexedDB offline saves", () => {
 
     const newRoute = planRiverRoute("dhaka", "sylhet");
     expect(restoredVoyage.route).toEqual(newRoute);
-    expect(restored?.version).toBe(20);
+    expect(restored?.version).toBe(21);
     expect(restoredVoyage.elapsedMs / restoredVoyage.durationMs).toBeCloseTo(
       elapsedMs / durationMs,
       6,
@@ -1158,7 +1161,7 @@ describe("IndexedDB offline saves", () => {
     });
 
     const restored = await loadGame();
-    expect(restored?.version).toBe(20);
+    expect(restored?.version).toBe(21);
     expect(restored?.sailingSpeed).toBe(1);
     expect(restored?.voyage?.elapsedMs).toBe(0);
     const migratedVoyage = restored?.voyage;
@@ -1189,7 +1192,7 @@ describe("IndexedDB offline saves", () => {
     await writeLegacySave(legacySave);
 
     const migrated = await loadGame();
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.cargo.rice).toBe(4);
     expect(migrated?.cargo.muslin).toBe(2);
     expect(migrated?.cargo.salt).toBe(3);

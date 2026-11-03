@@ -5,7 +5,7 @@ import type { CommandType, RecordedCommand } from "../game/commands";
 import { createNewGame, type GameState, type GoodId, type TownId } from "../game/model";
 import { arrive, createSim, depart, sail, send, type Sim } from "./driver";
 
-export const RECORDED_GAME_GOLD = 4_000;
+export const RECORDED_GAME_COINS = 200_000;
 
 export const ALL_COMMAND_TYPES: Record<CommandType, true> = {
   selectDestination: true,
@@ -38,8 +38,8 @@ export const ALL_COMMAND_TYPES: Record<CommandType, true> = {
 /** Every amount of money in a state, for comparing a replay step by step. */
 export interface MoneyStep {
   seq: number;
-  gold: number;
-  highestGold: number;
+  coins: number;
+  highestCoins: number;
   routeCapital: number;
   npcPurses: number;
   cargoCostBasis: number;
@@ -62,8 +62,8 @@ export function readMoney(state: GameState, seq: number): MoneyStep {
   const goods = Object.keys(state.cargo) as GoodId[];
   return {
     seq,
-    gold: state.gold,
-    highestGold: state.highestGold,
+    coins: state.coins,
+    highestCoins: state.highestCoins,
     routeCapital: sum(state.fleet.map((ship) => ship.automatedRoute?.capital ?? 0)),
     npcPurses: sum(state.npcMerchants.map((merchant) => merchant.budget)),
     cargoCostBasis: sum(
@@ -78,7 +78,7 @@ export function readMoney(state: GameState, seq: number): MoneyStep {
         ),
       ),
     ),
-    contractRewards: sum(state.missions.map((mission) => mission.rewardGold)),
+    contractRewards: sum(state.missions.map((mission) => mission.rewardCoins)),
     contractProfitProgress: sum(
       state.missions.flatMap((mission) => (mission.type === "profitable_trade" ? [mission.progress] : [])),
     ),
@@ -103,14 +103,14 @@ function buildBase(): GameState {
   // port as the player only happens in a set-up like this one.
   return {
     ...fresh,
-    gold: RECORDED_GAME_GOLD,
-    highestGold: RECORDED_GAME_GOLD,
+    coins: RECORDED_GAME_COINS,
+    highestCoins: RECORDED_GAME_COINS,
     npcMerchants: fresh.npcMerchants.map((merchant) =>
       merchant.id === "abdul-rahman"
         ? {
             ...merchant,
             cargo: { ...merchant.cargo, rice: 2 },
-            cargoCost: { ...merchant.cargoCost, rice: 8 },
+            cargoCost: { ...merchant.cargoCost, rice: 400 },
           }
         : merchant,
     ),
@@ -161,7 +161,7 @@ export function playRecordedGame(): Sim {
     shipId: bora,
     destination: "balasore",
     rules: [{ good: "sugar", buyAtOrigin: true, sellAtDestination: true }],
-    initialCapital: 150,
+    initialCapital: 7_500,
   });
 
   // Chittagong: the introductory encounter, then repairs.
@@ -194,7 +194,7 @@ export function playRecordedGame(): Sim {
     shipId: starter,
     destination: "satgaon",
     rules: [{ good: "sugar", buyAtOrigin: true, sellAtDestination: true }],
-    initialCapital: 200,
+    initialCapital: 10_000,
   });
 
   // Goods for a contract, and cargo with a cost basis.

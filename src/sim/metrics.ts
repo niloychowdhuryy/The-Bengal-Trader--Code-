@@ -30,7 +30,7 @@ function goodsValue(goods: Record<GoodId, number>): number {
 }
 
 export function estimateNetWorth(state: GameState): number {
-  let worth = state.gold;
+  let worth = state.coins;
   for (const ship of state.fleet) {
     worth += goodsValue(ship.cargo);
     worth += VESSEL_CLASSES[ship.vesselClass].price * SHIP_SHARE;

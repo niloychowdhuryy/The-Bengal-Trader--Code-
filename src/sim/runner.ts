@@ -70,7 +70,7 @@ export function seededRandom(seed: number): () => number {
 export interface DaySnapshot {
   day: number;
   sailingDay: number;
-  gold: number;
+  coins: number;
   netWorth: number;
   reputation: number;
   standing: number;
@@ -109,7 +109,7 @@ function snapshot(sim: Sim, day: number): DaySnapshot {
   return {
     day,
     sailingDay: round(state.sailingDay),
-    gold: state.gold,
+    coins: state.coins,
     netWorth: estimateNetWorth(state),
     reputation: state.reputation,
     standing: Object.values(state.localStanding).reduce((total, value) => total + value, 0),

@@ -73,7 +73,7 @@ describe("port panel", () => {
   it("says why a port can't be reached, even when compact", async () => {
     await saveGame(
       selectPlayerShip(
-        buyPlayerShip({ ...createNewGame("Maya"), gold: 2_000, highestGold: 2_000 }, "patello").state,
+        buyPlayerShip({ ...createNewGame("Maya"), coins: 100_000, highestCoins: 100_000 }, "patello").state,
         "player-ship-2",
       ).state,
     );

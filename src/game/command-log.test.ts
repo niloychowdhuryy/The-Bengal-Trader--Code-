@@ -11,6 +11,7 @@ import {
   saveGame,
   startCommandLog,
 } from "./storage";
+import { asGoldSave } from "../test/gold-save";
 import fixture from "./__fixtures__/save-v19.json";
 
 const T0 = 1_800_000_000_000;
@@ -75,7 +76,7 @@ beforeEach(resetDatabase);
 
 describe("command log", () => {
   it("rebuilds a saved game from its recorded commands", async () => {
-    const start = { ...createNewGame("Maya"), gold: 800, highestGold: 800 };
+    const start = { ...createNewGame("Maya"), coins: 40_000, highestCoins: 40_000 };
     await startCommandLog(start);
     const { state, entries } = play(start, [
       { type: "buyGood", good: "salt", quantity: 2 },
@@ -109,7 +110,7 @@ describe("command log", () => {
     const broken = { ...state, unsavable: () => undefined } as unknown as GameState;
     await expect(commitGame(broken, entries)).rejects.toBeDefined();
     expect(await readCommandLog()).toMatchObject({ commands: [], meta: { nextSeq: 1 } });
-    expect((await loadGame())?.gold).toBe(start.gold);
+    expect((await loadGame())?.coins).toBe(start.coins);
     await commitGame(state, entries);
     expect((await readCommandLog())?.commands).toHaveLength(1);
   });
@@ -147,19 +148,20 @@ describe("version 19 saves", () => {
     await writeRaw("captain", fixture);
     const session = await openGameSession(T0);
     const game = session.game!;
-    expect(game.version).toBe(20);
+    expect(game.version).toBe(21);
     expect(isValidGameState(game)).toBe(true);
     const saved = fixture as unknown as GameState;
-    expect(game.gold).toBe(saved.gold);
-    expect(game.fleet).toEqual(saved.fleet);
+    expect(game.coins).toBe(fixture.gold * 50);
+    expect(game.fleet.map((ship) => ship.cargo)).toEqual(saved.fleet.map((ship) => ship.cargo));
     expect(game.cargo).toEqual(saved.cargo);
-    expect(game.averagePurchasePrice).toEqual(saved.averagePurchasePrice);
     expect(game.marketStock).toEqual(saved.marketStock);
-    expect(game.missions).toEqual(saved.missions);
+    expect(game.missions.map((mission) => mission.status)).toEqual(
+      saved.missions.map((mission) => mission.status),
+    );
     expect(game.household).toEqual(saved.household);
     expect(game.ownedWarehouses).toEqual(saved.ownedWarehouses);
     // The journey moved onto the rebuilt network, keeping how far along it was.
-    expect(game.version).toBe(20);
+    expect(game.version).toBe(21);
     expect(game.voyage?.destination).toBe(saved.voyage?.destination);
     expect(game.voyage!.elapsedMs / game.voyage!.durationMs).toBeCloseTo(
       saved.voyage!.elapsedMs / saved.voyage!.durationMs,
@@ -172,7 +174,7 @@ describe("version 19 saves", () => {
     expect(session.log).toMatchObject({ provenance: "imported", nextSeq: 1 });
     expect(session.resumedVoyage).toBeNull();
     const log = await readCommandLog();
-    expect(log?.base.gold).toBe(session.game?.gold);
+    expect(log?.base.coins).toBe(session.game?.coins);
   });
 
   it("starts a new history after migrating, since old commands used the old rules", async () => {
@@ -180,14 +182,14 @@ describe("version 19 saves", () => {
     await startCommandLog(start);
     const { state, entries } = play(start, [{ type: "buyGood", good: "rice", quantity: 1 }]);
     await commitGame(state, entries);
-    await writeRaw("captain", { ...state, version: 19 });
+    await writeRaw("captain", asGoldSave(state, 19));
     const session = await openGameSession(T0 + 60_000);
-    expect(session.game?.version).toBe(20);
+    expect(session.game?.version).toBe(21);
     expect(session.log).toMatchObject({ provenance: "imported", baseSeq: 1, nextSeq: 2 });
     const log = await readCommandLog();
     expect(log?.commands).toEqual([]);
-    expect(log?.base.gold).toBe(state.gold);
-    expect((await loadGame())?.version).toBe(20);
+    expect(log?.base.coins).toBe(state.coins);
+    expect((await loadGame())?.version).toBe(21);
   });
 
   it("can be played on and verified after loading", async () => {

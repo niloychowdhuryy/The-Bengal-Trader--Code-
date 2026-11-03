@@ -18,12 +18,13 @@ import {
 import { getRouteStateAt } from "./navigation";
 import { replayCommands } from "./replay";
 import { isValidGameState, validateSave } from "./save-format";
+import { asGoldSave } from "../test/gold-save";
 import fixture from "./__fixtures__/save-v19.json";
 
 const T0 = 1_800_000_000_000;
 
 function loaded(): GameState {
-  return { ...createNewGame("Maya"), gold: 4_000, highestGold: 4_000 };
+  return { ...createNewGame("Maya"), coins: 200_000, highestCoins: 200_000 };
 }
 
 // Dhaka to Sonargaon goes by boat, then by cart.
@@ -57,7 +58,7 @@ describe("cargo and journey through a transfer", () => {
       const during = checkpointVoyageProgress(sailing, at);
       expect(during.cargo).toEqual(start.cargo);
       expect(during.averagePurchasePrice).toEqual(start.averagePurchasePrice);
-      expect(during.gold).toBe(start.gold);
+      expect(during.coins).toBe(start.coins);
       expect(during.selectedShipId).toBe(start.selectedShipId);
       expect(during.voyage!.destination).toBe("sonargaon");
       expect(during.fleet.map((ship) => ship.cargo)).toEqual(start.fleet.map((ship) => ship.cargo));
@@ -65,7 +66,7 @@ describe("cargo and journey through a transfer", () => {
     const arrived = applyCommand(sailing, { type: "arrive" }, Math.ceil(sailing.voyage!.arrivalAt)).state;
     expect(arrived.currentTown).toBe("sonargaon");
     expect(arrived.cargo).toEqual(start.cargo);
-    expect(arrived.gold).toBe(start.gold);
+    expect(arrived.coins).toBe(start.coins);
   });
 
   it("refuses arriving during the cart stage, and trading mid-transfer", () => {
@@ -183,10 +184,10 @@ describe("existing saves", () => {
   it("moves a version 19 voyage onto the new network, keeping its progress and cargo", () => {
     const saved = fixture as unknown as GameState;
     const game = validateSave(fixture, T0);
-    expect(game.version).toBe(20);
+    expect(game.version).toBe(21);
     expect(isValidGameState(game)).toBe(true);
     expect(game.cargo).toEqual(saved.cargo);
-    expect(game.gold).toBe(saved.gold);
+    expect(game.coins).toBe(fixture.gold * 50);
     expect(game.fleet.map((ship) => ship.id)).toEqual(saved.fleet.map((ship) => ship.id));
     expect(game.fleet.map((ship) => ship.cargo)).toEqual(saved.fleet.map((ship) => ship.cargo));
     expect(game.voyage!.route.points).not.toEqual(saved.voyage!.route.points);
@@ -205,20 +206,20 @@ describe("existing saves", () => {
       "player-ship-2",
       "sonargaon",
       [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
-      300,
+      15_000,
     ).state;
     for (let day = 1; day <= 3; day += 1) state = advanceNpcWorld({ ...state, sailingDay: day }, day);
+    const gold = asGoldSave(state, 19);
     const asOld = {
-      ...state,
-      version: 19,
-      npcMerchants: state.npcMerchants.map((merchant) =>
+      ...gold,
+      npcMerchants: (gold.npcMerchants as GameState["npcMerchants"]).map((merchant) =>
         merchant.phase === "traveling"
           ? { ...merchant, travelDaysTotal: 99, travelDaysRemaining: 50 }
           : merchant,
       ),
     };
     const migrated = validateSave(asOld, T0);
-    expect(migrated.version).toBe(20);
+    expect(migrated.version).toBe(21);
     for (const merchant of migrated.npcMerchants) {
       if (merchant.phase === "traveling") {
         expect(merchant.travelDaysRemaining).toBeLessThanOrEqual(merchant.travelDaysTotal);
@@ -228,7 +229,7 @@ describe("existing saves", () => {
   });
 
   it("drops closures naming channels that no longer exist", () => {
-    const old = { ...loaded(), version: 19, navigationConditions: { eventBlockages: ["upper-river"] } };
+    const old = { ...asGoldSave(loaded(), 19), navigationConditions: { eventBlockages: ["upper-river"] } };
     expect(validateSave(old, T0).navigationConditions.eventBlockages).toEqual([]);
   });
 

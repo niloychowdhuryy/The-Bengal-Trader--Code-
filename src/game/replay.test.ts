@@ -5,9 +5,9 @@ import { MAX_CLOCK_AHEAD_MS, replayCommands, type ReplayAnchor } from "./replay"
 
 const T0 = 1_800_000_000_000;
 
-function anchor(gold = 2_000): ReplayAnchor {
+function anchor(coins = 5_000_000): ReplayAnchor {
   return {
-    state: { ...createNewGame("Maya"), gold, highestGold: gold },
+    state: { ...createNewGame("Maya"), coins, highestCoins: coins },
     lastSeq: 0,
     lastAt: T0,
   };
@@ -20,8 +20,8 @@ function entry(seq: number, command: GameCommand, at = T0 + seq * 1_000): Record
 const options = { receivedAt: T0 + 3_600_000 };
 const buySalt: GameCommand = { type: "buyGood", good: "salt", quantity: 1 };
 
-function goldAfter(state: GameState, ...commands: GameCommand[]): number {
-  return commands.reduce((current, command) => applyCommand(current, command, T0).state, state).gold;
+function coinsAfter(state: GameState, ...commands: GameCommand[]): number {
+  return commands.reduce((current, command) => applyCommand(current, command, T0).state, state).coins;
 }
 
 describe("replayCommands", () => {
@@ -30,8 +30,8 @@ describe("replayCommands", () => {
     const result = replayCommands(start, [entry(1, buySalt), entry(2, buySalt)], options);
     expect(result.status).toBe("accepted");
     if (result.status !== "accepted") return;
-    expect(result.state.gold).toBe(goldAfter(start.state, buySalt, buySalt));
-    expect(result.state.gold).toBeLessThan(start.state.gold);
+    expect(result.state.coins).toBe(coinsAfter(start.state, buySalt, buySalt));
+    expect(result.state.coins).toBeLessThan(start.state.coins);
     expect(result).toMatchObject({ lastSeq: 2, lastAt: T0 + 2_000, duplicates: 0 });
     expect(result.applied).toHaveLength(2);
   });
@@ -44,7 +44,7 @@ describe("replayCommands", () => {
   });
 
   it("offers no way to claim a result", () => {
-    const forged = { ...entry(1, buySalt), gold: 1_000_000 };
+    const forged = { ...entry(1, buySalt), coins: 50_000_000 };
     expect(replayCommands(anchor(), [forged], options)).toMatchObject({
       status: "rejected",
       reason: "malformed-command",
@@ -57,7 +57,7 @@ describe("replayCommands", () => {
       status: "rejected",
       reason: "command-refused",
       seq: 1,
-      detail: "gold",
+      detail: "coins",
     });
     expect(
       replayCommands(anchor(), [entry(1, { type: "sellGood", good: "opium", quantity: 1 })], options),
@@ -163,7 +163,7 @@ describe("replayCommands", () => {
       expect(retry).toMatchObject({ status: "accepted", duplicates: 2, lastSeq: 2 });
       if (retry.status !== "accepted") return;
       expect(retry.applied).toHaveLength(0);
-      expect(retry.state.gold).toBe(next.state.gold);
+      expect(retry.state.coins).toBe(next.state.coins);
     });
 
     it("applies only the new part of an overlapping batch", () => {

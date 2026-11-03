@@ -1,6 +1,6 @@
 // Gathers every measurement into one record that contains no dates or machine details,
 // so the same rules always produce the same record and later stages can compare against it.
-import { VESSEL_CLASS_IDS, createNewGame } from "../game/model";
+import { VESSEL_CLASS_IDS, createNewGame, type GameState } from "../game/model";
 import {
   demonstrateSamePortLoop,
   findSamePortLoops,
@@ -38,9 +38,9 @@ function spread(values: number[]): Spread {
 
 export interface StrategyDay {
   day: number;
-  gold: Spread;
+  coins: Spread;
   netWorth: Spread;
-  goldPerDay: number;
+  coinsPerDay: number;
   netWorthPerVoyage: number;
   netWorthPerRealMinute: number;
   voyages: number;
@@ -89,9 +89,10 @@ function summariseStrategy(
   definition: StrategyDefinition,
   seeds: readonly number[],
   days: readonly number[],
+  base: GameState,
 ): StrategySummary {
   const runs = seeds.map((seed) => {
-    const run = runStrategy(definition, { seed, days });
+    const run = runStrategy(definition, { seed, days, base });
     return { ...run, replays: replayMatches(run.sim) };
   });
   const middle = (pick: (snapshot: DaySnapshot) => number, index: number) =>
@@ -104,7 +105,7 @@ function summariseStrategy(
     label: definition.label,
     seeds: seeds.length,
     days: days.map((day, index) => {
-      const gold = spread(runs.map((run) => run.result.snapshots[index].gold));
+      const coins = spread(runs.map((run) => run.result.snapshots[index].coins));
       const netWorth = spread(runs.map((run) => run.result.snapshots[index].netWorth));
       const sailingDay = middle((snapshot) => snapshot.sailingDay, index);
       const voyages = middle((snapshot) => snapshot.voyages, index);
@@ -112,9 +113,9 @@ function summariseStrategy(
       const earned = netWorth.median - worthAtStart;
       return {
         day,
-        gold,
+        coins,
         netWorth,
-        goldPerDay: round((gold.median - runs[0].sim.base.gold) / sailingDay),
+        coinsPerDay: round((coins.median - runs[0].sim.base.coins) / sailingDay),
         netWorthPerVoyage: round(earned / Math.max(1, voyages)),
         netWorthPerRealMinute: round(earned / Math.max(0.01, realMinutes)),
         voyages,
@@ -155,19 +156,20 @@ export function measureStrategies(
   definitions: readonly StrategyDefinition[] = STRATEGIES,
   seeds: readonly number[] = SIM_SEEDS,
   days: readonly number[] = SIM_DAYS,
+  base: GameState = createNewGame("Simulated"),
 ): StrategySummary[] {
-  return definitions.map((definition) => summariseStrategy(definition, seeds, days));
+  return definitions.map((definition) => summariseStrategy(definition, seeds, days, base));
 }
 
-export function buildBaseline() {
-  const sustained = measureSustainedRoutes(90);
-  const perDay = sustained.map((route) => route.goldPerDay);
+export function buildBaseline(base: GameState = createNewGame("Simulated")) {
+  const sustained = measureSustainedRoutes(90, base);
+  const perDay = sustained.map((route) => route.coinsPerDay);
   const topTenth = fromTop(perDay, 0.1);
   const loops = findSamePortLoops();
   return {
     saveVersion: createNewGame("Simulated").version,
-    newGameNetWorth: estimateNetWorth(createNewGame("Simulated")),
-    strategies: measureStrategies(),
+    newGameNetWorth: estimateNetWorth(base),
+    strategies: measureStrategies(STRATEGIES, SIM_SEEDS, SIM_DAYS, base),
     firstTrips: summariseFirstTrips(),
     sustainedRoutes: {
       days: 90,
@@ -176,7 +178,7 @@ export function buildBaseline() {
       worst: sustained.slice(-3),
       topTenthPerDay: topTenth,
       medianPerDay: round(median(perDay)),
-      dominance: topTenth > 0 ? round(sustained[0].goldPerDay / topTenth, 1) : 0,
+      dominance: topTenth > 0 ? round(sustained[0].coinsPerDay / topTenth, 1) : 0,
       routesThatTire: sustained.filter((route) => route.lateVsEarly > 0 && route.lateVsEarly < 0.9).length,
     },
     recovery: measureRecovery(),
@@ -195,7 +197,7 @@ export function buildBaseline() {
           dhakaSilk: measureLoopAtLowStock("dhaka", "silk"),
           dhakaOpium: measureLoopAtLowStock("dhaka", "opium"),
         },
-        demonstration: demonstrateSamePortLoop(),
+        demonstration: demonstrateSamePortLoop(200, base),
       },
       closedTimeChangesNothing: measureBreakInvariance(),
     },

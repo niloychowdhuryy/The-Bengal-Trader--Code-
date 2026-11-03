@@ -20,8 +20,8 @@ import { isValidGameState } from "./save-format";
 
 const T0 = 1_800_000_000_000;
 
-function rich(gold = 5_000): GameState {
-  return { ...createNewGame("Maya"), gold, highestGold: gold };
+function rich(coins = 12_500_000): GameState {
+  return { ...createNewGame("Maya"), coins, highestCoins: coins };
 }
 
 function sailing(state = rich()): GameState {
@@ -44,7 +44,7 @@ describe("parseCommand", () => {
     ["buyGood"],
     [[]],
     [{}],
-    [{ type: "giveMeGold", amount: 1_000_000 }],
+    [{ type: "giveMeCoins", amount: 1_000_000 }],
     [{ type: "buyGood", good: "rice" }],
     [{ type: "buyGood", good: "diamonds", quantity: 1 }],
     [{ type: "buyGood", good: "__proto__", quantity: 1 }],
@@ -55,7 +55,7 @@ describe("parseCommand", () => {
     [{ type: "buyGood", good: "rice", quantity: 1e12 }],
     [{ type: "buyGood", good: "rice", quantity: 1, price: 0 }],
     [{ type: "sellGood", good: "rice", quantity: Number.NaN }],
-    [{ type: "startVoyage", gold: 999 }],
+    [{ type: "startVoyage", coins: 49_950 }],
     [{ type: "selectDestination", town: "atlantis" }],
     [{ type: "changeVoyageSpeed", speed: 1000 }],
     [{ type: "buyShip", vesselClass: "constructor" }],
@@ -92,7 +92,7 @@ describe("applyCommand", () => {
     const state = rich(1);
     const result = applyCommand(state, { type: "buyGood", good: "silk", quantity: 1 }, T0);
     expect(result.status).toBe("rejected");
-    expect(result.error).toBe("gold");
+    expect(result.error).toBe("coins");
     expect(result.state).toBe(state);
   });
 
@@ -253,7 +253,7 @@ describe("randomised play", () => {
       if (result.status !== "applied") return;
       live = result.state;
       log.push({ seq: (seq += 1), at, command });
-      expect(live.gold).toBeGreaterThanOrEqual(0);
+      expect(live.coins).toBeGreaterThanOrEqual(0);
       expect(isValidGameState(live), `after ${command.type}`).toBe(true);
     };
 

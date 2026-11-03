@@ -54,7 +54,7 @@ describe("account screens", () => {
       const request = indexedDB.deleteDatabase("bengal-trader");
       request.onsuccess = request.onerror = request.onblocked = () => resolve();
     });
-    await saveGame({ ...createNewGame("Maya"), gold: 321, highestGold: 321 });
+    await saveGame({ ...createNewGame("Maya"), coins: 16_050, highestCoins: 16_050 });
   });
   afterEach(cleanup);
 
@@ -84,7 +84,7 @@ describe("account screens", () => {
     await openAccount({ kind: "signed-out" });
     fireEvent.click(screen.getByRole("button", { name: /Sign in with Google/ }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/keep playing offline/);
-    expect(screen.getByLabelText(/^Gold 321/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Coins 16,050/)).toBeInTheDocument();
   });
 
   it("asks a new player for a name and age, and shows server refusals", async () => {
@@ -118,6 +118,6 @@ describe("account screens", () => {
     await waitFor(() => expect(service.signOut).toHaveBeenCalledOnce());
     act(() => listener({ kind: "signed-out" }));
     expect(await screen.findByRole("button", { name: /Sign in with Google/ })).toBeVisible();
-    expect((await loadGame())?.gold).toBe(321);
+    expect((await loadGame())?.coins).toBe(16_050);
   });
 });
