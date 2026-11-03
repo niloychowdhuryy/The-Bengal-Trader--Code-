@@ -42,7 +42,7 @@ describe("port panel", () => {
     expect(toggle("Hide port details")).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText(/Boat and cart route/)).toBeVisible();
     expect(screen.getByText(/By boat to the landing/)).toBeVisible();
-    expect(screen.getByText(/docked here|At this port/)).toBeVisible();
+    expect(screen.getByText(/merchants are in port|In port:/)).toBeVisible();
     fireEvent.click(toggle("Hide port details"));
     expect(document.querySelector(".port-context-copy")).toBeNull();
     expect(screen.getByRole("heading", { name: "Sonargaon" })).toBeVisible();

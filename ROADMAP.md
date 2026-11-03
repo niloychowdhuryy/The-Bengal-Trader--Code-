@@ -222,8 +222,8 @@ Visual polish is committed. The owner has approved a larger online expansion, wh
 - **Milestone N, correct water and land navigation: implemented and committed, phone testing still to come.** Routes are traced from the painted water, journeys can change between boat and cart, and saves are version 20. The map now stays alive when leaving and returning, fixing a broken-map bug, and the port panel is compact and collapsible so it can't permanently hide the south. It comes before cloud saves, Coins, markets and voyage events. The route network doesn't match the painted map and needs retracing, with land legs and boat-to-cart transitions where the map needs them.
 - **Milestone T, individual town identities:** every town gets its own look, layout and landmarks, with every important building functional. Built with Stage 9; see [TOWN_IDENTITY_PLAN.md](./TOWN_IDENTITY_PLAN.md).
 
-- **At least 25 active NPC traders: planned, owner's requirement.** Four exist today. Recommended alongside dynamic markets.
-- **Economy plan:** six steps, separate from the stages above: 1 simulation harness and baseline (**done**, see [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 2 Coins and save backup (**done**); 3 pricing fix, deeper stock and a single world tick (**done**, results in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 4 26 NPC merchants; 5 offline leaderboards; 6 review of time-away progression, which is **not approved**.
+- **At least 25 active NPC traders: implemented, awaiting review.** 26 merchants with real ships, cargo and purses trade across the shared market. See `src/game/npc.ts`. Merchants load across several goods, larger ships carry more, and investment is decided from their own trading record.
+- **Economy plan:** six steps, separate from the stages above: 1 simulation harness and baseline (**done**, see [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 2 Coins and save backup (**done**); 3 pricing fix, deeper stock and a single world tick (**done**, results in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 4 26 NPC merchants and recovery from a player dead end (**implemented, awaiting review**); 5 offline leaderboards; 6 review of time-away progression, which is **not approved**.
 - **Economy balancing requirements, owner's decision:** these must be built into later simulation and balancing work, and not dropped when NPCs and leaderboards arrive. Simulations check them from the stage that changes each system, and the full balancing pass must meet all three.
   1. **Automated trading** must be profitable and useful, but must not outperform active trading so significantly that manual play becomes pointless. At the baseline, a Bora on a route earns 7.88 gold a day against 6.45 for manual trading.
   2. **Delivery contracts** need a proper profitability and risk model, so a player has a genuine financial incentive to accept suitable ones. At the baseline, only 1 of 15 pays more than the goods handed over.
@@ -232,9 +232,11 @@ Visual polish is committed. The owner has approved a larger online expansion, wh
 - **To address after the NPC economy is implemented and measured, owner's decision:** these systems aren't changed before then, and later balancing must meet all of them.
   - Farms must not dominate manual trading.
   - Automated ships must remain useful without outperforming active trading by a large margin.
-  - NPCs must become genuine market participants, with meaningful cargo, money, travel and trading activity. Economy Plan Step 4 builds this.
-  - Contracts and warehouses still need proper economic value.
-- **Measured after Step 3, still to be solved:** the farm player ends 3.1× ahead of manual trading (412,845 against 134,690), a Patello on a route earns 680 Coins a day against 511 for manual trading, and only 1 of 15 delivery contracts pays more than its goods. NPC merchants still barely affect markets until Step 4.
+  - NPCs must be genuine market participants, with meaningful cargo, money, travel and trading activity. Economy Plan Step 4 builds this. Merchants' wealth growth and their effect on prices should be reviewed with real play.
+  - Contracts need meaningful profitability, and warehouses genuine strategic value.
+  - Offline merchant leaderboards, for richest and highest reputation (Economy Plan Step 5). They need a shared valuation for the player and merchants; `getMerchantWorth` and the harness's estimate are the starting points. A player's debt to the moneylender must count against them, as the harness's estimate already does.
+  - Future online leaderboards must distinguish real players from NPCs.
+- **Measured, still to be solved:** see "What's still out of balance" in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). Farms are the strongest strategy by far, and only 1 of 15 delivery contracts pays more than its goods.
 - **Login and cloud-save setup: postponed by the owner** until the main game is built.
 
 Current status of everything is in [PROJECT_STATUS_SUMMARY.md](./PROJECT_STATUS_SUMMARY.md). Exit checks are in the plan. Each stage gets its own commit, passing tests and build, and a report. Physical mobile testing is a later dedicated phase.

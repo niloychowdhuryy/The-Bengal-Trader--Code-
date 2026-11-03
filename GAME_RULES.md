@@ -8,7 +8,7 @@ Recommended future design decisions, which are not all implemented, are recorded
 
 - Start in Dhaka with **5,000 Coins**, **2 rice + 1 fine cloth**, a **12-item hold** and a basic wooden vessel.
 - Each good takes one place in the hold.
-- Progress saves to IndexedDB on this device. Version 19 saves add each ship's vessel class and any return order; version 18 ships migrate as River boats with everything else unchanged. Version 20 saves use the rebuilt routes. Version 22 saves give stalls three times the stock, keeping each stall's share, and use a single world clock. Version 21 saves count in Coins: every older amount becomes exactly ×50, and the original save is kept as a backup under **More → Save backups**. Version 18 saves also persist each non-selected ship's automated route, route capital and recent activity. Version 17 fleets migrate with no routes assigned and empty activity logs; the selected ship and active voyage remain unchanged. Version 16 saves migrate their current vessel into one named ship without resetting cargo, upgrades, condition, Coins or voyage progress. Earlier versions migrate through the existing steps before receiving newer features. Version 15 saves preserve NPC trader state while removing the former voyage encounter; version 14 saves initialize bounded traders. Older voyage formats without a saved progress checkpoint restart the active trip at its route duration rather than using closed-app wall time. Production app files can be cached for offline reopening after first visit.
+- Progress saves to IndexedDB on this device. Version 19 saves add each ship's vessel class and any return order; version 18 ships migrate as River boats with everything else unchanged. Version 20 saves use the rebuilt routes. Version 24 saves add a debt record, empty for every existing game. Version 23 saves add 22 merchants and a world seed. Version 22 saves give stalls three times the stock, keeping each stall's share, and use a single world clock. Version 21 saves count in Coins: every older amount becomes exactly ×50, and the original save is kept as a backup under **More → Save backups**. Version 18 saves also persist each non-selected ship's automated route, route capital and recent activity. Version 17 fleets migrate with no routes assigned and empty activity logs; the selected ship and active voyage remain unchanged. Version 16 saves migrate their current vessel into one named ship without resetting cargo, upgrades, condition, Coins or voyage progress. Earlier versions migrate through the existing steps before receiving newer features. Version 15 saves preserve NPC trader state while removing the former voyage encounter; version 14 saves initialize bounded traders. Older voyage formats without a saved progress checkpoint restart the active trip at its route duration rather than using closed-app wall time. Production app files can be cached for offline reopening after first visit.
 
 ## Map and navigation
 
@@ -17,8 +17,10 @@ Recommended future design decisions, which are not all implemented, are recorded
 - Each voyage is planned as one continuous waterway path between its origin and destination. Intermediate port nodes are not used as waypoints; the route preview, travel estimate and moving ship all use the same path. Route estimates use polyline distance, not straight-line distance. The longest normal navigable route takes exactly five real-world minutes while the game is open; shorter routes take the same fraction of that time as their river distance. One real-world minute underway equals one in-game day, including fractional days. This is a gameplay scale, not a historical sailing-time claim.
 - Voyages advance only while the game is open. Closing or backgrounding the game does not advance in-game time; reopening resumes with the same in-game travel time remaining as at the last saved checkpoint.
 - Four named NPC merchants travel between ports and trade within the same saved market stock. They start at Dhaka (Abdul Rahman), Sonargaon (Mariam Banu), Kasimbazar (Govinda Das), and Patna (Fatima Khatun). Their names, home ports, preferences, and routes are game abstractions, not claims about documented individual merchants or exact historic trade roles.
-- NPCs update only as active sailing crosses full in-game day checkpoints. Each has a three-item hold, starts with 5,000 Coins, and cannot hold more than 9,000 Coins. Specialists favor a small set of goods and destinations; one trader seeks reachable profitable price differences; one favors the nearest of a few regional ports. Traders buy up to two goods per docked day when stock and funds allow, then follow routes calculated from the shared river graph and sailing-time model. On arrival they sell cargo subject to the 0–40 market-stock limit. No NPC movement, purchase, or sale occurs during closed-app time.
-- NPC activity is shown on the map and in port and town-centre merchant panels. Docked traders can be inspected, traded with one unit at a time, or left without interaction; these optional port interactions never pause or interrupt the player's voyage. All eight goods and 15 ports remain accessible.
+- 26 fictional merchants share the world. They update only as active sailing crosses full in-game days, so they stop whenever you're not sailing or the game is closed. Each has a real ship with its usual limits, a finite purse and a hold, and buys and sells at the same prices you do. They also pay crew and port costs for each day at sea.
+- Merchants differ. Cautious ones wait for large margins and short trips, bold ones take thinner margins and longer trips, and steady ones sit between. A route must be worth sailing before they'll load, and then they keep loading while the next unit still pays, across several goods if needed. Bulk carriers accept thinner margins per unit, so larger ships carry more. Specialists stick to their goods, regional traders stay near home until they've done well, and others go wherever the price gap is widest. Merchants buy a bigger ship at a shipyard when their trading record says it would pay for itself and they'd still have working capital left, unless that ship couldn't reach their home waters. Ambitious merchants do this sooner, and also buy bigger holds.
+- Merchants leave at least 40% of a stall's usual stock for the town, and won't flood it past 160%. One who runs out of money and cargo lays up the ship and gets no help. One who hasn't traded for a while accepts thinner margins.
+- Merchant ships sail on the map and wait at the docks. Tap one to see who it is, where it's going and what it carries. On a touch screen, tapping a busy dock lists its ships. You can also see them all under **More → Rival merchants**. Markets note a rival's recent trades at each stall. In the Town centre, a docked merchant with unsold cargo can sell you a unit at a time. These interactions are optional and never pause or interrupt you.
 - Sailing is refused if the route planner finds no open route or the vessel draft exceeds a channel's abstract minimum depth.
 - Routes follow the painted waterways. Where water doesn't reach a town, the journey continues by bullock cart, with a stop to move the cargo, as one continuous trip. Balasore and Bakla-Chandradwip are always reached by cart from their landing. Sonargaon and Malda also have road landings. Cargo stays with the journey, and Patello can never reach Sylhet or Balasore, by any route. Saves are version 20; version 19 voyages move to the new routes keeping their progress.
 
@@ -66,7 +68,7 @@ Recommended future design decisions, which are not all implemented, are recorded
 - The deterministic buy quote is `max(1, round(base value × (1 + 0.15 × (demand tier − supply tier)) × 30 / (stall stock + 10)) + event modifier)`. Supply and demand tiers are 1 (low), 2 (neutral) or 3 (high); prices are balancing values, not historical prices.
 - Stalls usually hold **48–72** units, and at most **120**. Prices stay between **40% and 250%** of a good's base price, and move in steps of 5 Coins.
 - A **Buy** quote is the Coins you pay now. A **Sell** quote is 12% below what that unit would cost to buy back, so buying and reselling at one port always loses money, at any stock level and any quantity.
-- A full River boat hold moves a typical price by about 12% and a full Patello hold by up to 40%, so large trades get steadily worse. Each day, a stall closes part of the gap to its usual stock: 12% for towns that produce a good or buy a lot of it, 8% for most, and 6% for towns that do neither. Emptied stalls get halfway back in 6–12 days.
+- A full River boat hold moves a typical price by about 12% and a full Patello hold by up to 40%, so large trades get steadily worse. Each day, a stall closes part of the gap to its usual stock: 12% for towns that produce a good or buy a lot of it, 8% for most, and 6% for towns that do neither. It always moves at least 1–3 units, for what a town makes and uses in an ordinary day. Emptied stalls get halfway back in 6–12 days.
 - Buying reduces stall stock and may raise the next quote. Selling increases stock and may lower the next quote. A stall cannot sell below zero stock or accept goods when full.
 - Choose a quantity and review the total transaction quote before confirming. Bulk quotes update per unit as the transaction changes stall stock. Purchases check Coins, cargo space and available stock; sales check inventory and stall capacity.
 - The interface tracks average purchase price per good using a weighted average. Partial sales preserve the average basis of remaining cargo; selling the last unit clears it. Estimated sale proceeds use the current local selling quote and are not guaranteed profit.
@@ -83,13 +85,34 @@ Recommended future design decisions, which are not all implemented, are recorded
 | Reinforced hull | 1,750 Coins | +1 defence and extra hull per level (starts at 1 defence and 8 hull). |
 | Roomier cargo hold | 1,250 Coins | More spaces per level, by vessel class (River boat starts at 12, +6). |
 
-Upgrade cost grows with level; maximum levels are 3 cannon, 2 hull and 3 hold. Each shipyard card shows its current level, next cost and resulting stat before fitting. Hold upgrades add the class's spaces per level (six, or three on a Bora); hull upgrades improve defence and maximum hull; cannon upgrades improve attack. Repairs restore all missing hull at the ship's class rate. Repairs and upgrades are unavailable during a voyage or unresolved encounter, and purchases require enough Coins.
+Upgrade cost grows with level; maximum levels are 3 cannon, 2 hull and 3 hold. Each shipyard card shows its current level, next cost and resulting stat before fitting. Hold upgrades add the class's spaces per level (six, or three on a Bora); hull upgrades improve defence and maximum hull; cannon upgrades improve attack. Repairs restore all missing hull at the ship's class rate, or as much as the purse can pay for. Repairs and upgrades are unavailable during a voyage or unresolved encounter, and purchases require enough Coins.
 
 The fictional Chittagong river encounter has 3 hull and 3 attack. It is a one-time first-arrival introduction; the save records whether it has occurred. Later arrivals do not repeat it. Future Chittagong encounters belong to a separate event system.
 
 1. Attack of 3 or more defeats the raider before it can hit.
 2. Otherwise, your vessel loses `max(0, 3 − your defence)` hull, up to its current hull.
 3. This tutorial encounter does not steal cargo.
+
+## If a merchant runs out of options
+
+A ship with 0 hull can't sail, and time only passes while sailing, so a player with no money and nothing to sell could otherwise be stuck for good.
+
+A moneylender at the docks helps only when both of these are true:
+
+- **No money to carry on:** at 0 hull, the purse can't pay for 1 hull. With hull left, the purse can't buy the cheapest good at any port the ship can reach.
+- **No other way to raise it:**
+  - no cargo that can be sold (here, if the ship can't sail)
+  - no goods in a warehouse in reach
+  - no farm in reach, or a farm with no crop yet if the ship can't sail
+  - no other sound ship in this port, or, if the ship can sail, no cargo on another ship
+  - no route capital that can be called back
+  - no visit contract that can still be completed, if the ship can sail
+
+The advance patches the hull to 2 if it's lower and brings the purse up to 1,000 Coins. The player owes all of that plus a quarter, rounded up to 5 Coins, and loses 2 reputation. The debt doesn't grow with time.
+
+Until the debt is repaid at the docks, in full or in parts, the player can't buy ships, upgrades, warehouses, farms or a residence, set up a household, or put capital into a trade route. Trading, repairs, contracts and sailing all still work. If a repayment would leave the player unable to buy goods or pay for repairs, with nothing to sell, the Docks show what would be left in the purse and ask them to confirm. A debt counts against net worth, so an advance always leaves the player worth less than before.
+
+The moneylender is a game invention, not a documented historical practice.
 
 ## Reputation and optional milestones
 

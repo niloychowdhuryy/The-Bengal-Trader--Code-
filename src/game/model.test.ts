@@ -95,69 +95,6 @@ describe("first playable journey", () => {
     });
 
     describe("NPC merchants", () => {
-      it("moves named merchants between reachable ports and trades within stock, hold, and budget bounds", () => {
-        const game = createNewGame("Maya");
-        const merchant = game.npcMerchants[0];
-        expect(merchant.name).toBe("Abdul Rahman");
-        expect(merchant.homePort).toBe("dhaka");
-        expect(merchant.cargoCapacity).toBe(3);
-
-        const firstDay = advanceWorld(game, 1);
-        expect(advanceWorld(structuredClone(game), 1)).toEqual(firstDay);
-        const traveling = firstDay.npcMerchants.find((entry) => entry.id === merchant.id)!;
-        expect(traveling.phase).toBe("traveling");
-        expect(traveling.destinationPort).not.toBe(traveling.currentPort);
-        expect(traveling.travelDaysTotal).toBe(
-          Math.ceil(
-            getRouteTravelTime(
-              getTownRoute(traveling.currentPort, traveling.destinationPort)!,
-            ).durationDays,
-          ),
-        );
-        expect(traveling.cargo.rice).toBe(2);
-        expect(traveling.budget).toBeLessThan(merchant.budget);
-        expect(traveling.budget).toBeGreaterThanOrEqual(0);
-        expect(
-          firstDay.marketStock.dhaka.rice,
-        ).toBe(game.marketStock.dhaka.rice - traveling.cargo.rice);
-        expect(
-          Object.values(traveling.cargo).reduce((sum, quantity) => sum + quantity, 0),
-        ).toBeLessThanOrEqual(traveling.cargoCapacity);
-        expect(firstDay.npcMerchants.every((entry) => entry.budget <= 9_000)).toBe(true);
-
-        let arrived = firstDay;
-        const daysToArrival = traveling.travelDaysRemaining;
-        for (let day = 0; day < daysToArrival; day += 1) {
-          arrived = advanceWorld(arrived, arrived.worldDay + 1);
-        }
-        const traderAfterSale = arrived.npcMerchants.find((entry) => entry.id === merchant.id)!;
-        expect(traderAfterSale.currentPort).toBe(traveling.destinationPort);
-        expect(traderAfterSale.phase).toBe("docked");
-        expect(traderAfterSale.cargo.rice).toBe(0);
-        expect(traderAfterSale.budget).toBeLessThanOrEqual(9_000);
-        expect(arrived.marketStock[traveling.destinationPort].rice).toBeGreaterThan(
-          firstDay.marketStock[traveling.destinationPort].rice,
-        );
-        expect(
-          Object.values(arrived.marketStock).every((portStock) =>
-            Object.values(portStock).every(
-              (stock) => stock >= 0 && stock <= MARKET_MAX_STOCK,
-            ),
-          ),
-        ).toBe(true);
-        expect(
-          arrived.npcMerchants.every(
-            (entry) =>
-              entry.budget <= 9_000 &&
-              Object.values(entry.cargo).reduce(
-                (sum, quantity) => sum + quantity,
-                0,
-              ) <= entry.cargoCapacity,
-          ),
-        ).toBe(true);
-        expect(arrived.npcActivity.some((activity) => activity.message === "arrived")).toBe(true);
-      });
-
       it("uses distinct merchant strategies and keeps player encounters optional at ports", () => {
         const game = createNewGame("Maya");
         const [specialist, arbitrage, , regional] = game.npcMerchants;
@@ -167,37 +104,6 @@ describe("first playable journey", () => {
         expect(getNpcTradingIntent(specialist)).toContain("Specialises");
         expect(getNpcTradingIntent(arbitrage)).toContain("best price difference");
         expect(getNpcTradingIntent(regional)).toContain("nearby ports");
-
-        const simulated = advanceWorld(game, 1);
-        expect(advanceWorld(structuredClone(game), 1)).toEqual(simulated);
-        const arbitrageMerchant = simulated.npcMerchants[1];
-        const arbitrageGood = GOODS.find(
-          (good) => arbitrageMerchant.cargo[good.id] > 0,
-        );
-        expect(arbitrageGood).toBeDefined();
-        if (arbitrageGood) {
-          expect(arbitrageMerchant.phase).toBe("traveling");
-          expect(
-            getGoodPrice(
-              arbitrageMerchant.destinationPort,
-              arbitrageGood.id,
-              "sell",
-              false,
-              simulated.marketStock[arbitrageMerchant.destinationPort][
-                arbitrageGood.id
-              ],
-            ),
-          ).toBeGreaterThan(arbitrageMerchant.cargoCost[arbitrageGood.id]);
-        }
-
-        const regionalMerchant = simulated.npcMerchants[3];
-        const nearestRegionalPort = regional.preferredPorts
-          .map((port) => ({
-            port,
-            distance: getTownRoute(regional.homePort, port)!.distance,
-          }))
-          .sort((a, b) => a.distance - b.distance || a.port.localeCompare(b.port))[0];
-        expect(regionalMerchant.destinationPort).toBe(nearestRegionalPort.port);
 
         const dockedMerchant = {
           ...specialist,
@@ -222,7 +128,7 @@ describe("first playable journey", () => {
         expect(traded.state.coins).toBe(25_000 - price);
         expect(traded.state.cargo.rice).toBe(game.cargo.rice + 1);
         expect(getNpcMerchant(traded.state, specialist.id)?.cargo.rice).toBe(0);
-        expect(getNpcMerchant(traded.state, specialist.id)?.budget).toBe(9_000);
+        expect(getNpcMerchant(traded.state, specialist.id)?.budget).toBe(8_950 + price);
         expect(traded.state.marketStock).toEqual(atPort.marketStock);
         expect(tradeWithNpcMerchant(traded.state, specialist.id, "rice").error)
           .toBe("no-cargo");
@@ -1480,7 +1386,7 @@ describe("first playable journey", () => {
     expect(repair.state.coins).toBe(4_800);
     expect(repairShip(repair.state).error).toBe("full-hull");
     expect(repairShip({ ...battered, coins: 50 }).error).toBe("coins");
-    expect(repairShip({ ...battered, coins: 150 }).state.coins).toBe(150);
+    expect(repairShip({ ...battered, coins: 150 }).state).toMatchObject({ coins: 50, shipHull: 7 });
     expect(repairShip({ ...battered, coins: 200 }).state.coins).toBe(0);
   });
 

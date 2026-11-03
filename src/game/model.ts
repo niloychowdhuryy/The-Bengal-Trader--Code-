@@ -11,6 +11,18 @@ import {
   type RouteTravelTime,
   type SailingSpeed,
 } from "./travel-time";
+import { createNpcMerchants, getNpcMerchant, hashText, runMerchantDay } from "./npc";
+
+export {
+  createNpcMerchants,
+  getMerchantProfile,
+  getMerchantRoute,
+  getMerchantStanding,
+  getMerchantWorth,
+  getNpcMerchant,
+  getNpcTradingIntent,
+  isLaidUp,
+} from "./npc";
 
 export type GoodId =
   | "rice"
@@ -55,6 +67,7 @@ export type Screen =
   | "properties"
   | "notifications"
   | "backups"
+  | "rivals"
   | "account";
 
 export interface Town {
@@ -169,12 +182,25 @@ export interface NpcMerchant {
   phase: "docked" | "traveling";
   cargo: Record<GoodId, number>;
   cargoCost: Record<GoodId, number>;
+  vesselClass: VesselClassId;
+  holdUpgrades: number;
   cargoCapacity: number;
   budget: number;
   preferences: GoodId[];
   preferredPorts: TownId[];
   travelDaysRemaining: number;
   travelDaysTotal: number;
+  dockDaysRemaining: number;
+  purchaseDay: number;
+  reputation: number;
+  visitedPorts: TownId[];
+  /** Each port-and-good market this merchant has sold in at a profit. */
+  profitMarks: number[];
+  tripsCompleted: number;
+  unitsBought: number;
+  unitsSold: number;
+  realizedProfit: number;
+  lastTradeDay: number;
 }
 
 export interface NpcActivity {
@@ -183,6 +209,9 @@ export interface NpcActivity {
   town: TownId;
   sailingDay: number;
   message: string;
+  kind?: "arrived" | "sailed" | "bought" | "sold" | "invested";
+  good?: GoodId;
+  units?: number;
 }
 
 export type TravelEventId = "river-pilot" | "rough-water";
@@ -238,7 +267,8 @@ export type AutomatedRouteFailure =
   | "no-route"
   | "too-large"
   | "invalid-rules"
-  | "coins";
+  | "coins"
+  | "in-debt";
 
 export function configureAutomatedTradeRoute(
   state: GameState,
@@ -305,6 +335,7 @@ export function configureAutomatedTradeRoute(
   ) {
     return { state, error: "invalid-rules" };
   }
+  if (capitalDeposit > 0 && state.debtOwed > 0) return { state, error: "in-debt" };
   if (state.coins < capitalDeposit) return { state, error: "coins" };
   const route: AutomatedTradeRoute = {
     origin: ship.currentPort,
@@ -382,6 +413,9 @@ export interface GameState {
   coins: number;
   highestCoins: number;
   reputation: number;
+  /** What the player still owes the moneylender. See takeRescueLoan. */
+  debtOwed: number;
+  rescuesTaken: number;
   visitedTowns: TownId[];
   profitableTradeMarks: string[];
   completedMilestones: MilestoneId[];
@@ -395,6 +429,8 @@ export interface GameState {
   npcMerchants: NpcMerchant[];
   npcActivity: NpcActivity[];
   worldDay: number;
+  /** Sets how this game's merchants judge prices and take turns. */
+  worldSeed: number;
   farmOutput: Record<MarketPortId, number>;
   farmProductionDay: Record<MarketPortId, number>;
   warehouseStock: Record<MarketPortId, Record<GoodId, number>>;
@@ -697,7 +733,7 @@ export function buyPlayerShip(
   vesselClass: VesselClassId = "river-boat",
 ): {
   state: GameState;
-  error?: "unavailable" | "not-shipyard" | "fleet-full" | "coins";
+  error?: "unavailable" | "not-shipyard" | "fleet-full" | "coins" | "in-debt";
 } {
   if (state.voyage || state.encounterPending) {
     return { state, error: "unavailable" };
@@ -708,6 +744,7 @@ export function buyPlayerShip(
   if (state.fleet.length >= MAX_PLAYER_SHIPS) {
     return { state, error: "fleet-full" };
   }
+  if (state.debtOwed > 0) return { state, error: "in-debt" };
   const vessel = VESSEL_CLASSES[vesselClass];
   if (state.coins < vessel.price) {
     return { state, error: "coins" };
@@ -918,7 +955,7 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
 ];
 
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 24;
 export const STARTING_COINS = 5_000;
 export const PROSPEROUS_MERCHANT_COINS = 12_500;
 const CHITTAGONG_ALERT_SALT_SURCHARGE = 300;
@@ -944,6 +981,9 @@ export const MARKET_SELL_SPREAD = 0.12;
 // Producers restock faster and big buyers use up a surplus faster, which is what makes one
 // town's shortage last longer than another's.
 const MARKET_RECOVERY_BY_TIER: Record<MarketTier, number> = { 1: 0.06, 2: 0.08, 3: 0.12 };
+// Units a town makes or uses in an ordinary day. Everyday trade is absorbed by this flow, so
+// small gaps close in days, while the shares above decide how long a real shortage lasts.
+const MARKET_DAILY_FLOW_BY_TIER: Record<MarketTier, number> = { 1: 1, 2: 2, 3: 3 };
 export const WAREHOUSE_PRICE = 7_500;
 export const WAREHOUSE_CAPACITY = 20;
 export const RESIDENCE_PRICE = 12_500;
@@ -952,43 +992,6 @@ export const FARM_OUTPUT_CAPACITY = 20;
 export const FARM_DAILY_OUTPUT = 1;
 export const FARM_GOOD_ID: GoodId = "rice";
 export const MARRIAGE_HOUSEHOLD_COST = 5_000;
-export const NPC_MAX_BUDGET = 9_000;
-export const NPC_STARTING_BUDGET = 5_000;
-export const NPC_MERCHANTS = [
-  {
-    id: "abdul-rahman",
-    name: "Abdul Rahman",
-    homePort: "dhaka",
-    strategy: "specialist",
-    preferences: ["rice", "salt", "muslin"],
-    preferredPorts: ["patna", "sonargaon", "hooghly"],
-  },
-  {
-    id: "mariam-banu",
-    name: "Mariam Banu",
-    homePort: "sonargaon",
-    strategy: "arbitrage",
-    preferences: ["muslin", "silk", "sugar", "lac", "salt"],
-    preferredPorts: [],
-  },
-  {
-    id: "govinda-das",
-    name: "Govinda Das",
-    homePort: "kasimbazar",
-    strategy: "specialist",
-    preferences: ["silk", "saltpetre", "lac"],
-    preferredPorts: ["patna", "hooghly", "rajmahal"],
-  },
-  {
-    id: "fatima-khatun",
-    name: "Fatima Khatun",
-    homePort: "patna",
-    strategy: "regional",
-    preferences: ["saltpetre", "opium", "silk"],
-    preferredPorts: ["rajmahal", "tanda", "malda", "kasimbazar"],
-  },
-] as const;
-
 export const MILESTONES = [
   {
     id: "river_explorer",
@@ -1261,330 +1264,6 @@ export function createEmptyWarehousePurchasePrices(): GameState["warehouseAverag
   ) as GameState["warehouseAveragePurchasePrice"];
 }
 
-function emptyCargo(): Record<GoodId, number> {
-  return Object.fromEntries(GOODS.map((good) => [good.id, 0])) as
-    Record<GoodId, number>;
-}
-
-export function createNpcMerchants(): NpcMerchant[] {
-  return NPC_MERCHANTS.map((merchant): NpcMerchant => ({
-    ...merchant,
-    preferences: [...merchant.preferences],
-    preferredPorts: [...merchant.preferredPorts],
-    currentPort: merchant.homePort,
-    destinationPort: merchant.homePort,
-    strategy: merchant.strategy,
-    phase: "docked",
-    cargo: emptyCargo(),
-    cargoCost: Object.fromEntries(GOODS.map((good) => [good.id, 0])) as
-      Record<GoodId, number>,
-    cargoCapacity: 3,
-    budget: NPC_STARTING_BUDGET,
-    travelDaysRemaining: 0,
-    travelDaysTotal: 0,
-  }));
-}
-
-export function getNpcMerchant(
-  state: GameState,
-  merchantId: string,
-): NpcMerchant | undefined {
-  return state.npcMerchants.find((merchant) => merchant.id === merchantId);
-}
-
-export function getNpcTradingIntent(merchant: NpcMerchant): string {
-  if (merchant.strategy === "arbitrage") {
-    return "Compares reachable markets and seeks the best price difference.";
-  }
-  if (merchant.strategy === "regional") {
-    return "Trades preferred goods among nearby ports.";
-  }
-  const goods = merchant.preferences
-    .map((goodId) => GOODS.find((good) => good.id === goodId)?.name)
-    .filter((name): name is string => Boolean(name));
-  return `Specialises in ${goods.join(", ")}.`;
-}
-
-function getNpcCargoUsed(merchant: NpcMerchant): number {
-  return GOODS.reduce((total, good) => total + merchant.cargo[good.id], 0);
-}
-
-function recordNpcActivity(
-  state: GameState,
-  merchant: NpcMerchant,
-  town: TownId,
-  message: string,
-  sailingDay: number,
-): GameState {
-  const record: NpcActivity = {
-    id: `${merchant.id}:${sailingDay}:${message}`,
-    merchantId: merchant.id,
-    town,
-    sailingDay,
-    message,
-  };
-  return { ...state, npcActivity: [...state.npcActivity, record].slice(-24) };
-}
-
-function chooseNpcDestination(
-  state: GameState,
-  merchant: NpcMerchant,
-  good: GoodId | null,
-): TownId {
-  const candidates = (merchant.strategy === "arbitrage"
-    ? TOWNS.map((town) => town.id)
-    : merchant.preferredPorts
-  ).filter(
-    (port) =>
-      port !== merchant.currentPort &&
-      planRiverRoute(merchant.currentPort, port) !== null,
-  );
-  if (merchant.strategy === "regional") {
-    return candidates
-      .map((port) => ({
-        port,
-        distance: planRiverRoute(merchant.currentPort, port)?.distance ??
-          Number.POSITIVE_INFINITY,
-      }))
-      .sort((a, b) => a.distance - b.distance || a.port.localeCompare(b.port))[0]
-      ?.port ?? merchant.homePort;
-  }
-  if (good !== null) {
-    const profitable = candidates
-      .map((port) => ({
-        port,
-        quote: getGoodPrice(
-          port,
-          good,
-          "sell",
-          isHistoricalRouteAlertActive(state),
-          state.marketStock[port][good],
-        ),
-      }))
-      .filter(({ quote }) => quote > merchant.cargoCost[good])
-      .sort((a, b) => b.quote - a.quote);
-    if (profitable[0]) return profitable[0].port;
-  }
-  return candidates[0] ?? merchant.homePort;
-}
-
-function startNpcJourney(
-  state: GameState,
-  merchant: NpcMerchant,
-  sailingDay: number,
-): GameState {
-  const cargoGood = GOODS.find((good) => merchant.cargo[good.id] > 0)?.id ?? null;
-  const destinationPort = chooseNpcDestination(state, merchant, cargoGood);
-  if (destinationPort === merchant.currentPort) return state;
-  const route = planRiverRoute(merchant.currentPort, destinationPort);
-  if (!route) return state;
-  const durationDays = getRouteTravelTime(route).durationDays;
-  const traveling = {
-    ...merchant,
-    destinationPort,
-    phase: "traveling" as const,
-    travelDaysRemaining: Math.max(1, Math.ceil(durationDays)),
-    travelDaysTotal: Math.max(1, Math.ceil(durationDays)),
-  };
-  const updated = {
-    ...state,
-    npcMerchants: state.npcMerchants.map((entry) =>
-      entry.id === merchant.id ? traveling : entry,
-    ),
-  };
-  return recordNpcActivity(
-    updated,
-    traveling,
-    merchant.currentPort,
-    `sailed toward ${getTown(destinationPort).name}`,
-    sailingDay,
-  );
-}
-
-function settleNpcCargo(
-  state: GameState,
-  merchant: NpcMerchant,
-  sailingDay: number,
-): GameState {
-  let marketStock = state.marketStock;
-  let nextMerchant = merchant;
-  let soldUnits = 0;
-  for (const good of GOODS) {
-    const quantity = nextMerchant.cargo[good.id];
-    if (quantity <= 0) continue;
-    const availableSpace = MARKET_MAX_STOCK - marketStock[merchant.currentPort][good.id];
-    const sold = Math.min(quantity, availableSpace);
-    if (sold <= 0) continue;
-    let remainingCoins = nextMerchant.budget;
-    let revenue = 0;
-    let stock = marketStock[merchant.currentPort][good.id];
-    for (let unit = 0; unit < sold; unit += 1) {
-      const quote = getGoodPrice(
-        merchant.currentPort,
-        good.id,
-        "sell",
-        isHistoricalRouteAlertActive(state),
-        stock + unit,
-      );
-      revenue += quote;
-    }
-    stock += sold;
-    marketStock = {
-      ...marketStock,
-      [merchant.currentPort]: {
-        ...marketStock[merchant.currentPort],
-        [good.id]: stock,
-      },
-    };
-    remainingCoins = Math.min(NPC_MAX_BUDGET, remainingCoins + revenue);
-    nextMerchant = {
-      ...nextMerchant,
-      budget: remainingCoins,
-      cargo: {
-        ...nextMerchant.cargo,
-        [good.id]: quantity - sold,
-      },
-      cargoCost: {
-        ...nextMerchant.cargoCost,
-        [good.id]: quantity - sold > 0 ? nextMerchant.cargoCost[good.id] : 0,
-      },
-    };
-    soldUnits += sold;
-  }
-  const settled = {
-    ...state,
-    marketStock,
-    npcMerchants: state.npcMerchants.map((entry) =>
-      entry.id === merchant.id ? nextMerchant : entry,
-    ),
-  };
-  return soldUnits
-    ? recordNpcActivity(
-        settled,
-        nextMerchant,
-        merchant.currentPort,
-        `sold ${soldUnits} cargo unit${soldUnits === 1 ? "" : "s"}`,
-        sailingDay,
-      )
-    : settled;
-}
-
-function buyNpcCargo(
-  state: GameState,
-  merchant: NpcMerchant,
-  sailingDay: number,
-): GameState {
-  let nextMerchant = merchant;
-  let marketStock = state.marketStock;
-  let bought = 0;
-  const preferredGoods = merchant.strategy === "arbitrage"
-    ? [...merchant.preferences].sort((a, b) => {
-        const margin = (goodId: GoodId) => {
-          const currentBuy = getGoodPrice(
-            merchant.currentPort,
-            goodId,
-            "buy",
-            isHistoricalRouteAlertActive(state),
-            marketStock[merchant.currentPort][goodId],
-          );
-          const destination = chooseNpcDestination(state, merchant, goodId);
-          const destinationSell = getGoodPrice(
-            destination,
-            goodId,
-            "sell",
-            isHistoricalRouteAlertActive(state),
-            marketStock[destination][goodId],
-          );
-          return destinationSell - currentBuy;
-        };
-        return margin(b) - margin(a) || merchant.preferences.indexOf(a) -
-          merchant.preferences.indexOf(b);
-      })
-        .filter((goodId) => {
-          const currentBuy = getGoodPrice(
-            merchant.currentPort,
-            goodId,
-            "buy",
-            isHistoricalRouteAlertActive(state),
-            marketStock[merchant.currentPort][goodId],
-          );
-          const destination = chooseNpcDestination(state, merchant, goodId);
-          const destinationSell = getGoodPrice(
-            destination,
-            goodId,
-            "sell",
-            isHistoricalRouteAlertActive(state),
-            marketStock[destination][goodId],
-          );
-          return destinationSell > currentBuy;
-        })
-    : merchant.preferences;
-  for (const goodId of preferredGoods) {
-    const room = merchant.cargoCapacity - getNpcCargoUsed(nextMerchant);
-    if (room <= 0) break;
-    const stock = marketStock[merchant.currentPort][goodId];
-    if (stock <= 0) continue;
-    const desired = Math.min(2, room, stock);
-    let quantity = 0;
-    let cost = 0;
-    for (let unit = 0; unit < desired; unit += 1) {
-      const quote = getGoodPrice(
-        merchant.currentPort,
-        goodId,
-        "buy",
-        isHistoricalRouteAlertActive(state),
-        stock - unit,
-      );
-      if (nextMerchant.budget < cost + quote) break;
-      cost += quote;
-      quantity += 1;
-    }
-    if (!quantity) continue;
-    const oldQuantity = nextMerchant.cargo[goodId];
-    const nextQuantity = oldQuantity + quantity;
-    nextMerchant = {
-      ...nextMerchant,
-      budget: nextMerchant.budget - cost,
-      cargo: { ...nextMerchant.cargo, [goodId]: nextQuantity },
-      cargoCost: {
-        ...nextMerchant.cargoCost,
-        [goodId]:
-          (nextMerchant.cargoCost[goodId] * oldQuantity + cost) /
-          nextQuantity,
-      },
-    };
-    marketStock = {
-      ...marketStock,
-      [merchant.currentPort]: {
-        ...marketStock[merchant.currentPort],
-        [goodId]: stock - quantity,
-      },
-    };
-    bought = quantity;
-    break;
-  }
-
-  const updated = {
-    ...state,
-    marketStock,
-    npcMerchants: state.npcMerchants.map((entry) =>
-      entry.id === merchant.id ? nextMerchant : entry,
-    ),
-  };
-  const noticed = bought
-    ? recordNpcActivity(
-        updated,
-        nextMerchant,
-        merchant.currentPort,
-        `bought ${bought} preferred cargo unit${bought === 1 ? "" : "s"}`,
-        sailingDay,
-      )
-    : updated;
-  return bought || getNpcCargoUsed(nextMerchant) > 0
-      ? startNpcJourney(noticed, nextMerchant, sailingDay)
-      : noticed;
-}
-
 function addAutomatedTradeActivity(
   ship: PlayerShip,
   sailingDay: number,
@@ -1844,47 +1523,7 @@ export function advanceWorld(
       worldDay: day,
       marketStock: advanceMarketStock(next.marketStock, 1),
     };
-    for (const merchant of [...next.npcMerchants]) {
-      const current = next.npcMerchants.find((entry) => entry.id === merchant.id);
-      if (!current) continue;
-      if (current.phase === "traveling") {
-        const remaining = current.travelDaysRemaining - 1;
-        if (remaining > 0) {
-          next = {
-            ...next,
-            npcMerchants: next.npcMerchants.map((entry) =>
-              entry.id === current.id
-                ? { ...entry, travelDaysRemaining: remaining }
-                : entry,
-            ),
-          };
-          continue;
-        }
-        const arrived = {
-          ...current,
-          phase: "docked" as const,
-          currentPort: current.destinationPort,
-          travelDaysRemaining: 0,
-          travelDaysTotal: 0,
-        };
-        next = {
-          ...next,
-          npcMerchants: next.npcMerchants.map((entry) =>
-            entry.id === current.id ? arrived : entry,
-          ),
-        };
-        next = recordNpcActivity(
-          next,
-          arrived,
-          arrived.currentPort,
-          "arrived",
-          day,
-        );
-        next = settleNpcCargo(next, arrived, day);
-        continue;
-      }
-      next = buyNpcCargo(next, current, day);
-    }
+    next = runMerchantDay(next, day);
     for (const ship of [...next.fleet]) {
       next = advanceAutomatedShipDay(next, ship.id, day);
     }
@@ -1927,7 +1566,9 @@ export function tradeWithNpcMerchant(
   const nextQuantity = previousQuantity + 1;
   const updatedMerchant: NpcMerchant = {
     ...merchant,
-    budget: Math.min(NPC_MAX_BUDGET, merchant.budget + price),
+    budget: merchant.budget + price,
+    unitsSold: merchant.unitsSold + 1,
+    realizedProfit: merchant.realizedProfit + price - merchant.cargoCost[goodId],
     cargo: { ...merchant.cargo, [goodId]: merchant.cargo[goodId] - 1 },
     cargoCost: {
       ...merchant.cargoCost,
@@ -1960,10 +1601,12 @@ function recoverStall(
 ): number {
   const gap = target - stock;
   if (gap === 0) return stock;
-  const rate = MARKET_RECOVERY_BY_TIER[
-    gap > 0 ? getMarketSupply(port, good) : getMarketDemand(port, good)
-  ];
-  const step = Math.min(Math.abs(gap), Math.max(1, Math.round(Math.abs(gap) * rate)));
+  const tier = gap > 0 ? getMarketSupply(port, good) : getMarketDemand(port, good);
+  const rate = MARKET_RECOVERY_BY_TIER[tier];
+  const step = Math.min(
+    Math.abs(gap),
+    Math.max(MARKET_DAILY_FLOW_BY_TIER[tier], Math.round(Math.abs(gap) * rate)),
+  );
   return stock + Math.sign(gap) * step;
 }
 
@@ -1993,7 +1636,10 @@ export function advanceMarketStock(
   return next;
 }
 
-export function createNewGame(captainName: string): GameState {
+export function createNewGame(
+  captainName: string,
+  worldSeed = hashText(captainName.trim().slice(0, 18)),
+): GameState {
   const cleanName = captainName.trim().slice(0, 18);
   const marketStock = createInitialMarketStock();
   const cargo: GameState["cargo"] = {
@@ -2037,6 +1683,8 @@ export function createNewGame(captainName: string): GameState {
     coins: STARTING_COINS,
     highestCoins: STARTING_COINS,
     reputation: 0,
+    debtOwed: 0,
+    rescuesTaken: 0,
     visitedTowns: ["dhaka"],
     profitableTradeMarks: [],
     completedMilestones: [],
@@ -2050,6 +1698,7 @@ export function createNewGame(captainName: string): GameState {
     npcMerchants: createNpcMerchants(),
     npcActivity: [],
     worldDay: 0,
+    worldSeed: worldSeed >>> 0,
     farmOutput: createEmptyFarmOutput(),
     farmProductionDay: createEmptyFarmProductionDays(),
     warehouseStock: createEmptyWarehouseStock(),
@@ -2356,11 +2005,12 @@ export function getWarehouseUsed(
 
 export function buyWarehouse(
   state: GameState,
-): { state: GameState; error?: "coins" | "already-owned" } {
+): { state: GameState; error?: "coins" | "already-owned" | "in-debt" } {
   const port = state.currentTown;
   if (state.ownedWarehouses.includes(port)) {
     return { state, error: "already-owned" };
   }
+  if (state.debtOwed > 0) return { state, error: "in-debt" };
   if (state.coins < WAREHOUSE_PRICE) return { state, error: "coins" };
   return {
     state: {
@@ -2374,10 +2024,11 @@ export function buyWarehouse(
 
 export function buyResidence(
   state: GameState,
-): { state: GameState; error?: "coins" | "already-owned" } {
+): { state: GameState; error?: "coins" | "already-owned" | "in-debt" } {
   if (state.residenceTown !== null) {
     return { state, error: "already-owned" };
   }
+  if (state.debtOwed > 0) return { state, error: "in-debt" };
   if (state.coins < RESIDENCE_PRICE) return { state, error: "coins" };
   return {
     state: {
@@ -2391,7 +2042,7 @@ export function buyResidence(
 
 export function marryAtResidence(
   state: GameState,
-): { state: GameState; error?: "no-residence" | "away-from-residence" | "already-married" | "coins" } {
+): { state: GameState; error?: "no-residence" | "away-from-residence" | "already-married" | "coins" | "in-debt" } {
   if (!state.residenceTown) return { state, error: "no-residence" };
   if (
     state.currentTown !== state.residenceTown ||
@@ -2401,6 +2052,7 @@ export function marryAtResidence(
     return { state, error: "away-from-residence" };
   }
   if (state.household.spouse) return { state, error: "already-married" };
+  if (state.debtOwed > 0) return { state, error: "in-debt" };
   if (state.coins < MARRIAGE_HOUSEHOLD_COST) {
     return { state, error: "coins" };
   }
@@ -2423,11 +2075,12 @@ export function marryAtResidence(
 
 export function buyFarm(
   state: GameState,
-): { state: GameState; error?: "coins" | "already-owned" } {
+): { state: GameState; error?: "coins" | "already-owned" | "in-debt" } {
   const port = state.currentTown;
   if (state.ownedFarms.includes(port)) {
     return { state, error: "already-owned" };
   }
+  if (state.debtOwed > 0) return { state, error: "in-debt" };
   if (state.coins < FARM_PRICE) return { state, error: "coins" };
   return {
     state: {
@@ -3088,7 +2741,7 @@ export function sellGoodAtPort(
 export function buyUpgrade(
   state: GameState,
   upgradeId: UpgradeId,
-): { state: GameState; error?: "coins" | "max-level" | "unavailable" } {
+): { state: GameState; error?: "coins" | "max-level" | "unavailable" | "in-debt" } {
   const definition = UPGRADES.find((upgrade) => upgrade.id === upgradeId);
   if (!definition) throw new Error(`Unknown ship upgrade: ${upgradeId}`);
   if (state.voyage || state.encounterPending) {
@@ -3097,6 +2750,7 @@ export function buyUpgrade(
 
   const currentLevel = state.upgrades[upgradeId];
   if (currentLevel >= definition.maxLevel) return { state, error: "max-level" };
+  if (state.debtOwed > 0) return { state, error: "in-debt" };
 
   const cost = definition.baseCost * (currentLevel + 1);
   if (state.coins < cost) return { state, error: "coins" };
@@ -3116,6 +2770,7 @@ export function buyUpgrade(
   };
 }
 
+/** Repairs all the damage, or as much of it as the purse can pay for. */
 export function repairShip(
   state: GameState,
 ): { state: GameState; error?: "coins" | "full-hull" | "unavailable" } {
@@ -3123,18 +2778,200 @@ export function repairShip(
     return { state, error: "unavailable" };
   }
   const maximumHull = getShipMaximumHull(state);
-  if (state.shipHull >= maximumHull) return { state, error: "full-hull" };
+  const missing = maximumHull - state.shipHull;
+  if (missing <= 0) return { state, error: "full-hull" };
 
-  const cost =
-    (maximumHull - state.shipHull) * getSelectedVesselClass(state).repairCostPerHull;
-  if (state.coins < cost) return { state, error: "coins" };
+  const costPerHull = getSelectedVesselClass(state).repairCostPerHull;
+  const repaired = Math.min(missing, Math.floor(state.coins / costPerHull));
+  if (repaired <= 0) return { state, error: "coins" };
 
   return {
     state: syncSelectedShip({
       ...state,
-      shipHull: maximumHull,
-      coins: state.coins - cost,
-      lastMessage: "Your hull has been repaired at the dock.",
+      shipHull: state.shipHull + repaired,
+      coins: state.coins - repaired * costPerHull,
+      lastMessage:
+        repaired === missing
+          ? "Your hull has been repaired at the dock."
+          : `Repaired ${repaired} of ${missing} missing hull. That was all your purse could pay for.`,
     }),
+  };
+}
+
+// A last resort for a merchant with no way to carry on. It lends what's needed to move
+// again, at a price, so a rescue always leaves the player worse off than before it.
+export const RESCUE_PURSE = 1_000;
+export const RESCUE_HULL = 2;
+export const RESCUE_FEE_SHARE = 0.25;
+export const RESCUE_REPUTATION_COST = 2;
+
+export type RecoveryOption =
+  | "sell-cargo"
+  | "warehouse"
+  | "farm"
+  | "other-ship"
+  | "route-capital"
+  | "visit-contract";
+
+/** What the player could still do to raise money without borrowing. */
+export function getRecoveryOptions(state: GameState): RecoveryOption[] {
+  const canSail = state.shipHull > 0;
+  // A ship that can't sail can only use what's in its own port.
+  const inReach = (port: TownId) =>
+    port === state.currentTown || (canSail && canSelectedShipReach(state, port));
+  const hasGoods = (goods: Record<GoodId, number>) => GOODS.some((good) => goods[good.id] > 0);
+  const options: RecoveryOption[] = [];
+
+  const sellableHere = GOODS.some(
+    (good) =>
+      state.cargo[good.id] > 0 &&
+      state.marketStock[state.currentTown][good.id] < MARKET_MAX_STOCK,
+  );
+  if (sellableHere || (canSail && hasGoods(state.cargo))) options.push("sell-cargo");
+
+  if (
+    state.ownedWarehouses.some((port) => inReach(port) && hasGoods(state.warehouseStock[port]))
+  ) {
+    options.push("warehouse");
+  }
+
+  // Sailing grows a farm's crop, so any farm the ship can reach will pay in the end.
+  if (state.ownedFarms.some((port) => inReach(port) && (canSail || state.farmOutput[port] > 0))) {
+    options.push("farm");
+  }
+
+  const otherShips = state.fleet.filter((ship) => ship.id !== state.selectedShipId);
+  const usableHere = otherShips.some(
+    (ship) =>
+      ship.currentPort === state.currentTown &&
+      ship.shipHull > 0 &&
+      !ship.returnOrder &&
+      ship.automatedRoute?.phase !== "traveling",
+  );
+  if (canSail ? otherShips.some((ship) => hasGoods(ship.cargo)) : usableHere) {
+    options.push("other-ship");
+  }
+
+  // The world only moves while sailing, so a route at sea can't be recalled by a ship that can't sail.
+  if (
+    otherShips.some(
+      (ship) =>
+        (ship.automatedRoute?.capital ?? 0) > 0 &&
+        (canSail || ship.automatedRoute?.phase === "docked"),
+    )
+  ) {
+    options.push("route-capital");
+  }
+
+  const openVisit = state.missions.some(
+    (mission) =>
+      mission.type === "visit" &&
+      (mission.status === "available"
+        ? inReach(mission.origin)
+        : mission.status === "active" &&
+          state.sailingDay <= (mission.deadlineSailingDay ?? 0)) &&
+      inReach(mission.destination),
+  );
+  if (canSail && openVisit) options.push("visit-contract");
+
+  return options;
+}
+
+function isOutOfCoins(state: GameState): boolean {
+  if (state.coins >= RESCUE_PURSE) return false;
+  if (state.shipHull <= 0) {
+    return state.coins < getSelectedVesselClass(state).repairCostPerHull;
+  }
+  const alert = isHistoricalRouteAlertActive(state);
+  return !MARKET_PORTS.some(
+    (port) =>
+      canSelectedShipReach(state, port.id) &&
+      GOODS.some((good) => {
+        const stock = state.marketStock[port.id][good.id];
+        return stock > 0 && getGoodPrice(port.id, good.id, "buy", alert, stock) <= state.coins;
+      }),
+  );
+}
+
+/** True only when the player can neither afford to carry on nor raise the money. */
+export function isStranded(state: GameState): boolean {
+  return (
+    !state.voyage &&
+    !state.encounterPending &&
+    isOutOfCoins(state) &&
+    getRecoveryOptions(state).length === 0
+  );
+}
+
+export function getRescueTerms(
+  state: GameState,
+): { hullRepaired: number; coinsAdvanced: number; owed: number } | null {
+  if (!isStranded(state)) return null;
+  const hullRepaired = Math.max(0, RESCUE_HULL - state.shipHull);
+  const coinsAdvanced = RESCUE_PURSE - state.coins;
+  const lent = hullRepaired * getSelectedVesselClass(state).repairCostPerHull + coinsAdvanced;
+  return {
+    hullRepaired,
+    coinsAdvanced,
+    owed: MARKET_PRICE_STEP * Math.ceil((lent * (1 + RESCUE_FEE_SHARE)) / MARKET_PRICE_STEP),
+  };
+}
+
+export function takeRescueLoan(
+  state: GameState,
+): { state: GameState; error?: "unavailable" | "not-stranded" } {
+  if (state.voyage || state.encounterPending) return { state, error: "unavailable" };
+  const terms = getRescueTerms(state);
+  if (!terms) return { state, error: "not-stranded" };
+  const coins = state.coins + terms.coinsAdvanced;
+  return {
+    state: syncSelectedShip({
+      ...state,
+      coins,
+      highestCoins: Math.max(state.highestCoins, coins),
+      shipHull: state.shipHull + terms.hullRepaired,
+      debtOwed: state.debtOwed + terms.owed,
+      rescuesTaken: state.rescuesTaken + 1,
+      reputation: Math.max(0, state.reputation - RESCUE_REPUTATION_COST),
+      lastMessage: `The moneylender got you moving again. You now owe ${formatCoins(state.debtOwed + terms.owed)} Coins.`,
+    }),
+  };
+}
+
+/** Set when a repayment would leave the player unable to carry on without help. */
+export function getRepaymentRisk(
+  state: GameState,
+): { coinsLeft: number; debtLeft: number; mustBorrowAgain: boolean } | null {
+  const { state: repaid, error } = repayDebt(state);
+  if (error || !isOutOfCoins(repaid)) return null;
+  const options = getRecoveryOptions(repaid);
+  // A single visit contract pays once, so it doesn't count as a way to keep trading.
+  if (options.some((option) => option !== "visit-contract")) return null;
+  return {
+    coinsLeft: repaid.coins,
+    debtLeft: repaid.debtOwed,
+    mustBorrowAgain: options.length === 0,
+  };
+}
+
+/** Pays off the debt, or as much of it as the purse holds. */
+export function repayDebt(
+  state: GameState,
+): { state: GameState; error?: "unavailable" | "no-debt" | "coins" } {
+  if (state.voyage || state.encounterPending) return { state, error: "unavailable" };
+  if (state.debtOwed <= 0) return { state, error: "no-debt" };
+  if (state.coins <= 0) return { state, error: "coins" };
+  const paid = Math.min(state.coins, state.debtOwed);
+  const debtOwed = state.debtOwed - paid;
+  return {
+    state: {
+      ...state,
+      coins: state.coins - paid,
+      debtOwed,
+      lastMessage:
+        debtOwed > 0
+          ? `Paid ${formatCoins(paid)} Coins. You still owe ${formatCoins(debtOwed)}.`
+          : "Your debt to the moneylender is cleared.",
+    },
   };
 }

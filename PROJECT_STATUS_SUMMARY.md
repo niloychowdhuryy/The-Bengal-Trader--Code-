@@ -11,9 +11,9 @@
 **Read this first:**
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
-- Saves are now version 22, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The market rules, stock and world clock are new in Economy Plan Step 3, committed locally and not pushed.
+- Saves are now version 24, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end are new in Economy Plan Step 4, **not committed, awaiting review**.
 - The economy has a simulation harness and a recorded baseline (Economy Plan Step 1). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
-- Most of the planned commercial game is **not built**. In particular, NPC merchants barely affect markets yet, and there are no ads or leaderboards.
+- Most of the planned commercial game is **not built**. In particular, there are no ads or leaderboards, and farms, contracts and warehouses are out of balance.
 
 ## 1. The game
 
@@ -49,10 +49,10 @@
 | Eight goods at all 15 ports | Implemented | Rice, cotton textiles, salt, raw silk, sugar, saltpetre, opium, lac resin |
 | Finite stock with stock-sensitive prices | Implemented | Usually 48–72 units, at most 120. Prices within 40–250% of base |
 | Weighted-average cargo cost and profit estimates | Implemented | |
-| Daily stock recovery toward each port's baseline | Implemented | 6–12% of the gap per day, by what the town produces and buys |
+| Daily stock recovery toward each port's baseline | Implemented | 6–12% of the gap per day, at least 1–3 units, by what the town produces and buys |
 | Coins at 50×, 5,000 starting balance | Implemented | Older saves convert at exactly ×50 |
-| Dynamic market (production, shortages, events, explained prices) | Partially implemented | Stock moves prices and recovers by town. No seasons, shortages from events, or explained prices yet, and NPCs barely affect markets until Step 4 |
-| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`. 12 of 13 targets met. Farms, automated ships and contracts still out of balance |
+| Dynamic market (production, shortages, events, explained prices) | Partially implemented | Stock moves prices and recovers by town. Merchants trade real stock, and markets note their recent trades. No seasons, shortages from events, or full price explanations yet |
+| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`, including 26 merchants. Some targets are missed, and farms, contracts and warehouses are out of balance |
 
 ### Ships
 
@@ -61,7 +61,8 @@
 | River boat, Bora, Patello with distinct stats | Implemented | Prices are 25,000, 17,500 and 45,000 Coins |
 | Vessel access rules | Implemented | See section 8 |
 | Up to three ships, each with its own cargo and hull | Implemented | Sold at Dhaka, Chittagong and Hooghly |
-| Cannon, hull and hold upgrades; paid repairs | Implemented | Repair is 100 Coins per hull, 150 for Patello |
+| Cannon, hull and hold upgrades; paid repairs | Implemented | Repair is 100 Coins per hull, 150 for Patello. A short purse repairs part of the damage |
+| Recovery when a player has no options left | Implemented, awaiting review | A moneylender's advance, with a debt that blocks purchases until repaid. See `GAME_RULES.md` |
 | Automated two-port trade routes | Implemented | Patello trades up to 4 units per good per call, others 1 |
 | Return orders for out-of-reach ships | Implemented | Free, and only for ships that can't otherwise be reached |
 | Distinct art per vessel, plus a bullock cart | Implemented | |
@@ -70,8 +71,9 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| 4 named merchants who travel and trade | Implemented | Shared market stock, 3-item holds, budgets capped at 9,000 Coins |
-| At least 25 active NPC traders | Planned | Owner's requirement. Save validation currently assumes exactly the 4 existing merchants, so this needs a migration and performance testing |
+| 26 named merchants with real ships, cargo and purses | Implemented, awaiting review | They travel real routes, trade at shared prices, compete, and appear on the map and at docks |
+| Inspecting rivals | Implemented, awaiting review | Tap a ship, or use **More → Rival merchants** |
+| Rankings against rivals | Planned | Economy Plan Step 5 |
 
 ### Property, family and progress
 
@@ -146,11 +148,11 @@
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
 
-**Tests:** 502 passing across 23 test files, plus a passing type-check and production build, at the Economy Plan Step 3 checkpoint.
+**Tests:** 577 passing across 27 test files, plus a passing type-check and production build, at the Economy Plan Step 4 dead-end checkpoint.
 
 ## 4. Saves
 
-**Current format:** version 22. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
+**Current format:** version 24. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
 
 | Version | Added |
 |---|---|
@@ -166,6 +168,8 @@
 | 20 | New route network. Voyages move to it at the same percentage of progress |
 | 21 | Coins. Every amount of money ×50, and gold fields renamed |
 | 22 | Stalls hold three times the stock, keeping their share, and the NPC clock becomes the world clock |
+| 23 | 22 more merchants and a world seed. The original four get ships, and purses at least at their roster capital |
+| 24 | A debt record for the moneylender's advance, empty for every existing game |
 
 A repair on load also fixes saves affected by an earlier gold-peak bug. After a migration, the command log restarts and the game is marked `imported`, because old commands used old rules.
 
@@ -214,7 +218,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `d45a93d` | Navigation rebuild, map fix and port panel, save version 20 | Yes |
 | `c01862b` | Economy Plan Step 1: simulation harness and baseline | Yes |
 | `cbe2404` | Economy Plan Step 2: Coins and save backup, save version 21 | Yes |
-| Latest | Economy Plan Step 3: pricing fix, deeper stock and world clock, save version 22 | **No, awaiting the owner's instruction** |
+| `5628866` | Economy Plan Step 3: pricing fix, deeper stock and world clock, save version 22 | Yes |
+| (none) | Economy Plan Step 4: 26 merchants and dead-end recovery, save version 24 | **Not committed, awaiting review** |
 
 | Service | Status |
 |---|---|
@@ -231,7 +236,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | Requirement | Status | Current state |
 |---|---|---|
 | Distinct identity for all 15 towns | Partially implemented | Plan in `TOWN_IDENTITY_PLAN.md`. Today's towns fail its acceptance test. Religious placements and several town histories still need research |
-| At least 25 active NPC traders | Planned | 4 exist. Not yet in a numbered stage |
+| At least 25 active NPC traders | Implemented, awaiting review | Economy Plan Step 4 |
 | Dynamic markets | Partially implemented | Stage 5 |
 | Coins (50×) | Implemented | Economy Plan Step 2 |
 | Paid farm production orders | Planned | Stage 6. Needs a trusted clock for real-time timers, which is weak until cloud saves exist |
@@ -285,10 +290,10 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 - No filter for offensive merchant names. Non-Latin names are untested.
 
 **Technical and business risks:**
-1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). The same-port exploit is fixed. Farms and automated Patellos still out-earn trading, delivery contracts mostly lose money, and NPC merchants barely affect markets.
+1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). The same-port exploit is fixed. Farms still out-earn trading by far, delivery contracts mostly lose money, and some wealth and pacing targets are missed with 26 merchants.
 2. **Scale:** most of the planned game is still unbuilt.
 3. **Delaying cloud saves:** each new system adds saved data, and real-time farms can't be fully trusted without a server clock. Everything must stay in the command system so this can be added later.
-4. **Performance with 25+ traders:** untested. The current planner is not optimised for many routes per day.
+4. **Performance with 26 traders:** about 1.3 ms per world day on the development computer, with routes cached, measured partway through the Step 4 refinement. Not yet measured on a phone.
 5. **Large source files:** `model.ts` and `App.tsx` are each about 3,100 lines.
 6. **Ad income:** five ads a day caps revenue. At an assumed $10 per 1,000 views, that's at most $0.05 per active player per day.
 7. **Hosting terms:** Vercel's free plan excludes commercial use.
@@ -301,8 +306,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **The 25+ NPC traders** (Stage 5, Economy Plan Step 4), once the owner approves it. Traders are the main force on stock and prices, so they should be built and balanced together. Which commit staging runs is still unconfirmed.
-2. **Offline leaderboards** (Economy Plan Step 5).
+1. **Review the 26 merchants** (Economy Plan Step 4). Which commit staging runs is still unconfirmed.
+2. **Offline leaderboards** (Economy Plan Step 5), once approved.
 3. **Rebalance farms, automated ships, contracts and warehouses,** once the NPC economy is measured (see `ROADMAP.md`).
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.
 5. **City unlocks and reputation** (Stage 8).

@@ -596,6 +596,30 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .save-error-banner { position: relative; z-index: 11; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 12px; color: #ffe9dd; background: #6d2110; border-bottom: 1px solid var(--brass); font-size: 14px; }
 .save-error-banner { flex-wrap: wrap; }
 .save-error-banner span { flex: 1 1 220px; }
+.market-stall-news { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 13px; font-style: italic; }
+.npc-traffic, .npc-docked > g { cursor: pointer; outline: none; }
+.npc-docked-more { fill: #fff6dc; font-weight: 700; paint-order: stroke; stroke: rgb(40 28 14 / 75%); stroke-width: .25em; pointer-events: none; }
+.rival-ship-panel { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 8; max-height: min(62%, 420px); overflow: auto; overscroll-behavior: contain; padding: 12px; color: var(--ink); background: var(--paper); border: 1px solid var(--brass); border-radius: 4px; box-shadow: 0 8px 24px rgb(0 0 0 / 35%); }
+.rival-ship-panel header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.rival-ship-panel h2 { font: 400 22px/1.15 var(--display); }
+.rival-ship-panel header p { color: var(--ink-soft); font-size: 14px; }
+.npc-dock-target { cursor: pointer; outline: none; }
+.rival-dock-list { display: grid; gap: 6px; }
+.rival-dock-list button { display: grid; gap: 2px; min-height: 48px; padding: 7px 10px; color: var(--ink); text-align: left; background: rgb(255 248 226 / 55%); border: 1px solid var(--paper-line); border-radius: 3px; cursor: pointer; }
+.rival-dock-list strong { font: 400 17px/1.15 var(--display); }
+.rival-dock-list span { color: var(--ink-soft); font-size: 13.5px; }
+.rival-details { display: grid; gap: 6px; font-size: 14.5px; }
+.rival-details dl { display: grid; gap: 3px; margin: 0; }
+.rival-details dl > div { display: flex; gap: 8px; }
+.rival-details dt { flex: 0 0 76px; color: var(--ink-soft); }
+.rival-details dd { margin: 0; }
+.rival-details ul { margin: 0; padding-left: 16px; color: var(--ink-soft); font-size: 13.5px; }
+.rival-list { display: grid; gap: 8px; padding: 14px; }
+.rival-row { display: grid; gap: 6px; background: rgb(255 248 226 / 55%); border: 1px solid var(--paper-line); border-radius: 3px; }
+.rival-row > button { display: grid; gap: 2px; min-height: 48px; padding: 8px 10px; color: var(--ink); text-align: left; background: none; border: 0; cursor: pointer; }
+.rival-row > button strong { font: 400 18px/1.15 var(--display); }
+.rival-row > button span { color: var(--ink-soft); font-size: 13.5px; }
+.rival-row .rival-details { padding: 0 10px 10px; }
 .save-backups { display: grid; gap: 10px; padding: 14px; }
 .save-backup { display: grid; gap: 6px; padding: 10px; background: var(--paper); border: 1px solid var(--brass); border-radius: 3px; }
 .save-backup span { color: var(--ink-soft); font-size: 13.5px; }
@@ -734,6 +758,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .repair-callout strong { color: var(--ink); font: 800 17px var(--body); font-variant-numeric: lining-nums; }
 .repair-callout p { color: var(--ink-soft); font-size: 14px; }
 .repair-button { flex: 0 0 auto; }
+.rescue-callout { border-color: var(--madder); background: var(--warn-bg); }
+.rescue-callout p + p { margin-top: 4px; }
+.rescue-callout:has(.repayment-warning) { flex-direction: column; align-items: stretch; }
+.repayment-warning > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+.repayment-warning button { min-height: 44px; }
 .ship-purchase-panel { display: flex; flex-direction: column; gap: 9px; margin-top: 13px; padding-top: 11px; border-top: 3px double var(--timber-700); }
 .ship-purchase-heading strong { color: var(--ink); font: 400 21px/1.1 var(--display); }
 .ship-purchase-heading p { color: var(--ink-soft); font-size: 14.5px; }

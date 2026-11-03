@@ -9,8 +9,9 @@ import { buildBaseline } from "./baseline";
 import { renderComparison } from "./comparison";
 import { renderBaseline } from "./report";
 import oldRecord from "./__fixtures__/economy-baseline-v20.json";
+import stepThreeRecord from "./__fixtures__/economy-baseline-v22.json";
 
-const BASELINE_VERSION = 22;
+const BASELINE_VERSION = 24;
 const RESULTS_START = "<!-- results:start -->";
 const RESULTS_END = "<!-- results:end -->";
 
@@ -39,6 +40,6 @@ test("economy report", () => {
   expect(end).toBeGreaterThan(start);
   writeFileSync(
     "ECONOMY_BASELINE.md",
-    `${report.slice(0, start + RESULTS_START.length)}\n\n${renderComparison(oldRecord, sameStart, baseline)}\n${report.slice(end)}`,
+    `${report.slice(0, start + RESULTS_START.length)}\n\n${renderComparison(oldRecord, stepThreeRecord, sameStart, baseline)}\n${report.slice(end)}`,
   );
 });

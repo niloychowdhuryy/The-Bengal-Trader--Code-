@@ -46,7 +46,7 @@ describe("keeping saves safe", () => {
   });
 
   it("asks for a reload on a newer save, and offers nothing that could replace it", async () => {
-    const newer = { ...createNewGame("Maya"), version: 23 };
+    const newer = { ...createNewGame("Maya"), version: 25 };
     await writeRawSave(newer);
     render(<App />);
 
@@ -106,10 +106,10 @@ describe("keeping saves safe", () => {
     render(<SaveBackupPanel onRestored={onRestored} />);
     fireEvent.click(await screen.findByRole("button", { name: "Restore" }));
     expect(onRestored).not.toHaveBeenCalled();
-    expect(await readRawSave()).toMatchObject({ version: 22 });
+    expect(await readRawSave()).toMatchObject({ version: 24 });
 
     fireEvent.click(screen.getByRole("button", { name: "Keep my current game" }));
-    expect(await readRawSave()).toMatchObject({ version: 22 });
+    expect(await readRawSave()).toMatchObject({ version: 24 });
 
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
     fireEvent.click(screen.getByRole("button", { name: "Replace my current game with this" }));

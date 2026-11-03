@@ -17,7 +17,7 @@ import {
   createEmptyLocalStanding,
   createMissionBoard,
   createNpcMerchants,
-  NPC_MAX_BUDGET,
+  getMerchantRoute,
   advanceMarketStock,
   createEmptyWarehouseStock,
   createEmptyWarehousePurchasePrices,
@@ -57,6 +57,8 @@ import {
   SAILING_SPEEDS,
   type SailingSpeed,
 } from "./travel-time";
+import { MAX_NPC_ACTIVITY, hashText } from "./npc";
+import { LEGACY_MERCHANT_IDS } from "./npc-roster";
 
 const COINS_PER_GOLD = 50;
 
@@ -379,8 +381,10 @@ function isValidMissions(value: unknown, sailingDay: number): value is Mission[]
 function isValidNpcMerchants(value: unknown): value is NpcMerchant[] {
   if (!Array.isArray(value)) return false;
   const templates = createNpcMerchants();
+  const hold = UPGRADES.find((upgrade) => upgrade.id === "hold")!;
   return (
     value.length === templates.length &&
+    new Set(value.map((merchant) => (isRecord(merchant) ? merchant.id : ""))).size === templates.length &&
     value.every((merchant) => {
       if (!isRecord(merchant)) return false;
       const template = templates.find((entry) => entry.id === merchant.id);
@@ -389,40 +393,53 @@ function isValidNpcMerchants(value: unknown): value is NpcMerchant[] {
         merchant.name !== template.name ||
         merchant.homePort !== template.homePort ||
         merchant.strategy !== template.strategy ||
-        merchant.cargoCapacity !== 3 ||
+        !isVesselClassId(merchant.vesselClass) ||
+        !isNonnegativeInteger(merchant.holdUpgrades) ||
+        Number(merchant.holdUpgrades) > hold.maxLevel ||
+        merchant.cargoCapacity !==
+          getVesselCargoCapacity(merchant.vesselClass, {
+            cannon: 0,
+            hull: 0,
+            hold: Number(merchant.holdUpgrades),
+          }) ||
         !isTownId(merchant.currentPort) ||
         !isTownId(merchant.destinationPort) ||
+        VESSEL_CLASSES[merchant.vesselClass].barredPorts.includes(merchant.currentPort) ||
+        VESSEL_CLASSES[merchant.vesselClass].barredPorts.includes(merchant.destinationPort) ||
         (merchant.phase !== "docked" && merchant.phase !== "traveling") ||
-        !isNonnegativeInteger(merchant.budget) ||
-        merchant.budget > NPC_MAX_BUDGET ||
+        !isNonnegativeFiniteNumber(merchant.budget) ||
         !Array.isArray(merchant.preferences) ||
-        JSON.stringify(merchant.preferences) !==
-          JSON.stringify(template.preferences) ||
+        JSON.stringify(merchant.preferences) !== JSON.stringify(template.preferences) ||
         !Array.isArray(merchant.preferredPorts) ||
-        JSON.stringify(merchant.preferredPorts) !==
-          JSON.stringify(template.preferredPorts) ||
+        JSON.stringify(merchant.preferredPorts) !== JSON.stringify(template.preferredPorts) ||
         !isNonnegativeFiniteNumber(merchant.travelDaysRemaining) ||
-        !isNonnegativeFiniteNumber(merchant.travelDaysTotal)
+        !isNonnegativeFiniteNumber(merchant.travelDaysTotal) ||
+        !isNonnegativeInteger(merchant.dockDaysRemaining) ||
+        !isNonnegativeFiniteNumber(merchant.purchaseDay) ||
+        !isNonnegativeInteger(merchant.reputation) ||
+        !Array.isArray(merchant.visitedPorts) ||
+        !merchant.visitedPorts.every(isTownId) ||
+        !Array.isArray(merchant.profitMarks) ||
+        !merchant.profitMarks.every(isNonnegativeInteger) ||
+        !isNonnegativeInteger(merchant.tripsCompleted) ||
+        !isNonnegativeInteger(merchant.unitsBought) ||
+        !isNonnegativeInteger(merchant.unitsSold) ||
+        typeof merchant.realizedProfit !== "number" ||
+        !Number.isFinite(merchant.realizedProfit) ||
+        !isNonnegativeFiniteNumber(merchant.lastTradeDay)
       ) {
         return false;
       }
       const cargo = merchant.cargo;
       const costs = merchant.cargoCost;
       if (!isRecord(cargo) || !isRecord(costs)) return false;
-      const cargoUsed = GOODS.reduce(
-        (total, good) => total + Number(cargo[good.id] ?? 0),
-        0,
-      );
+      const cargoUsed = GOODS.reduce((total, good) => total + Number(cargo[good.id] ?? 0), 0);
       const validGoods = GOODS.every(
         (good) =>
           isNonnegativeInteger(cargo[good.id]) &&
           isNonnegativeFiniteNumber(costs[good.id]) &&
           (Number(cargo[good.id]) > 0 || Number(costs[good.id]) === 0),
       );
-      const npcRoute =
-        merchant.phase === "traveling"
-          ? planRiverRoute(merchant.currentPort, merchant.destinationPort)
-          : null;
       return (
         validGoods &&
         cargoUsed <= merchant.cargoCapacity &&
@@ -431,15 +448,8 @@ function isValidNpcMerchants(value: unknown): value is NpcMerchant[] {
             merchant.travelDaysTotal === 0 &&
             merchant.currentPort === merchant.destinationPort
           : merchant.currentPort !== merchant.destinationPort &&
-            npcRoute !== null &&
+            getMerchantRoute(merchant.currentPort, merchant.destinationPort, merchant.vesselClass) !== null &&
             merchant.travelDaysRemaining > 0 &&
-            merchant.travelDaysTotal ===
-              Math.max(
-                1,
-                Math.ceil(
-                  getRouteTravelTime(npcRoute).durationDays,
-                ),
-              ) &&
             merchant.travelDaysRemaining <= merchant.travelDaysTotal)
       );
     })
@@ -447,7 +457,7 @@ function isValidNpcMerchants(value: unknown): value is NpcMerchant[] {
 }
 
 function isValidNpcActivity(value: unknown, maxDay: number): value is NpcActivity[] {
-  if (!Array.isArray(value) || value.length > 24) return false;
+  if (!Array.isArray(value) || value.length > MAX_NPC_ACTIVITY) return false;
   const merchantIds = new Set(createNpcMerchants().map((merchant) => merchant.id));
   return value.every(
     (activity) =>
@@ -931,6 +941,9 @@ export function isValidGameState(value: unknown): value is GameState {
     value.coins < 0 ||
     !isNonnegativeInteger(value.highestCoins) ||
     value.highestCoins < value.coins ||
+    !isNonnegativeInteger(value.debtOwed) ||
+    !isNonnegativeInteger(value.rescuesTaken) ||
+    (value.debtOwed > 0 && value.rescuesTaken === 0) ||
     !isNonnegativeInteger(value.reputation) ||
     value.reputation >
       MARKET_PORTS.length * (GOODS.length + 1) +
@@ -952,6 +965,7 @@ export function isValidGameState(value: unknown): value is GameState {
     !isNonnegativeInteger(value.voyagesStarted) ||
     !isValidNpcMerchants(npcMerchants) ||
     !isValidNpcActivity(npcActivity, maximumNpcDay) ||
+    !isNonnegativeInteger(value.worldSeed) ||
     !isNonnegativeInteger(value.worldDay) ||
     Number(value.worldDay) > Math.floor(maximumNpcDay) ||
     !isValidRouteConditions(value.navigationConditions) ||
@@ -1033,11 +1047,11 @@ function createGoldMissionBoard(): Record<string, unknown>[] {
   }));
 }
 
-function createGoldNpcMerchants(): NpcMerchant[] {
-  return createNpcMerchants().map((merchant) => ({
-    ...merchant,
-    budget: merchant.budget / COINS_PER_GOLD,
-  }));
+// The merchants a save of that age knew, with what they held before the roster grew.
+function createGoldNpcMerchants(): Record<string, unknown>[] {
+  return createNpcMerchants()
+    .filter((merchant) => LEGACY_MERCHANT_IDS.includes(merchant.id))
+    .map((merchant) => ({ ...merchant, budget: 100 }));
 }
 
 // Stalls held a third of today's stock before version 22.
@@ -1092,6 +1106,59 @@ function migrateToWorldClock(save: Record<string, unknown>): Record<string, unkn
     }
   }
   return { ...rest, version: 22, worldDay: npcSimulationDay, marketStock };
+}
+
+// Twenty-two merchants join. The original four keep their cargo and whereabouts, and get a
+// real ship. Their old purses were limited by a cap that destroyed income, so each starts
+// from at least its roster capital. This happens once, and only to merchants, never the player.
+function migrateToLivingMerchants(save: Record<string, unknown>): Record<string, unknown> {
+  const old = Array.isArray(save.npcMerchants) ? save.npcMerchants : [];
+  const npcMerchants = createNpcMerchants().map((fresh) => {
+    const before = old.find((merchant) => isRecord(merchant) && merchant.id === fresh.id);
+    if (!isRecord(before)) return fresh;
+    const vesselClass = isVesselClassId(before.vesselClass) ? before.vesselClass : fresh.vesselClass;
+    const holdUpgrades = isNonnegativeInteger(before.holdUpgrades) ? before.holdUpgrades : 0;
+    const merged = {
+      ...fresh,
+      vesselClass,
+      holdUpgrades,
+      cargoCapacity: getVesselCargoCapacity(vesselClass, { cannon: 0, hull: 0, hold: holdUpgrades }),
+      currentPort: before.currentPort,
+      destinationPort: before.destinationPort,
+      phase: before.phase,
+      cargo: before.cargo,
+      cargoCost: before.cargoCost,
+      budget: Math.max(Number(before.budget) || 0, fresh.budget),
+      travelDaysRemaining: before.travelDaysRemaining,
+      travelDaysTotal: before.travelDaysTotal,
+    };
+    if (
+      merged.phase !== "traveling" ||
+      !isTownId(merged.currentPort) ||
+      !isTownId(merged.destinationPort)
+    ) {
+      return merged;
+    }
+    // The ship's speed may differ from the old abstract one, so keep the share of the trip.
+    const route = getMerchantRoute(merged.currentPort, merged.destinationPort, vesselClass);
+    if (!route) return merged;
+    const total = getShipRouteDays(route, vesselClass);
+    const share = Number(before.travelDaysRemaining) / Math.max(1, Number(before.travelDaysTotal));
+    return {
+      ...merged,
+      travelDaysTotal: total,
+      travelDaysRemaining: Math.max(1, Math.min(total, Math.ceil(share * total - 1e-9))),
+    };
+  });
+  return {
+    ...save,
+    version: 23,
+    npcMerchants,
+    worldSeed: isNonnegativeInteger(save.worldSeed)
+      ? save.worldSeed
+      : hashText(typeof save.captainName === "string" ? save.captainName : ""),
+    npcActivity: Array.isArray(save.npcActivity) ? save.npcActivity.slice(-MAX_NPC_ACTIVITY) : save.npcActivity,
+  };
 }
 
 function goldToCoins(value: unknown): unknown {
@@ -1693,6 +1760,14 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
 
   if (save.version === 21) {
     save = migrateToWorldClock(save);
+  }
+
+  if (save.version === 22) {
+    save = migrateToLivingMerchants(save);
+  }
+
+  if (save.version === 23) {
+    save = { ...save, version: 24, debtOwed: 0, rescuesTaken: 0 };
   }
 
   return save.version === SAVE_VERSION

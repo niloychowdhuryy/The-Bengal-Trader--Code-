@@ -164,25 +164,23 @@ ${table(
 
 ## NPC merchants
 
-${npcWorld.days} days with no player, one day at a time, using the same world functions as an arrival. It's measured this way because the activity log keeps only the last 24 entries.
+${npcWorld.seeds} seeds, ${npcWorld.first.days} days with no player, one day at a time. The table shows the first seed.
 
 ${table(
-  ["Merchant", "Purse day 30", "Day 90", "Day 200", "Trips", "Units bought", "Units sold", "Last trade", "Days docked with cargo", "Income lost to cap (est.)"],
-  npcWorld.merchants.map((merchant) => [
+  ["Merchant", "Start", "Day 30", "Day 90", "Day 200", "Trips", "Units sold", "Ports", "Profit/unit", "Last trade"],
+  npcWorld.first.merchants.map((merchant) => [
     merchant.name,
-    merchant.purseAt[30],
-    merchant.purseAt[90],
-    merchant.purseAt[200],
+    merchant.startWorth,
+    merchant.worthAt[30],
+    merchant.worthAt[90],
+    merchant.worthAt[200],
     merchant.trips,
-    merchant.unitsBought,
     merchant.unitsSold,
+    merchant.portsVisited,
+    merchant.profitPerUnit,
     merchant.lastTradeDay,
-    merchant.daysDockedWithCargo,
-    merchant.estimatedIncomeLostToCap,
   ]),
 )}
-
-All merchants started with 100 Coins. **No merchant was ever docked with cargo in this run**, so the "buy from a merchant" action had nothing to offer. NPCs buy and leave on the same day, and sell everything on arrival.
 
 ## Exploit checks
 

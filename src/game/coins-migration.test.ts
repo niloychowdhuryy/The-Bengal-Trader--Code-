@@ -6,6 +6,7 @@ import {
   STARTING_COINS,
   createNewGame,
   getGoodPrice,
+  getMerchantProfile,
   type GameState,
 } from "./model";
 import { NewerSaveError, isValidGameState, migrateLegacySave, validateSave } from "./save-format";
@@ -60,7 +61,7 @@ function scaled(amounts: Record<string, number>): Record<string, number> {
 }
 
 function expectExactCoins(old: Loose, game: GameState): void {
-  expect(game.version).toBe(22);
+  expect(game.version).toBe(24);
   expect(game.coins).toBe(old.gold * 50);
   expect(game.highestCoins).toBe(old.highestGold * 50);
   expect("gold" in game).toBe(false);
@@ -80,11 +81,12 @@ function expectExactCoins(old: Loose, game: GameState): void {
       before.automatedRoute ? before.automatedRoute.capital * 50 : undefined,
     );
   });
-  game.npcMerchants.forEach((merchant, index) => {
-    const before = old.npcMerchants[index];
-    expect(merchant.budget).toBe(before.budget * 50);
+  // The original merchants convert exactly, and can only then rise to their roster capital.
+  for (const before of old.npcMerchants) {
+    const merchant = game.npcMerchants.find((entry) => entry.id === before.id)!;
+    expect(merchant.budget).toBe(Math.max(before.budget * 50, getMerchantProfile(before.id)!.startingCoins));
     expect(merchant.cargoCost).toEqual(scaled(before.cargoCost));
-  });
+  }
   game.missions.forEach((mission, index) => {
     const before = old.missions[index];
     expect(mission.rewardCoins).toBe(before.rewardGold * 50);
@@ -98,7 +100,7 @@ function expectExactCoins(old: Loose, game: GameState): void {
 // What's left of a save once every money field is taken out should be identical.
 function withoutMoney(save: Loose): Loose {
   // Stock and the world clock are covered by the market tests.
-  const { gold, highestGold, coins, highestCoins, version, averagePurchasePrice, warehouseAveragePurchasePrice, lastMessage, voyage, marketStock, npcSimulationDay, worldDay, ...rest } = save;
+  const { gold, highestGold, coins, highestCoins, version, averagePurchasePrice, warehouseAveragePurchasePrice, lastMessage, voyage, marketStock, npcSimulationDay, worldDay, worldSeed, npcActivity, debtOwed, rescuesTaken, ...rest } = save;
   const { startedAt, arrivalAt, progressUpdatedAt, ...voyageRest } = voyage ?? {};
   return {
     ...rest,
@@ -108,7 +110,8 @@ function withoutMoney(save: Loose): Loose {
       const { capital, ...route } = automatedRoute ?? {};
       return { ...other, route, logDays: automationLog.map((entry: Loose) => entry.sailingDay) };
     }),
-    npcMerchants: save.npcMerchants.map(({ budget, cargoCost, ...merchant }: Loose) => merchant),
+    // Merchants have their own migration tests.
+    npcMerchants: undefined,
     missions: save.missions.map(
       ({ rewardGold, rewardCoins, targetProfit, progress, ...mission }: Loose) => mission,
     ),
@@ -166,7 +169,7 @@ describe("migrating to Coins", () => {
     const { missions, npcMerchants, npcActivity, worldDay, ...v13 } = asGoldSave(createNewGame("Maya"), 13);
     const game = validateSave(v13, T0);
     expect(game.missions).toEqual(createNewGame("Maya").missions);
-    expect(game.npcMerchants.map((merchant) => merchant.budget)).toEqual([5_000, 5_000, 5_000, 5_000]);
+    expect(game.npcMerchants).toEqual(createNewGame("Maya").npcMerchants);
   });
 
   it("gives an old save's estimated cost basis in Coins once", () => {
@@ -242,7 +245,7 @@ describe("save backups", () => {
 
     const session = await openGameSession(T0);
 
-    expect(session.game?.version).toBe(22);
+    expect(session.game?.version).toBe(24);
     expect(session.log?.provenance).toBe("imported");
     expect((await readCommandLog())?.commands).toEqual([]);
     const backup = await readSaveBackup(MIGRATION_BACKUP);
@@ -347,7 +350,7 @@ describe("save backups", () => {
 });
 
 describe("a save from a newer version of the game", () => {
-  const newer = { ...createNewGame("Maya"), version: 23, somethingNew: true };
+  const newer = { ...createNewGame("Maya"), version: 25, somethingNew: true };
 
   beforeEach(resetDatabase);
 

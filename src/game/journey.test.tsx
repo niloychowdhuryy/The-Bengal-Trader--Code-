@@ -96,8 +96,13 @@ describe("the map shows the right vehicle", () => {
   function shown(state: GameState, now: number) {
     const map = render(<BengalMap state={state} now={now} onSelectTown={() => undefined} />);
     const result = {
-      boats: map.container.querySelectorAll(".bengal-trading-vessel").length,
-      moving: map.container.querySelectorAll(".vessel-under-sail").length,
+      // Other merchants' ships wait at the docks, so count only the player's.
+      boats: [...map.container.querySelectorAll(".bengal-trading-vessel")].filter(
+        (vessel) => !vessel.closest(".npc-docked, .npc-traffic"),
+      ).length,
+      moving: [...map.container.querySelectorAll(".vessel-under-sail")].filter(
+        (vessel) => !vessel.closest(".npc-docked, .npc-traffic"),
+      ).length,
       carts: map.container.querySelectorAll(".bengal-land-cart").length,
       roads: map.container.querySelectorAll(".route-leg-land").length,
       rivers: map.container.querySelectorAll(".route-leg-water").length,
@@ -184,7 +189,7 @@ describe("existing saves", () => {
   it("moves a version 19 voyage onto the new network, keeping its progress and cargo", () => {
     const saved = fixture as unknown as GameState;
     const game = validateSave(fixture, T0);
-    expect(game.version).toBe(22);
+    expect(game.version).toBe(24);
     expect(isValidGameState(game)).toBe(true);
     expect(game.cargo).toEqual(saved.cargo);
     expect(game.coins).toBe(fixture.gold * 50);
@@ -219,7 +224,7 @@ describe("existing saves", () => {
       ),
     };
     const migrated = validateSave(asOld, T0);
-    expect(migrated.version).toBe(22);
+    expect(migrated.version).toBe(24);
     for (const merchant of migrated.npcMerchants) {
       if (merchant.phase === "traveling") {
         expect(merchant.travelDaysRemaining).toBeLessThanOrEqual(merchant.travelDaysTotal);

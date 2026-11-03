@@ -16,8 +16,12 @@ import {
   createInitialMarketStock,
   createNewGame,
   getGoodPrice,
+  getMerchantProfile,
+  getMerchantRoute,
+  getMerchantWorth,
   getShipRouteConditions,
   getTradeQuote,
+  isLaidUp,
   type GameState,
   type GoodId,
   type MarketPortId,
@@ -27,8 +31,8 @@ import {
 import { planRiverRoute } from "../game/navigation";
 import { getRouteTravelTime } from "../game/travel-time";
 import { arrive, createSim, depart, sail, send } from "./driver";
-import { fromTop, measureMarket, median, npcWorth, round } from "./metrics";
-import { runStrategy } from "./runner";
+import { fromTop, giniOf, measureMarket, median, npcWorth, round, type MarketSnapshot } from "./metrics";
+import { SIM_SEEDS, STRATEGIES, runStrategy } from "./runner";
 import { manual, routeRules, twoPort } from "./strategies";
 
 // ---- Routes ----
@@ -397,106 +401,404 @@ export function measureContracts(): ContractValue[] {
 export interface NpcReport {
   id: string;
   name: string;
-  purseAt: Record<number, number>;
+  temperament: string;
+  strategy: string;
+  vessel: VesselClassId;
+  startWorth: number;
   worthAt: Record<number, number>;
+  purseAt: Record<number, number>;
   trips: number;
   unitsBought: number;
   unitsSold: number;
+  portsVisited: number;
+  averageTripDays: number;
+  profitPerUnit: number;
+  reputation: number;
   lastTradeDay: number;
   daysDockedWithCargo: number;
-  /** Sales income lost to the purse limit. An estimate from prices at the start of the day. */
-  estimatedIncomeLostToCap: number;
+  daysLaidUp: number;
 }
 
+export interface GroupBehaviour {
+  group: string;
+  merchants: number;
+  tripsEach: number;
+  unitsEach: number;
+  averageTripDays: number;
+  portsEach: number;
+  profitPerUnit: number;
+  growth: number;
+}
+
+export interface VesselLoad {
+  vessel: VesselClassId;
+  voyages: number;
+  emptyVoyages: number;
+  /** Cargo units per voyage that carried anything. */
+  unitsPerLoadedVoyage: number;
+  /** Cargo units per voyage, counting empty ones. */
+  unitsPerVoyage: number;
+  /** Share of the hold in use, counting empty voyages. */
+  holdUse: number;
+  /** Share of the hold in use on voyages that carried anything. */
+  loadedHoldUse: number;
+}
+
+export interface MerchantTier {
+  tier: string;
+  merchants: number;
+  medianGrowth: number;
+  lowestGrowth: number;
+  voyagesEach: number;
+  unitsEach: number;
+  profitEach: number;
+  shareOfWealthAtEnd: number;
+}
+
+const TIER_LIMITS = [
+  { tier: "Great houses", from: 60_000, to: Number.POSITIVE_INFINITY },
+  { tier: "Established", from: 26_000, to: 60_000 },
+  { tier: "Modest", from: 12_000, to: 26_000 },
+  { tier: "Small", from: 0, to: 12_000 },
+];
+
 export interface NpcWorldReport {
+  seed: number;
+  loads: VesselLoad[];
+  tiers: MerchantTier[];
+  /** Ship purchases that happened, as "name: from to on day". */
+  shipPurchases: string[];
+  holdUpgrades: number;
+  /** Stall-days at or below the merchants' reserve, across the whole run. */
+  stallDaysAtReserve: number;
+  lowestStock: number;
   days: number;
   merchants: NpcReport[];
-  marketAt: Record<number, ReturnType<typeof measureMarket>>;
+  marketAt: Record<number, MarketSnapshot>;
+  totalWorthAt: Record<number, number>;
+  giniAt: Record<number, number>;
+  /** Share of all merchant wealth held by the richest three. */
+  topThreeShareAt: Record<number, number>;
   /** Merchants that made no trade in the final 50 days. */
   stalledAtEnd: number;
+  laidUpAtEnd: number;
   unitsMovedPerDay: number;
+  journeysCompleted: number;
+  /** Stops at a port a merchant's own ship is barred from, or moves with no valid route. */
+  restrictionBreaks: number;
+  /** Goods that appeared or vanished, beyond what stalls recovered and merchants traded. */
+  goodsUnaccounted: number;
+  /** Times a purse grew on a day its owner sold nothing. */
+  purseGrewWithoutSale: number;
 }
 
 /**
  * Advances only the world, one day at a time, with no player in it. It calls the same
- * world functions an arrival does, but steps them daily so every trade can be counted.
+ * world clock an arrival does, but steps it daily so every trade can be counted and checked.
  */
-export function measureNpcWorld(days = 200, marks: readonly number[] = [30, 90, 200]): NpcWorldReport {
-  let state = createNewGame("Simulated");
+export function measureNpcWorld(
+  seed = 1,
+  days = 200,
+  marks: readonly number[] = [30, 90, 200],
+): NpcWorldReport {
+  let state: GameState = { ...createNewGame("Simulated"), worldSeed: seed };
   const reports = new Map<string, NpcReport>(
-    state.npcMerchants.map((merchant) => [
-      merchant.id,
-      {
-        id: merchant.id,
-        name: merchant.name,
-        purseAt: {},
-        worthAt: {},
-        trips: 0,
-        unitsBought: 0,
-        unitsSold: 0,
-        lastTradeDay: 0,
-        daysDockedWithCargo: 0,
-        estimatedIncomeLostToCap: 0,
-      },
-    ]),
+    state.npcMerchants.map((merchant) => {
+      const profile = getMerchantProfile(merchant.id)!;
+      return [
+        merchant.id,
+        {
+          id: merchant.id,
+          name: merchant.name,
+          temperament: profile.temperament,
+          strategy: profile.strategy,
+          vessel: merchant.vesselClass,
+          startWorth: getMerchantWorth(merchant),
+          worthAt: {},
+          purseAt: {},
+          trips: 0,
+          unitsBought: 0,
+          unitsSold: 0,
+          portsVisited: 1,
+          averageTripDays: 0,
+          profitPerUnit: 0,
+          reputation: merchant.reputation,
+          lastTradeDay: 0,
+          daysDockedWithCargo: 0,
+          daysLaidUp: 0,
+        },
+      ];
+    }),
   );
   const marketAt: NpcWorldReport["marketAt"] = {};
-
-  const units = (cargo: Record<GoodId, number>) =>
-    GOODS.reduce((total, good) => total + cargo[good.id], 0);
+  const totalWorthAt: NpcWorldReport["totalWorthAt"] = {};
+  const giniAt: NpcWorldReport["giniAt"] = {};
+  const topThreeShareAt: NpcWorldReport["topThreeShareAt"] = {};
+  const tripDays = new Map<string, number>();
+  const loadTally = new Map<VesselClassId, { voyages: number; empty: number; units: number; capacity: number; loadedCapacity: number }>();
+  const shipPurchases: string[] = [];
+  let holdUpgrades = 0;
+  let stallDaysAtReserve = 0;
+  let lowestStock = Number.POSITIVE_INFINITY;
+  let restrictionBreaks = 0;
+  let goodsUnaccounted = 0;
+  let purseGrewWithoutSale = 0;
 
   for (let day = 1; day <= days; day += 1) {
     const before = state;
     const recovered = advanceMarketStock(before.marketStock, 1);
     state = advanceWorld({ ...before, sailingDay: day }, day);
 
+    for (const { id: good } of GOODS) {
+      const held = (world: GameState) =>
+        world.npcMerchants.reduce((total, merchant) => total + merchant.cargo[good], 0);
+      const stocked = (market: GameState["marketStock"]) =>
+        MARKET_PORTS.reduce((total, port) => total + market[port.id][good], 0);
+      goodsUnaccounted += Math.abs(held(state) + stocked(state.marketStock) - held(before) - stocked(recovered));
+    }
+
     for (const merchant of state.npcMerchants) {
       const previous = before.npcMerchants.find((entry) => entry.id === merchant.id)!;
       const report = reports.get(merchant.id)!;
-      const change = units(merchant.cargo) - units(previous.cargo);
-      if (change > 0) report.unitsBought += change;
-      if (change < 0) report.unitsSold -= change;
-      if (change !== 0) report.lastTradeDay = day;
-      if (previous.phase === "docked" && merchant.phase === "traveling") report.trips += 1;
-      if (merchant.phase === "docked" && units(merchant.cargo) > 0) report.daysDockedWithCargo += 1;
-      if (change < 0) {
-        let revenue = 0;
-        for (const { id: good } of GOODS) {
-          const sold = previous.cargo[good] - merchant.cargo[good];
-          for (let unit = 0; unit < sold; unit += 1) {
-            revenue += getGoodPrice(
-              merchant.currentPort,
-              good,
-              "sell",
-              false,
-              recovered[merchant.currentPort][good] + unit,
-            );
-          }
-        }
-        report.estimatedIncomeLostToCap += Math.max(0, revenue - (merchant.budget - previous.budget));
+      const barred = VESSEL_CLASSES[merchant.vesselClass].barredPorts;
+      if (barred.includes(merchant.currentPort) || barred.includes(merchant.destinationPort)) restrictionBreaks += 1;
+      if (previous.phase === "docked" && merchant.phase === "traveling") {
+        tripDays.set(merchant.id, (tripDays.get(merchant.id) ?? 0) + merchant.travelDaysTotal);
+        const carried = GOODS.reduce((total, good) => total + merchant.cargo[good.id], 0);
+        const tally = loadTally.get(merchant.vesselClass) ?? { voyages: 0, empty: 0, units: 0, capacity: 0, loadedCapacity: 0 };
+        tally.voyages += 1;
+        tally.units += carried;
+        tally.capacity += merchant.cargoCapacity;
+        if (carried === 0) tally.empty += 1;
+        else tally.loadedCapacity += merchant.cargoCapacity;
+        loadTally.set(merchant.vesselClass, tally);
+        if (!getMerchantRoute(merchant.currentPort, merchant.destinationPort, merchant.vesselClass)) restrictionBreaks += 1;
+      }
+      // A ship can only change port by finishing the journey it was on.
+      if (
+        merchant.currentPort !== previous.currentPort &&
+        !(previous.phase === "traveling" && previous.travelDaysRemaining === 1 && merchant.currentPort === previous.destinationPort)
+      ) {
+        restrictionBreaks += 1;
+      }
+      if (merchant.budget > previous.budget && merchant.unitsSold === previous.unitsSold) purseGrewWithoutSale += 1;
+      if (merchant.vesselClass !== previous.vesselClass) {
+        shipPurchases.push(`${merchant.name}: ${previous.vesselClass} to ${merchant.vesselClass}, day ${day}`);
+      }
+      if (merchant.holdUpgrades > previous.holdUpgrades) holdUpgrades += 1;
+      if (merchant.phase === "docked" && GOODS.some((good) => merchant.cargo[good.id] > 0)) report.daysDockedWithCargo += 1;
+      if (isLaidUp(merchant)) report.daysLaidUp += 1;
+      report.lastTradeDay = merchant.lastTradeDay;
+    }
+
+    for (const port of MARKET_PORTS) {
+      for (const { id: good } of GOODS) {
+        const stock = state.marketStock[port.id][good];
+        lowestStock = Math.min(lowestStock, stock);
+        if (stock <= 8) stallDaysAtReserve += 1;
       }
     }
 
     if (marks.includes(day)) {
       marketAt[day] = measureMarket(state);
+      const worths = state.npcMerchants.map(npcWorth);
+      const total = worths.reduce((sum, value) => sum + value, 0);
+      totalWorthAt[day] = total;
+      giniAt[day] = giniOf(worths);
+      topThreeShareAt[day] = round(
+        [...worths].sort((a, b) => b - a).slice(0, 3).reduce((sum, value) => sum + value, 0) / total,
+        3,
+      );
       for (const merchant of state.npcMerchants) {
         const report = reports.get(merchant.id)!;
-        report.purseAt[day] = merchant.budget;
         report.worthAt[day] = npcWorth(merchant);
+        report.purseAt[day] = Math.round(merchant.budget);
       }
     }
   }
 
+  for (const merchant of state.npcMerchants) {
+    const report = reports.get(merchant.id)!;
+    report.vessel = merchant.vesselClass;
+    report.trips = merchant.tripsCompleted;
+    report.unitsBought = merchant.unitsBought;
+    report.unitsSold = merchant.unitsSold;
+    report.portsVisited = merchant.visitedPorts.length;
+    report.reputation = merchant.reputation;
+    report.averageTripDays = round((tripDays.get(merchant.id) ?? 0) / Math.max(1, merchant.tripsCompleted));
+    report.profitPerUnit = merchant.unitsSold > 0 ? Math.round(merchant.realizedProfit / merchant.unitsSold) : 0;
+  }
+
   const merchants = [...reports.values()];
+  const finalWorth = merchants.reduce((total, merchant) => total + (merchant.worthAt[days] ?? merchant.startWorth), 0);
+  const tiers = TIER_LIMITS.map(({ tier, from, to }) => {
+    const members = merchants.filter((merchant) => {
+      const coins = getMerchantProfile(merchant.id)!.startingCoins;
+      return coins >= from && coins < to;
+    });
+    const growths = members.map((merchant) => (merchant.worthAt[days] ?? merchant.startWorth) / merchant.startWorth);
+    const each = (pick: (merchant: NpcReport) => number) =>
+      round(members.reduce((total, merchant) => total + pick(merchant), 0) / members.length);
+    return {
+      tier,
+      merchants: members.length,
+      medianGrowth: round(median(growths)),
+      lowestGrowth: round(Math.min(...growths)),
+      voyagesEach: each((merchant) => merchant.trips),
+      unitsEach: each((merchant) => merchant.unitsSold),
+      profitEach: Math.round(each((merchant) => (merchant.worthAt[days] ?? merchant.startWorth) - merchant.startWorth)),
+      shareOfWealthAtEnd: round(
+        members.reduce((total, merchant) => total + (merchant.worthAt[days] ?? merchant.startWorth), 0) / finalWorth,
+        3,
+      ),
+    };
+  });
   return {
+    seed,
+    loads: VESSEL_CLASS_IDS.map((vessel) => {
+      const tally = loadTally.get(vessel) ?? { voyages: 0, empty: 0, units: 0, capacity: 0, loadedCapacity: 0 };
+      const loaded = tally.voyages - tally.empty;
+      return {
+        vessel,
+        voyages: tally.voyages,
+        emptyVoyages: tally.empty,
+        unitsPerLoadedVoyage: loaded > 0 ? round(tally.units / loaded) : 0,
+        unitsPerVoyage: tally.voyages > 0 ? round(tally.units / tally.voyages) : 0,
+        holdUse: tally.capacity > 0 ? round(tally.units / tally.capacity, 3) : 0,
+        loadedHoldUse: tally.loadedCapacity > 0 ? round(tally.units / tally.loadedCapacity, 3) : 0,
+      };
+    }),
+    tiers,
+    shipPurchases,
+    holdUpgrades,
+    stallDaysAtReserve,
+    lowestStock,
     days,
     merchants,
     marketAt,
+    totalWorthAt,
+    giniAt,
+    topThreeShareAt,
     stalledAtEnd: merchants.filter((merchant) => merchant.lastTradeDay <= days - 50).length,
+    laidUpAtEnd: state.npcMerchants.filter(isLaidUp).length,
     unitsMovedPerDay: round(
       merchants.reduce((total, merchant) => total + merchant.unitsBought + merchant.unitsSold, 0) / days,
     ),
+    journeysCompleted: merchants.reduce((total, merchant) => total + merchant.trips, 0),
+    restrictionBreaks,
+    goodsUnaccounted,
+    purseGrewWithoutSale,
   };
+}
+
+function behaviourBy(merchants: readonly NpcReport[], key: "temperament" | "strategy"): GroupBehaviour[] {
+  return [...new Set(merchants.map((merchant) => merchant[key]))].sort().map((group) => {
+    const members = merchants.filter((merchant) => merchant[key] === group);
+    const average = (pick: (merchant: NpcReport) => number) =>
+      round(members.reduce((total, merchant) => total + pick(merchant), 0) / members.length);
+    return {
+      group,
+      merchants: members.length,
+      tripsEach: average((merchant) => merchant.trips),
+      unitsEach: average((merchant) => merchant.unitsSold),
+      averageTripDays: average((merchant) => merchant.averageTripDays),
+      portsEach: average((merchant) => merchant.portsVisited),
+      profitPerUnit: average((merchant) => merchant.profitPerUnit),
+      growth: average((merchant) => (merchant.worthAt[200] ?? merchant.startWorth) / merchant.startWorth),
+    };
+  });
+}
+
+/** The same world across several seeds, with the first kept in full. */
+export function measureNpcWorlds(seeds: readonly number[] = SIM_SEEDS) {
+  const worlds = seeds.map((seed) => measureNpcWorld(seed));
+  const middleOf = (pick: (world: NpcWorldReport) => number) => round(median(worlds.map(pick)), 3);
+  const atDays = (pick: (world: NpcWorldReport, day: number) => number) =>
+    [30, 90, 200].map((day) => ({ day, value: middleOf((world) => pick(world, day)) }));
+  const growths = worlds.flatMap((world) =>
+    world.merchants.map((merchant) => merchant.worthAt[200] / merchant.startWorth),
+  );
+  const sum = (pick: (load: VesselLoad) => number, vessel: VesselClassId) =>
+    worlds.reduce((total, world) => total + pick(world.loads.find((load) => load.vessel === vessel)!), 0);
+  return {
+    seeds: seeds.length,
+    first: worlds[0],
+    loads: VESSEL_CLASS_IDS.map((vessel) => {
+      const voyages = sum((load) => load.voyages, vessel);
+      const empty = sum((load) => load.emptyVoyages, vessel);
+      const weighted = (pick: (load: VesselLoad) => number, weight: (load: VesselLoad) => number) => {
+        const totalWeight = sum(weight, vessel);
+        return totalWeight > 0
+          ? round(sum((load) => pick(load) * weight(load), vessel) / totalWeight, 3)
+          : 0;
+      };
+      return {
+        vessel,
+        voyagesPerWorld: round(voyages / seeds.length),
+        emptyShare: voyages > 0 ? round(empty / voyages, 3) : 0,
+        unitsPerVoyage: weighted((load) => load.unitsPerVoyage, (load) => load.voyages),
+        unitsPerLoadedVoyage: weighted((load) => load.unitsPerLoadedVoyage, (load) => load.voyages - load.emptyVoyages),
+        holdUse: weighted((load) => load.holdUse, (load) => load.voyages),
+        loadedHoldUse: weighted((load) => load.loadedHoldUse, (load) => load.voyages - load.emptyVoyages),
+      };
+    }),
+    tiers: worlds[0].tiers.map((entry, index) => ({
+      tier: entry.tier,
+      merchants: entry.merchants,
+      medianGrowth: round(median(worlds.map((world) => world.tiers[index].medianGrowth))),
+      lowestGrowth: Math.min(...worlds.map((world) => world.tiers[index].lowestGrowth)),
+      voyagesEach: round(median(worlds.map((world) => world.tiers[index].voyagesEach))),
+      unitsEach: round(median(worlds.map((world) => world.tiers[index].unitsEach))),
+      profitEach: round(median(worlds.map((world) => world.tiers[index].profitEach))),
+      shareOfWealthAtEnd: round(median(worlds.map((world) => world.tiers[index].shareOfWealthAtEnd)), 3),
+    })),
+    shipPurchasesPerWorld: round(worlds.reduce((total, world) => total + world.shipPurchases.length, 0) / seeds.length),
+    shipPurchasesFirstWorld: worlds[0].shipPurchases,
+    holdUpgradesPerWorld: round(worlds.reduce((total, world) => total + world.holdUpgrades, 0) / seeds.length),
+    stallDaysAtReserve: middleOf((world) => world.stallDaysAtReserve),
+    lowestStock: Math.min(...worlds.map((world) => world.lowestStock)),
+    behaviourByTemperament: behaviourBy(worlds[0].merchants, "temperament"),
+    behaviourByStrategy: behaviourBy(worlds[0].merchants, "strategy"),
+    totalWorth: atDays((world, day) => world.totalWorthAt[day]),
+    gini: atDays((world, day) => world.giniAt[day]),
+    topThreeShare: atDays((world, day) => world.topThreeShareAt[day]),
+    priceMovement: atDays((world, day) => world.marketAt[day].priceMovement),
+    priceIndex: atDays((world, day) => world.marketAt[day].priceIndex),
+    stallsMoved: atDays((world, day) => world.marketAt[day].stallsMoved),
+    largestPriceMove: atDays((world, day) => world.marketAt[day].largestPriceMove),
+    stallsNearEmpty: atDays((world, day) => world.marketAt[day].stallsNearEmpty),
+    stallsNearFull: atDays((world, day) => world.marketAt[day].stallsNearFull),
+    medianGrowth: round(median(growths)),
+    richestGrowth: round(Math.max(...growths)),
+    shrunkBelowHalf: round(growths.filter((growth) => growth < 0.5).length / seeds.length),
+    stalledAtEnd: middleOf((world) => world.stalledAtEnd),
+    laidUpAtEnd: middleOf((world) => world.laidUpAtEnd),
+    unitsMovedPerDay: middleOf((world) => world.unitsMovedPerDay),
+    journeysCompleted: middleOf((world) => world.journeysCompleted),
+    restrictionBreaks: worlds.reduce((total, world) => total + world.restrictionBreaks, 0),
+    goodsUnaccounted: worlds.reduce((total, world) => total + world.goodsUnaccounted, 0),
+    purseGrewWithoutSale: worlds.reduce((total, world) => total + world.purseGrewWithoutSale, 0),
+  };
+}
+
+export interface CompetitionCheck {
+  strategy: string;
+  withMerchants: number;
+  withoutMerchants: number;
+  change: number;
+}
+
+/** What rivals cost a player: the same play, on the same day, with and without them. */
+export function measureCompetition(ids: readonly string[] = ["manual", "mixed-active", "two-port-start"]): CompetitionCheck[] {
+  const fresh = createNewGame("Simulated");
+  return ids.map((id) => {
+    const definition = STRATEGIES.find((entry) => entry.id === id)!;
+    const worth = (base: GameState) =>
+      runStrategy(definition, { base, days: [200] }).result.snapshots[0].netWorth;
+    const withMerchants = worth(fresh);
+    const withoutMerchants = worth({ ...fresh, npcMerchants: [], npcActivity: [] });
+    return { strategy: id, withMerchants, withoutMerchants, change: round(withMerchants / withoutMerchants - 1, 3) };
+  });
 }
 
 // ---- Exploits ----

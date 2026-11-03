@@ -36,7 +36,14 @@ import {
   getShipDefence,
   canSelectedShipReach,
   getSelectedVesselClass,
+  getRecoveryOptions,
+  getRepaymentRisk,
+  getRescueTerms,
   getShipMaximumHull,
+  isStranded,
+  RESCUE_PURSE,
+  RESCUE_REPUTATION_COST,
+  type RecoveryOption,
   getShipReturnPlan,
   getShipRouteConditions,
   getShipRoutePreview,
@@ -68,6 +75,7 @@ import { applyCommand, type CommandResult, type GameCommand, type RecordedComman
 import { NewerSaveError } from "./game/save-format";
 import { commitGame, openGameSession, readRawSave, startCommandLog } from "./game/storage";
 import { SaveBackupPanel, downloadJson } from "./components/SaveBackupPanel";
+import { RivalDockPanel, RivalList, RivalShipPanel, getStallNews } from "./components/RivalMerchants";
 import {
   formatInGameDays,
   formatTravelDuration,
@@ -709,6 +717,11 @@ function MarketPanel({
                   <span className="market-stock-line">
                     Stall {marketStock} available · You hold {owned}
                   </span>
+                  {getStallNews(state, state.currentTown, good.id) && (
+                    <span className="market-stall-news">
+                      {getStallNews(state, state.currentTown, good.id)}
+                    </span>
+                  )}
                   {owned > 0 && (
                     <span className={`inventory-return${estimatedProfit >= 0 ? " return-positive" : " return-negative"}`}>
                       Avg cost {formatPrice(averageCost)} · Sell est. {formatPrice(estimatedSellingValue)} ({estimatedProfit >= 0 ? "+" : ""}{formatPrice(estimatedProfit)})
@@ -814,15 +827,30 @@ function getVesselSpeedLabel(vessel: VesselClass): string {
   return vessel.travelFactor > 1 ? "slow" : "normal";
 }
 
+const IN_DEBT_NOTICE = "Repay the moneylender at the docks first.";
+
+const RECOVERY_OPTION_LABELS: Record<RecoveryOption, string> = {
+  "sell-cargo": "sell your cargo",
+  warehouse: "take goods from your warehouse and sell them",
+  farm: "collect your farm's crop and sell it",
+  "other-ship": "switch to another of your ships",
+  "route-capital": "end a trade route to get its Coins back",
+  "visit-contract": "complete a visit contract",
+};
+
 function DockPanel({
   state,
   onUpgrade,
   onRepair,
+  onTakeRescue,
+  onRepayDebt,
   onBuyShip,
 }: {
   state: GameState;
   onUpgrade: (upgrade: UpgradeId) => void;
   onRepair: () => void;
+  onTakeRescue: () => void;
+  onRepayDebt: () => void;
   onBuyShip: (vesselClass: VesselClassId) => void;
 }) {
   const [confirmingShipClass, setConfirmingShipClass] =
@@ -839,6 +867,11 @@ function DockPanel({
   const maximumHull = getShipMaximumHull(state);
   const hullToRepair = maximumHull - state.shipHull;
   const repairCost = hullToRepair * vessel.repairCostPerHull;
+  const affordableHull = Math.min(hullToRepair, Math.floor(state.coins / vessel.repairCostPerHull));
+  const rescue = getRescueTerms(state);
+  const repaymentRisk = getRepaymentRisk(state);
+  const [confirmingRepayment, setConfirmingRepayment] = useState(false);
+  const stuckHere = state.shipHull === 0 && affordableHull === 0 && !rescue;
   const canBuyShipHere =
     SHIPYARD_PORTS.includes(state.currentTown) &&
     state.fleet.length < MAX_PLAYER_SHIPS &&
@@ -852,6 +885,82 @@ function DockPanel({
         <h2>Shipyard repairs & upgrades</h2>
         <p>{vessel.name}: repair for {formatCoins(vessel.repairCostPerHull)} Coins per missing hull. Upgrade costs and new stats are shown before fitting.</p>
       </div>
+      {rescue && (
+        <div className="repair-callout rescue-callout">
+          <div>
+            <strong>Moneylender's advance</strong>
+            <p>
+              You can't pay your way and have nothing left to sell. A moneylender will
+              {rescue.hullRepaired > 0 ? ` patch your hull to ${state.shipHull + rescue.hullRepaired} and` : ""} bring
+              your purse up to {formatCoins(RESCUE_PURSE)} Coins. You'll owe {formatCoins(rescue.owed)} Coins and
+              lose {RESCUE_REPUTATION_COST} reputation.
+            </p>
+            <p>Until it's repaid, you can't buy ships, upgrades or property, or fund a trade route.</p>
+          </div>
+          <button className="repair-button" onClick={onTakeRescue}>
+            Accept · owe {formatCoins(rescue.owed)}c
+          </button>
+        </div>
+      )}
+      {stuckHere && (
+        <div className="repair-callout rescue-callout" role="status">
+          <div>
+            <strong>Your ship can't sail</strong>
+            <p>
+              You need {formatCoins(vessel.repairCostPerHull)} Coins to repair 1 hull. Raise them here:{" "}
+              {getRecoveryOptions(state).map((option) => RECOVERY_OPTION_LABELS[option]).join(", ")}.
+            </p>
+          </div>
+        </div>
+      )}
+      {state.debtOwed > 0 && (
+        <div className="repair-callout rescue-callout">
+          <div>
+            <strong>You owe {formatCoins(state.debtOwed)} Coins</strong>
+            <p>Until it's repaid, you can't buy ships, upgrades or property, or fund a trade route.</p>
+          </div>
+          {confirmingRepayment && repaymentRisk ? (
+            <div className="repayment-warning" role="alert">
+              <p>
+                <strong>This would leave {formatCoins(repaymentRisk.coinsLeft)} Coins in your purse</strong>
+                {repaymentRisk.debtLeft > 0 ? `, and you'd still owe ${formatCoins(repaymentRisk.debtLeft)}` : ""}.
+              </p>
+              <p>
+                {repaymentRisk.mustBorrowAgain
+                  ? "That won't pay for goods or repairs, and you'd have nothing to sell. You'd have to borrow again, which adds to what you owe."
+                  : "That won't buy any goods, and you'd have nothing to sell. A visit contract would be your only income."}
+              </p>
+              <div>
+                <button className="ship-cancel-button" onClick={() => setConfirmingRepayment(false)}>
+                  Keep my Coins
+                </button>
+                <button
+                  className="repair-button"
+                  onClick={() => {
+                    setConfirmingRepayment(false);
+                    onRepayDebt();
+                  }}
+                >
+                  Repay anyway
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              className="repair-button"
+              disabled={state.coins <= 0 || Boolean(state.voyage) || state.encounterPending}
+              onClick={() => {
+                if (repaymentRisk) setConfirmingRepayment(true);
+                else onRepayDebt();
+              }}
+            >
+              {state.coins >= state.debtOwed
+                ? `Repay · ${formatCoins(state.debtOwed)}c`
+                : `Pay ${formatCoins(state.coins)}c`}
+            </button>
+          )}
+        </div>
+      )}
       <div className="ship-hero">
         <VesselPortrait vesselClass={vessel.id} />
         <div>
@@ -938,20 +1047,22 @@ function DockPanel({
           <strong>Hull {state.shipHull}/{maximumHull}</strong>
           <p>
             {hullToRepair > 0
-              ? `Restore ${hullToRepair} hull · ${formatCoins(repairCost)} Coins total (${vessel.repairCostPerHull} per hull).`
+              ? `Restore ${hullToRepair} hull · ${formatCoins(repairCost)} Coins total (${vessel.repairCostPerHull} per hull).${affordableHull < hullToRepair ? " You can repair part of it with what you have." : ""}`
               : "Your ship is fully repaired."}
           </p>
         </div>
         <button
           aria-label={
             hullToRepair > 0
-              ? `Repair ship for ${formatCoins(repairCost)} Coins`
+              ? affordableHull < hullToRepair
+                ? `Repair ${affordableHull} hull for ${formatCoins(affordableHull * vessel.repairCostPerHull)} Coins`
+                : `Repair ship for ${formatCoins(repairCost)} Coins`
               : "Ship fully repaired"
           }
           className="repair-button"
           disabled={
             hullToRepair === 0 ||
-            state.coins < repairCost ||
+            affordableHull === 0 ||
             Boolean(state.voyage) ||
             state.encounterPending
           }
@@ -959,9 +1070,11 @@ function DockPanel({
         >
           {hullToRepair === 0
             ? "Fully repaired"
-            : state.coins < repairCost
-              ? `Need ${formatCoins(repairCost)}c`
-              : `Repair · ${formatCoins(repairCost)}c`}
+            : affordableHull === 0
+              ? `Need ${formatCoins(vessel.repairCostPerHull)}c`
+              : affordableHull < hullToRepair
+                ? `Repair ${affordableHull} of ${hullToRepair} · ${formatCoins(affordableHull * vessel.repairCostPerHull)}c`
+                : `Repair · ${formatCoins(repairCost)}c`}
         </button>
       </div>
       <div className="ship-purchase-panel">
@@ -1177,8 +1290,8 @@ function PortContextPanel({
           {getRouteModeNote(route) && <p className="route-speed-note">{getRouteModeNote(route)}</p>}
           <p className="npc-port-traffic">
             {dockedMerchants.length
-              ? `At this port: ${dockedMerchants.map((merchant) => merchant.name).join(", ")}.`
-              : "No NPC merchants are docked here right now."}
+              ? `In port: ${dockedMerchants.slice(0, 2).map((merchant) => merchant.name).join(", ")}${dockedMerchants.length > 2 ? ` and ${dockedMerchants.length - 2} more` : ""}.`
+              : "No other merchants are in port right now."}
             {recentPortActivity
               ? ` Latest: ${getNpcMerchant(state, recentPortActivity.merchantId)?.name ?? "A merchant"} ${recentPortActivity.message}.`
               : ""}
@@ -2341,6 +2454,8 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saveIsNewer, setSaveIsNewer] = useState(false);
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null);
+  const [selectedDock, setSelectedDock] = useState<TownId | null>(null);
   const [accountService] = useState(() => {
     const config = getOnlineConfig();
     return config ? createAccountService(config) : null;
@@ -2517,7 +2632,8 @@ export default function App() {
   }, [notice]);
 
   const startNewGame = useCallback((captain: string) => {
-    const nextGame = createNewGame(captain);
+    // Each new game's merchants judge prices differently, so no two worlds play alike.
+    const nextGame = createNewGame(captain, Math.floor(Math.random() * 2 ** 31));
     pendingCommands.current = [];
     nextSeq.current = 1;
     lastCommandAt.current = 0;
@@ -2572,6 +2688,7 @@ export default function App() {
       unavailable: "Ships can only be purchased while docked and clear of an encounter.",
       "not-shipyard": "New ships are available at Dhaka, Chittagong, and Hooghly.",
       "fleet-full": `You can own up to ${MAX_PLAYER_SHIPS} ships in this stage.`,
+      "in-debt": IN_DEBT_NOTICE,
       coins: `A new ${VESSEL_CLASSES[vesselClass].name} costs ${formatCoins(VESSEL_CLASSES[vesselClass].price)} Coins.`,
     });
   }, [runCommand]);
@@ -2612,6 +2729,7 @@ export default function App() {
         unavailable: "Resolve the current river encounter before changing automated routes.",
         "not-owned": "That ship is not part of your fleet.",
         "active-ship": "The selected ship stays under your direct control; assign a different ship.",
+        "in-debt": IN_DEBT_NOTICE,
         "not-docked": "Wait until the ship reaches a port before changing its route.",
         "port-not-visited": "Automated routes can use only ports you have visited.",
         "same-port": "Choose a different visited port for the other end of the route.",
@@ -2675,6 +2793,7 @@ export default function App() {
     runCommand({ type: "buyWarehouse" }, {
       coins: `A warehouse costs ${formatCoins(WAREHOUSE_PRICE)} Coins. Earn more before purchasing.`,
       "already-owned": "You already own a warehouse in this port.",
+      "in-debt": IN_DEBT_NOTICE,
     });
   }, [runCommand]);
 
@@ -2682,6 +2801,7 @@ export default function App() {
     runCommand({ type: "buyResidence" }, {
       coins: `A residence costs ${formatCoins(RESIDENCE_PRICE)} Coins. Earn more before purchasing.`,
       "already-owned": "You already have a residence in another port.",
+      "in-debt": IN_DEBT_NOTICE,
     });
   }, [runCommand]);
 
@@ -2689,6 +2809,7 @@ export default function App() {
     runCommand({ type: "buyFarm" }, {
       coins: `A farm costs ${formatCoins(FARM_PRICE)} Coins. Earn more before purchasing.`,
       "already-owned": "You already own a farm in this port.",
+      "in-debt": IN_DEBT_NOTICE,
     });
   }, [runCommand]);
 
@@ -2697,6 +2818,7 @@ export default function App() {
       "no-residence": "Establish a residence before starting a household.",
       "away-from-residence": "Return to your residence to establish a household.",
       "already-married": "Your household is already established.",
+      "in-debt": IN_DEBT_NOTICE,
       coins: `Establishing a household costs ${formatCoins(MARRIAGE_HOUSEHOLD_COST)} Coins.`,
     });
   }, [runCommand]);
@@ -2728,6 +2850,7 @@ export default function App() {
       runCommand({ type: "buyUpgrade", upgrade }, {
         coins: "Save a few more Coins for this ship upgrade.",
         "max-level": "This upgrade is already at its best.",
+      "in-debt": IN_DEBT_NOTICE,
         unavailable: "You can only upgrade while docked and clear of an encounter.",
       });
     },
@@ -2807,6 +2930,7 @@ export default function App() {
     properties: "Properties",
     notifications: "Notices",
     backups: "Save backups",
+    rivals: "Rival merchants",
     account: "Account",
   };
 
@@ -2941,7 +3065,18 @@ export default function App() {
             bottomInset={portPanelHeight}
             state={game}
             now={now}
+            selectedMerchantId={selectedMerchantId}
+            onSelectMerchant={(merchantId) => {
+              setSelectedDock(null);
+              setSelectedMerchantId(merchantId);
+            }}
+            onSelectDock={(dock) => {
+              setSelectedMerchantId(null);
+              setSelectedDock(dock);
+            }}
             onSelectTown={(destination: TownId) => {
+              setSelectedMerchantId(null);
+              setSelectedDock(null);
               if (!atDock) return;
               setSelectedBuilding(null);
               setMoreOpen(false);
@@ -2950,7 +3085,27 @@ export default function App() {
             }}
           />
 
-          {screen === "map" && !game.voyage && !game.encounterPending && (
+          {screen === "map" && selectedMerchantId && (
+            <RivalShipPanel
+              state={game}
+              merchantId={selectedMerchantId}
+              onClose={() => {
+                setSelectedMerchantId(null);
+                setSelectedDock(null);
+              }}
+            />
+          )}
+
+          {screen === "map" && selectedDock && !selectedMerchantId && (
+            <RivalDockPanel
+              state={game}
+              town={selectedDock}
+              onSelect={setSelectedMerchantId}
+              onClose={() => setSelectedDock(null)}
+            />
+          )}
+
+          {screen === "map" && !selectedMerchantId && !selectedDock && !game.voyage && !game.encounterPending && (
             <PortContextPanel
               expanded={portPanelExpanded}
               onToggle={() => setPortPanelExpanded((open) => !open)}
@@ -2984,9 +3139,13 @@ export default function App() {
             </div>
           )}
 
-          {screen === "map" && game.shipHull <= 3 && !game.encounterPending && !game.voyage && (
+          {screen === "map" && !game.encounterPending && !game.voyage && (game.shipHull <= 3 || isStranded(game)) && (
             <div className="low-hull-alert" role="status">
-              Your ship is battered. Visit the docks for repairs before sailing.
+              {isStranded(game)
+                ? "You have no way left to raise money. Visit the docks: a moneylender can get you moving, at a price."
+                : game.shipHull === 0
+                  ? "Your ship can't sail with no hull left. Visit the docks: you can repair as much as you can afford."
+                  : "Your ship is battered. Visit the docks for repairs before sailing."}
             </div>
           )}
 
@@ -3013,6 +3172,16 @@ export default function App() {
                       unavailable: "You can only repair while docked and clear of an encounter.",
                     });
                   }}
+                  onTakeRescue={() => {
+                    runCommand({ type: "takeRescueLoan" }, {
+                      "not-stranded": "The moneylender only helps merchants with no other way to carry on.",
+                    });
+                  }}
+                  onRepayDebt={() => {
+                    runCommand({ type: "repayDebt" }, {
+                      coins: "You have no Coins to repay with yet.",
+                    });
+                  }}
                   onUpgrade={handleUpgrade}
                   state={game}
                   onBuyShip={handleBuyPlayerShip}
@@ -3020,6 +3189,7 @@ export default function App() {
               )}
               {screen === "progress" && <ProgressPanel state={game} />}
               {screen === "family" && <HouseholdPanel state={game} />}
+              {screen === "rivals" && <RivalList state={game} />}
               {screen === "backups" && (
                 <SaveBackupPanel onRestored={() => window.location.reload()} />
               )}
@@ -3120,6 +3290,7 @@ export default function App() {
                 ["family", "Household"],
                 ["properties", "Properties"],
                 ["notifications", "Notifications"],
+                ["rivals", "Rival merchants"],
                 ["backups", "Save backups"],
                 ...(accountService ? ([["account", "Account"]] as const) : []),
               ] as const).map(([destination, label]) => (

@@ -14,6 +14,7 @@ import {
   getSelectedVesselClass,
   getShipRouteConditions,
   getShipRoutePreview,
+  getMerchantRoute,
   getTownRoute,
   isHistoricalRouteAlertActive,
   VESSEL_CLASSES,
@@ -177,10 +178,24 @@ function getIsMobileViewport(): boolean {
   );
 }
 
+// The rest are counted beside them, so a busy port stays readable on a phone.
+const DOCKED_SHIPS_SHOWN = 3;
+const DOCKED_SHIP_SPACING = 15;
+// A comfortable fingertip, in screen pixels, however far the map is zoomed.
+const TOUCH_TARGET_PIXELS = 44;
+
+function hasCoarsePointer(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+}
+
 interface BengalMapProps {
   state: GameState;
   now: number;
   onSelectTown: (town: TownId) => void;
+  onSelectMerchant?: (merchantId: string) => void;
+  /** A finger can't pick between ships this close, so a dock's ships are chosen from a list. */
+  onSelectDock?: (town: TownId) => void;
+  selectedMerchantId?: string | null;
   interactive?: boolean;
   /** Hidden rather than removed, so it keeps its camera and loaded art. */
   hidden?: boolean;
@@ -436,6 +451,9 @@ export default function BengalMap({
   state,
   now,
   onSelectTown,
+  onSelectMerchant,
+  onSelectDock,
+  selectedMerchantId = null,
   interactive = true,
   hidden = false,
   bottomInset = 0,
@@ -638,6 +656,22 @@ export default function BengalMap({
       );
     });
   }, [shipX, shipY, followShip, aspectRatio]);
+  const liveDay = state.sailingDay + (voyage ? progress * voyage.durationDays : 0);
+  const touchScreen = isMobileViewport || hasCoarsePointer();
+  const selectDock = (town: TownId) => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    onSelectDock?.(town);
+  };
+  const selectMerchant = (merchantId: string) => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    onSelectMerchant?.(merchantId);
+  };
   const selectByKeyboard = (
     event: KeyboardEvent<SVGGElement>,
     town: TownId,
@@ -855,6 +889,7 @@ export default function BengalMap({
   const viewBox = `${camera.x} ${camera.y} ${viewWidth} ${viewHeight}`;
   // Markers keep one on-screen size at every zoom so names stay readable.
   const pixelsPerUnit = mapPixelHeight > 0 ? mapPixelHeight / viewHeight : 1;
+  const touchRadius = TOUCH_TARGET_PIXELS / 2 / pixelsPerUnit;
   const markerScale = Math.max(0.5, Math.min(2.4, 0.88 / pixelsPerUnit));
   const homePoint = toMapPoint(PORT_QUAYS[state.currentTown]);
   const fleetShips = state.fleet.filter(
@@ -902,41 +937,58 @@ export default function BengalMap({
 
           {state.npcMerchants
             .filter((merchant) => merchant.phase === "traveling")
-            .map((merchant, index) => {
-              const merchantRoute = getTownRoute(
+            .map((merchant) => {
+              const merchantRoute = getMerchantRoute(
                 merchant.currentPort,
                 merchant.destinationPort,
+                merchant.vesselClass,
+                state.navigationConditions,
               );
               if (!merchantRoute) return null;
+              // Days tick over one at a time, so glide between them while the player sails.
+              const dayProgress = Math.max(0, Math.min(1, liveDay - state.worldDay));
               const travelProgress = Math.max(
                 0,
                 Math.min(
                   1,
-                  1 - merchant.travelDaysRemaining / merchant.travelDaysTotal,
+                  (merchant.travelDaysTotal - merchant.travelDaysRemaining + dayProgress) /
+                    merchant.travelDaysTotal,
                 ),
               );
+              const travelFactor = VESSEL_CLASSES[merchant.vesselClass].travelFactor;
               const position = toMapPoint(
-                getRouteStateAt(merchantRoute, travelProgress).point,
+                getRouteStateAt(merchantRoute, travelProgress, travelFactor).point,
               );
-              const color = index % 2 === 0 ? "#f0dfb6" : "#d8e3c4";
+              const inspected = merchant.id === selectedMerchantId;
               return (
-                <g key={merchant.id} role="img" aria-label={`${merchant.name} traveling`} className="npc-traffic">
-                  <path
-                    d={toMapPath(merchantRoute.points)}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth={1.8 * markerScale}
-                    strokeDasharray={`${3 * markerScale} ${8 * markerScale}`}
-                    strokeLinecap="round"
-                    opacity=".6"
-                    aria-hidden="true"
-                  />
+                <g
+                  key={merchant.id}
+                  role={interactive ? "button" : "img"}
+                  tabIndex={-1}
+                  aria-label={`${merchant.name}, sailing to ${getTown(merchant.destinationPort).name}`}
+                  className="npc-traffic"
+                  onClick={interactive ? () => selectMerchant(merchant.id) : undefined}
+                >
+                  {inspected && (
+                    <path
+                      d={toMapPath(merchantRoute.points)}
+                      fill="none"
+                      stroke="#f0dfb6"
+                      strokeWidth={2 * markerScale}
+                      strokeDasharray={`${3 * markerScale} ${8 * markerScale}`}
+                      strokeLinecap="round"
+                      opacity=".8"
+                      aria-hidden="true"
+                    />
+                  )}
                   <JourneyVehicle
                     route={merchantRoute}
                     progress={travelProgress}
-                    size={0.62 * markerScale}
+                    travelFactor={travelFactor}
+                    vesselClass={merchant.vesselClass}
+                    size={0.68 * markerScale}
                   />
-                  <circle cx={position.x} cy={position.y} r={14 * markerScale} fill="transparent">
+                  <circle cx={position.x} cy={position.y} r={Math.max(20 * markerScale, touchRadius)} fill="transparent" pointerEvents="all">
                     <title>
                       {merchant.name}: {getTown(merchant.currentPort).name} to{" "}
                       {getTown(merchant.destinationPort).name}
@@ -945,6 +997,80 @@ export default function BengalMap({
                 </g>
               );
             })}
+
+          {TOWNS.map((town) => {
+            const docked = state.npcMerchants.filter(
+              (merchant) => merchant.phase === "docked" && merchant.currentPort === town.id,
+            );
+            if (docked.length === 0) return null;
+            const quay = toMapPoint(PORT_QUAYS[town.id]);
+            const shownShips = docked.slice(0, DOCKED_SHIPS_SHOWN);
+            const shipX = (index: number) => quay.x + (28 + index * DOCKED_SHIP_SPACING) * markerScale;
+            const shipY = (index: number) => quay.y + (14 + (index % 2) * 7) * markerScale;
+            const groupWidth = Math.max(
+              touchRadius * 2,
+              shipX(shownShips.length - 1) - shipX(0) + 28 * markerScale,
+            );
+            const groupCentre = (shipX(0) + shipX(shownShips.length - 1)) / 2;
+            const onlyMerchant = docked.length === 1 ? docked[0] : null;
+            return (
+              <g key={`docked-${town.id}`} className="npc-docked">
+                {shownShips.map((merchant, index) => (
+                  <g
+                    key={merchant.id}
+                    role={interactive && !touchScreen ? "button" : undefined}
+                    tabIndex={interactive && !touchScreen ? -1 : undefined}
+                    aria-label={touchScreen ? undefined : `${merchant.name}, in port at ${town.name}`}
+                    onClick={interactive && !touchScreen ? () => selectMerchant(merchant.id) : undefined}
+                  >
+                    <BengalTradingVessel
+                      x={shipX(index)}
+                      y={shipY(index)}
+                      vesselClass={merchant.vesselClass}
+                      size={0.58 * markerScale}
+                    />
+                    {!touchScreen && (
+                      <circle cx={shipX(index)} cy={shipY(index)} r={14 * markerScale} fill="transparent" pointerEvents="all">
+                        <title>{merchant.name}, in port at {town.name}</title>
+                      </circle>
+                    )}
+                  </g>
+                ))}
+                {docked.length > DOCKED_SHIPS_SHOWN && (
+                  <text
+                    className="npc-docked-more"
+                    x={shipX(DOCKED_SHIPS_SHOWN)}
+                    y={quay.y + 20 * markerScale}
+                    fontSize={11 * markerScale}
+                    aria-hidden="true"
+                  >
+                    +{docked.length - DOCKED_SHIPS_SHOWN}
+                  </text>
+                )}
+                {touchScreen && interactive && (
+                  <rect
+                    className="npc-dock-target"
+                    role="button"
+                    tabIndex={-1}
+                    aria-label={
+                      onlyMerchant
+                        ? `${onlyMerchant.name}, in port at ${town.name}`
+                        : `${docked.length} merchants in port at ${town.name}`
+                    }
+                    x={groupCentre - groupWidth / 2}
+                    y={shipY(0) + 3 * markerScale - touchRadius}
+                    width={groupWidth}
+                    height={touchRadius * 2}
+                    fill="transparent"
+                    pointerEvents="all"
+                    onClick={() =>
+                      onlyMerchant ? selectMerchant(onlyMerchant.id) : selectDock(town.id)
+                    }
+                  />
+                )}
+              </g>
+            );
+          })}
 
           {fleetShips.map((entry, index) => {
             const trip = getFleetShipRoute(state, entry);

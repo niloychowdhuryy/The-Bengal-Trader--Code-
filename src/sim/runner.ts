@@ -83,6 +83,9 @@ export interface DaySnapshot {
   fleet: number;
   market: MarketSnapshot;
   npcTotalWorth: number;
+  /** The player's place among all the merchants by net worth. 1 is the richest. */
+  playerRank: number;
+  richestRival: number;
 }
 
 export interface RouteShare {
@@ -121,6 +124,9 @@ function snapshot(sim: Sim, day: number): DaySnapshot {
     fleet: state.fleet.length,
     market: measureMarket(state),
     npcTotalWorth: state.npcMerchants.reduce((total, merchant) => total + npcWorth(merchant), 0),
+    playerRank:
+      1 + state.npcMerchants.filter((merchant) => npcWorth(merchant) > estimateNetWorth(state)).length,
+    richestRival: Math.max(0, ...state.npcMerchants.map(npcWorth)),
   };
 }
 
@@ -151,7 +157,7 @@ export function runStrategy(
   definition: Pick<StrategyDefinition, "id" | "strategy" | "noise" | "speed">,
   { seed = 1, days = SIM_DAYS, base = createNewGame("Simulated") }: RunOptions = {},
 ): { result: RunResult; sim: Sim } {
-  const sim = createSim(base, definition.speed);
+  const sim = createSim({ ...base, worldSeed: seed }, definition.speed);
   const context: BotContext = { random: seededRandom(seed), noise: definition.noise, reserved: {} };
   const snapshots: DaySnapshot[] = [];
   const remaining = [...days];

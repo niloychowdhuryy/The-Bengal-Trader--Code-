@@ -12,9 +12,9 @@ import {
   WAREHOUSE_PRICE,
   createInitialMarketStock,
   getGoodPrice,
+  getMerchantWorth,
   type GameState,
   type GoodId,
-  type NpcMerchant,
 } from "../game/model";
 
 const GOODS_SHARE = 0.8;
@@ -30,7 +30,7 @@ function goodsValue(goods: Record<GoodId, number>): number {
 }
 
 export function estimateNetWorth(state: GameState): number {
-  let worth = state.coins;
+  let worth = state.coins - state.debtOwed;
   for (const ship of state.fleet) {
     worth += goodsValue(ship.cargo);
     worth += VESSEL_CLASSES[ship.vesselClass].price * SHIP_SHARE;
@@ -51,8 +51,15 @@ export function estimateNetWorth(state: GameState): number {
   return Math.round(worth);
 }
 
-export function npcWorth(merchant: NpcMerchant): number {
-  return Math.round(merchant.budget + goodsValue(merchant.cargo));
+export const npcWorth = getMerchantWorth;
+
+/** How unevenly wealth is shared: 0 means everyone has the same, near 1 means one has it all. */
+export function giniOf(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const total = sorted.reduce((sum, value) => sum + value, 0);
+  if (total <= 0 || sorted.length === 0) return 0;
+  const weighted = sorted.reduce((sum, value, index) => sum + (index + 1) * value, 0);
+  return round((2 * weighted) / (sorted.length * total) - (sorted.length + 1) / sorted.length, 3);
 }
 
 export interface MarketSnapshot {

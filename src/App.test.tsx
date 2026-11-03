@@ -116,16 +116,16 @@ describe("first game screen", () => {
     await saveGame(game);
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Show port details" }));
-    expect(await screen.findByText("At this port: Mariam Banu.")).toBeVisible();
+    expect(await screen.findByText(/In port:.*Mariam Banu/)).toBeVisible();
     fireEvent.click(getMapPort(/^Dhaka/));
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Town centre" }));
 
     expect(await screen.findByRole("region", { name: "Merchant traffic in Dhaka" }))
       .toHaveTextContent("Abdul Rahman");
-    fireEvent.click(screen.getByRole("button", { name: "Inspect" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Inspect" })[0]);
     expect(screen.getByText(/Specialises in Rice, Salt, Bengal cotton textiles/)).toBeVisible();
-    expect(screen.getByText(/Capital: 5,000 Coins · Goods carried: Rice × 1/)).toBeVisible();
+    expect(screen.getByText(/Capital: 30,000 Coins · Goods carried: Rice × 1/)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /Buy 1 Rice ·/ }));
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Bought 1 Rice from Abdul Rahman",
@@ -805,7 +805,12 @@ describe("first game screen", () => {
         onSelectTown={() => undefined}
       />,
     );
-    const vessel = map.container.querySelector(".bengal-trading-vessel");
+    // Other merchants' ships are at the docks too, so find the player's.
+    const playerVessel = () =>
+      [...map.container.querySelectorAll(".bengal-trading-vessel")].find(
+        (candidate) => !candidate.closest(".npc-docked, .npc-traffic"),
+      );
+    const vessel = playerVessel();
     expect(vessel?.querySelector(":scope > g")).toHaveAttribute(
       "transform",
       "scale(0.45)",

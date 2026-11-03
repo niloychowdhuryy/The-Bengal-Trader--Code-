@@ -117,6 +117,17 @@ function sellCargo(sim: Sim, context: BotContext): void {
 }
 
 function repairIfNeeded(sim: Sim): void {
+  const hullLeft = sim.state.shipHull;
+  const repairCost =
+    (getShipMaximumHull(sim.state) - hullLeft) * getSelectedVesselClass(sim.state).repairCostPerHull;
+  // A ship about to stop sailing is worth more than any cargo's margin, as it is to a player.
+  if (hullLeft <= 2 && sim.state.coins < repairCost) {
+    for (const { id: good } of GOODS) {
+      const stock = sim.state.marketStock[sim.state.currentTown][good];
+      const quantity = Math.min(sim.state.cargo[good], MARKET_MAX_STOCK - stock);
+      if (quantity > 0) send(sim, { type: "sellGood", good, quantity });
+    }
+  }
   const state = sim.state;
   const maximum = getShipMaximumHull(state);
   const cost = (maximum - state.shipHull) * getSelectedVesselClass(state).repairCostPerHull;

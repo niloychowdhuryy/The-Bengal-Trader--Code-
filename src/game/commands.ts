@@ -21,6 +21,7 @@ import {
   marryAtResidence,
   orderShipReturn,
   repairShip,
+  repayDebt,
   resolveRiverEncounter,
   resumeVoyage,
   retrieveGoodFromWarehouse,
@@ -29,6 +30,7 @@ import {
   setAutomatedTradeRouteStatus,
   startVoyage,
   storeGoodInWarehouse,
+  takeRescueLoan,
   tradeWithNpcMerchant,
   type AutomatedTradeRule,
   type EncounterResult,
@@ -51,6 +53,8 @@ export type GameCommand =
   | { type: "sellGood"; good: GoodId; quantity: number }
   | { type: "buyUpgrade"; upgrade: UpgradeId }
   | { type: "repairShip" }
+  | { type: "takeRescueLoan" }
+  | { type: "repayDebt" }
   | { type: "buyShip"; vesselClass: VesselClassId }
   | { type: "selectShip"; shipId: string }
   | { type: "orderShipReturn"; shipId: string }
@@ -105,6 +109,8 @@ const DOCKED_ONLY = new Set<CommandType>([
   "sellGood",
   "buyUpgrade",
   "repairShip",
+  "takeRescueLoan",
+  "repayDebt",
   "buyShip",
   "selectShip",
   "tradeWithMerchant",
@@ -169,6 +175,8 @@ export function parseCommand(value: unknown): GameCommand | null {
     case "arrive":
     case "resolveEncounter":
     case "repairShip":
+    case "takeRescueLoan":
+    case "repayDebt":
     case "buyWarehouse":
     case "buyResidence":
     case "marry":
@@ -328,6 +336,10 @@ function runCommand(state: GameState, command: GameCommand, at: number): Command
       return fromModel(state, buyUpgrade(state, command.upgrade));
     case "repairShip":
       return fromModel(state, repairShip(state));
+    case "takeRescueLoan":
+      return fromModel(state, takeRescueLoan(state));
+    case "repayDebt":
+      return fromModel(state, repayDebt(state));
     case "buyShip":
       return fromModel(state, buyPlayerShip(state, command.vesselClass));
     case "selectShip":

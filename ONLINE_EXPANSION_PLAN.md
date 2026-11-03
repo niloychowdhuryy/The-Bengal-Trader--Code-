@@ -293,7 +293,7 @@ Your order is kept, with these adjustments: the command layer went first because
 | N | Correct water and land navigation, version 20 save, map fix, collapsible port panel (Part 15) — **implemented and committed** | Yes |
 | 3 | Cloud saves, linking, conflict handling, multi-tab safety | Logic yes; live sync needs your setup |
 | 4 | Coins, version 21 migration, simulation harness — **harness and baseline done; Coins and save backup done. See Economy Plan steps in `ROADMAP.md`** | Yes |
-| 5 | Dynamic markets, and at least 25 active NPC traders (owner's requirement; 4 exist) — **pricing, stock and the world clock done; NPCs are Economy Plan Step 4** | Yes |
+| 5 | Dynamic markets, and at least 25 active NPC traders (owner's requirement; 4 exist) — **pricing, stock and the world clock done; 26 merchants implemented, awaiting review (Economy Plan Step 4)** | Yes |
 | 6 | Farm production orders | Yes |
 | 7 | Warehouse network | Yes |
 | 8 | City unlocks, reputation levels | Yes |
@@ -353,6 +353,15 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` i
 | 3 Nov 2026 | Day-30 mixed wealth misses its target (52,270 against 15,000–30,000), and the target is not changed | Contracts pay mostly early, and the contract model is a known later requirement. The target also predates counting the starter ship's value of about 21,600 in net worth, so it should be reviewed with contracts |
 | 3 Nov 2026 | Short price labels use "c", such as "700c", and the top bar shortens balances from 100,000 ("174k", "1.23M"), rounding down | Keeps phone layouts unchanged, without overstating a balance. The full amount is available to screen readers |
 | 3 Nov 2026 | A backup is written in the same transaction as the upgraded save, not as a separate step before it | Either both are stored or the original stays as it was, so no half-finished state can exist |
+| 3 Nov 2026 | 26 fictional merchants trade by the player's rules: real routes for their ship, the shared prices, finite purses with no cap and no top-ups, and crew costs per day at sea | Owner's requirement for genuine participants. All names are fiction. Their descriptions talk about trade rather than communities, because sources checked only confirm Armenian merchants in these ports, and thinly for the 1660s |
+| 3 Nov 2026 | A route needs an entry margin of 24%, 20% or 16% by temperament, and merchants then load while each unit earns 16%, 14% or 11%, relaxing after 12 days without a trade | Loads doubled without leaving holds full for its own sake. Thinner margins squeezed everyone, until the player couldn't compete. Tested alternatives are in `ECONOMY_BASELINE.md` |
+| 3 Nov 2026 | A Patello's load margin is half the usual, and a Bora's 10% higher | One stall can't absorb 30 units of one good, so a big hold earns its advantage by accepting thinner margins across several goods. Prices are unchanged |
+| 3 Nov 2026 | Merchants buy a bigger ship only if it would repay within 250 days (125 if not ambitious), they've a profitable record, they'd keep working capital, and it can reach their home waters | A trade-in values the old ship at 60%, and a purchase lowers net worth at first, which limits snowballing. Payback rules shorter than this meant no merchant ever bought |
+| 3 Nov 2026 | On touch screens a dock's ships share one target of at least 44 pixels, which lists them. Desktop keeps one target per ship | Separate 44-pixel targets would overlap, or spread ships across the map |
+| 3 Nov 2026 | Towns make or use 1, 2 or 3 units of a good a day, as well as the share of the gap | Absorbs everyday trade, so small gaps close in days, while large shortages still take 6–12 days to halve. A larger flow made repeating one route the best strategy |
+| 3 Nov 2026 | Each game has a `worldSeed`, chosen when it starts, and merchants' judgement and turn order come from it | Every world plays differently, but one seed always replays the same. The seed isn't yet checked by the server, which matters once cloud saves arrive |
+| 3 Nov 2026 | In an upgraded save, the original four merchants' purses rise to at least their roster capital, once | The old purse cap had destroyed their income. It's a one-time correction to merchants only, and never reaches the player. Everything after that is earned |
+| 3 Nov 2026 | Merchants only buy down to 8 units and sell up to 6 below the limit | Leaves something for the town and the player, so rivals can't empty a stall, while player trading isn't limited this way |
 | 3 Nov 2026 | Farms, automated ships, contracts and warehouses are rebalanced only after the NPC economy is implemented and measured | Owner's decision. NPCs change what these systems earn, so balancing them first would be wasted |
 | 3 Nov 2026 | Time-away progression stays unapproved, and the world stays paused while the game is closed | Owner's decision until Economy Plan Step 6 reviews it |
 | 2 Nov 2026 | Added Milestones S, N and T as essential work | Owner's requirement |
@@ -367,6 +376,8 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` i
 | 2 Nov 2026 | Hosting is Vercel with a private GitHub repository, replacing Cloudflare Pages | Cloudflare setup failed for the owner. Vercel gives automatic deploys, but its free plan is non-commercial, so it must change before revenue |
 | 2 Nov 2026 | Water routes are traced deliberately and checked against a baked water map rather than generated from colours | A rough test showed colour detection alone breaks around ripples and bridges |
 | 2 Nov 2026 | Patello's limits are an explicit rule, not a result of channel width | Balasore sits on wide painted water, so width alone wouldn't exclude it |
+| 3 Nov 2026 | A stranded player can take a moneylender's advance, and repairs can be partial | A real game could reach a permanent dead end. The advance adds a fee, a reputation cost and a purchase block, so it can't earn a profit. Takes save version 24 |
+| 3 Nov 2026 | Leaderboards must subtract debt from net worth | Otherwise an advance would count as wealth |
 
 ## Sources
 

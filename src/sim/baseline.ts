@@ -11,7 +11,8 @@ import {
   measureFarmPayback,
   measureLoopAtLowStock,
   measureMarketImpact,
-  measureNpcWorld,
+  measureCompetition,
+  measureNpcWorlds,
   measureRecovery,
   measureRouteShip,
   measureSustainedRoutes,
@@ -63,6 +64,8 @@ export interface StrategyDay {
   stallsNearFull: number;
   stallsAtStart: number;
   npcTotalWorth: number;
+  playerRank: number;
+  richestRival: number;
 }
 
 export interface StrategySummary {
@@ -141,6 +144,8 @@ function summariseStrategy(
         stallsNearFull: middle((snapshot) => snapshot.market.stallsNearFull, index),
         stallsAtStart: middle((snapshot) => snapshot.market.stallsAtStart, index),
         npcTotalWorth: middle((snapshot) => snapshot.npcTotalWorth, index),
+        playerRank: middle((snapshot) => snapshot.playerRank, index),
+        richestRival: middle((snapshot) => snapshot.richestRival, index),
       };
     }),
     firstDay: Object.fromEntries(
@@ -197,7 +202,8 @@ export function buildBaseline(base: GameState = createNewGame("Simulated")) {
       routeShips: VESSEL_CLASS_IDS.map((vessel) => measureRouteShip(vessel)),
     },
     contracts: measureContracts(),
-    npcWorld: measureNpcWorld(),
+    npcWorld: measureNpcWorlds(),
+    competition: measureCompetition(),
     exploits: {
       samePortLoop: {
         stallsExposed: loops.length,

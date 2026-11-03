@@ -20,7 +20,7 @@ function wholeGold(coins: number): number {
  * multiple of three rounds, as no real old save could hold it.
  */
 export function asVersion21(state: Loose, version = 21): Loose {
-  const { worldDay, ...rest } = state;
+  const { worldDay, worldSeed: _seed, ...rest } = state;
   const old: Loose = { ...rest, version };
   if (worldDay !== undefined) old.npcSimulationDay = worldDay;
   if (state.marketStock) {

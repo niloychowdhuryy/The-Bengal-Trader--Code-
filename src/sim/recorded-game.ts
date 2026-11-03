@@ -7,7 +7,9 @@ import { arrive, createSim, depart, sail, send, type Sim } from "./driver";
 
 export const RECORDED_GAME_COINS = 200_000;
 
-export const ALL_COMMAND_TYPES: Record<CommandType, true> = {
+// The recording is frozen at v20. Commands added since are listed here so that a new one
+// must be looked at, and are tested where they're introduced. Rescues are covered by rescue.test.ts.
+export const ALL_COMMAND_TYPES: Record<Exclude<CommandType, "takeRescueLoan" | "repayDebt">, true> = {
   selectDestination: true,
   startVoyage: true,
   changeVoyageSpeed: true,
