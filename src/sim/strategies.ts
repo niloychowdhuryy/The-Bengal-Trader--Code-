@@ -1,6 +1,7 @@
 // Scripted players. They decide from what a player can see and act only through commands.
 // They're competent rather than optimal, so results show a lower limit on what's possible.
 import {
+  FARM_CROP_COST,
   FARM_PRICE,
   GOODS,
   MARKET_MAX_STOCK,
@@ -371,7 +372,8 @@ function workFarm(sim: Sim, reserve: number, limit: number): void {
   if (
     sim.state.ownedFarms.includes(sim.state.currentTown) &&
     sim.state.farmOutput[sim.state.currentTown] > 0 &&
-    room(sim.state) > 0
+    room(sim.state) > 0 &&
+    sim.state.coins >= FARM_CROP_COST
   ) {
     send(sim, { type: "collectFarm" });
   }
@@ -569,7 +571,7 @@ export const farmCircuit: Strategy = (sim, context) => {
     const time = getShipRoutePreview(state, town.id).travelTime;
     if (!time) continue;
     const gain = state.ownedFarms.includes(town.id)
-      ? state.farmOutput[town.id] * CIRCUIT_RICE_VALUE
+      ? state.farmOutput[town.id] * (CIRCUIT_RICE_VALUE - FARM_CROP_COST)
       : state.coins >= FARM_PRICE + CIRCUIT_RESERVE
         ? CIRCUIT_NEW_FARM_VALUE
         : 0;
@@ -590,5 +592,16 @@ export function farmsOnRoute(first: TownId, second: TownId): Strategy {
     workFarm(sim, FARM_RESERVE, 2);
     sellCargo(sim, context);
     loop(sim, context);
+  };
+}
+
+/** A skilled trader who also buys up to a set number of farms where it passes. */
+export function skilledWithFarms(limit: number): Strategy {
+  const trade = skilledManual();
+  return (sim, context) => {
+    sellCargo(sim, context);
+    workFarm(sim, FARM_RESERVE, limit);
+    sellCargo(sim, context);
+    trade(sim, context);
   };
 }

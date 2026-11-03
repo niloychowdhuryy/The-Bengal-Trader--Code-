@@ -61,7 +61,7 @@ function scaled(amounts: Record<string, number>): Record<string, number> {
 }
 
 function expectExactCoins(old: Loose, game: GameState): void {
-  expect(game.version).toBe(25);
+  expect(game.version).toBe(26);
   expect(game.coins).toBe(old.gold * 50);
   expect(game.highestCoins).toBe(old.highestGold * 50);
   expect("gold" in game).toBe(false);
@@ -245,7 +245,7 @@ describe("save backups", () => {
 
     const session = await openGameSession(T0);
 
-    expect(session.game?.version).toBe(25);
+    expect(session.game?.version).toBe(26);
     expect(session.log?.provenance).toBe("imported");
     expect((await readCommandLog())?.commands).toEqual([]);
     const backup = await readSaveBackup(MIGRATION_BACKUP);
@@ -350,7 +350,7 @@ describe("save backups", () => {
 });
 
 describe("a save from a newer version of the game", () => {
-  const newer = { ...createNewGame("Maya"), version: 26, somethingNew: true };
+  const newer = { ...createNewGame("Maya"), version: 27, somethingNew: true };
 
   beforeEach(resetDatabase);
 

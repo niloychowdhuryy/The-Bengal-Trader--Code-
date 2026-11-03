@@ -179,13 +179,15 @@ describe("who counts as stranded", () => {
     expect(isStranded({ ...elsewhere, shipHull: 1 })).toBe(false);
   });
 
-  it("is nobody with a farm's crop in reach", () => {
-    const base = ruined(0, 0);
-    const empty = { ...base, ownedFarms: [base.currentTown] };
-    expect(isStranded(empty)).toBe(true);
-    expect(isStranded({ ...empty, farmOutput: { ...base.farmOutput, [base.currentTown]: 1 } })).toBe(false);
-    // Sailing grows the crop, so a ship that can sail will always have this.
-    expect(isStranded({ ...empty, shipHull: 1 })).toBe(false);
+  it("is nobody with a farm's crop in reach and the Coins to collect it", () => {
+    // A crop costs more than one hull's repair, so a ship at 0 hull is never saved by a farm alone.
+    const base = ruined(0, 99);
+    const crop = { ...base.farmOutput, [base.currentTown]: 1 };
+    expect(isStranded({ ...base, ownedFarms: [base.currentTown], farmOutput: crop })).toBe(true);
+    // Sailing grows the crop, so a ship that can sail has this for as long as it can pay.
+    const sailing = { ...ruined(1, 150), ownedFarms: [base.currentTown] };
+    expect(getRecoveryOptions(sailing)).toEqual(["farm"]);
+    expect(getRecoveryOptions({ ...sailing, coins: 149 })).toEqual([]);
   });
 
   it("is nobody with another sound ship in the same port", () => {
@@ -384,7 +386,7 @@ describe("saving a debt", () => {
   it("gives older saves no debt, and keeps a debt across a reload", () => {
     const { debtOwed: _debt, rescuesTaken: _rescues, ...old } = createNewGame("Old");
     const migrated = validateSave(migrateLegacySave({ ...old, version: 23 }));
-    expect(migrated.version).toBe(25);
+    expect(migrated.version).toBe(26);
     expect(migrated.debtOwed).toBe(0);
     expect(migrated.rescuesTaken).toBe(0);
 

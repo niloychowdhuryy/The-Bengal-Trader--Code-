@@ -1,6 +1,6 @@
 # Economy rebalance: investigation and proposal
 
-**Status:** direction approved by the owner on 3 November 2026 (see section 8). Stage 1, the harness and benchmarks, is built, with results in [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md). No economy rule has changed yet. Investigated on 3 November 2026, from commit `213dc62`, save version 25.
+**Status:** direction approved by the owner on 3 November 2026 (see section 8). Stages 1 and 2, the benchmarks and the farm costs, are approved and committed, with results in [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md). Investigated on 3 November 2026, from commit `213dc62`, save version 25.
 
 ## Summary
 
@@ -256,12 +256,20 @@ Median of 5 seeds, with merchants present. These replace the current mixed-play 
 | Stalls near empty or full; price index | Under 15%; 0.90–1.15 | 0%; about 1.00 | 0%; about 1.00 |
 | Same-port or round-trip profit | None | None | Re-check in each step |
 
+## Corrections after Stage 2
+
+The tested package in section 5 had no bot that combined skilled trading with farms. Stage 2 added one, and it changes this proposal's claims:
+
+- **The strongest strategy isn't about 2× mixed play.** A skilled trader with 6 farms reaches 414,675 at day 200 and 880,860 at day 400, which is 3.35× mixed and 1.69× skilled alone under the Stage 2 costs.
+- **Farms keep pulling away beyond day 400.** They don't compound, but they earn on top of trading with little trade-off, and idle Coins have nothing better to do.
+- **Farm payback** is 103 days at a typical stall, or about 110 in play, not 93.
+
 ## 8. The owner's decisions
 
 Made on 3 November 2026:
 
 1. **Benchmarks:** the skilled bot is the engaged player, the basic bot the casual player, and mixed play stays a separate comparison.
-2. **Farms:** provisionally 20,000 Coins and 150 per unit of crop, with no rising cost for additional farms.
+2. **Farms:** provisionally 20,000 Coins and 150 per unit of crop, with no rising cost for additional farms. Approved in Stage 2. The strongest-strategy targets stay visible even while they fail, and whether farms need more is decided after routes.
 3. **Contracts:** repeat after 40 days, with reputation only on the first successful completion.
 4. **Route running costs:** routes pay the same running costs as merchants.
 5. **Prices over time:** small seasonal or event-driven changes are approved, as a later, separate phase.

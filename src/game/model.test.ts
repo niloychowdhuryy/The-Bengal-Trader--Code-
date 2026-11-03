@@ -698,7 +698,7 @@ describe("first playable journey", () => {
   it("collects farm output into ship cargo only up to free capacity", () => {
     const purchased = buyFarm({
       ...createNewGame("Maya"),
-      coins: FARM_PRICE,
+      coins: FARM_PRICE + 2_000,
     }).state;
     const ready = {
       ...purchased,
@@ -709,7 +709,8 @@ describe("first playable journey", () => {
     expect(collected.error).toBeUndefined();
     expect(collected.collected).toBe(5);
     expect(collected.state.cargo.rice).toBe(7);
-    expect(collected.state.averagePurchasePrice.rice).toBeCloseTo(20 / 7);
+    expect(collected.state.averagePurchasePrice.rice).toBeCloseTo((20 + 5 * 150) / 7);
+    expect(collected.state.coins).toBe(2_000 - 5 * 150);
     expect(collected.state.farmOutput.dhaka).toBe(0);
 
     const fullHold = {

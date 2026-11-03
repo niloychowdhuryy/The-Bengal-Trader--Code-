@@ -358,7 +358,7 @@ describe("moving saves to the new market", () => {
     const old = oldGame();
     expect(old.marketStock.dhaka.silk).toBe(7);
     const game = validateSave(old, T0);
-    expect(game.version).toBe(25);
+    expect(game.version).toBe(26);
     expect(game.marketStock.dhaka.silk).toBe(21);
     expect(game.marketStock).toEqual(
       Object.fromEntries(
@@ -421,7 +421,7 @@ describe("moving saves to the new market", () => {
 
   it("carries a v20 save all the way through, and keeps its stock's share", () => {
     const game = validateSave(saveV20, T0);
-    expect(game.version).toBe(25);
+    expect(game.version).toBe(26);
     expect(game.coins).toBe(saveV20.gold * 50);
     // One day's recovery was still due at the moment that save was written.
     expect(game.worldDay).toBe(saveV20.npcSimulationDay);
@@ -444,7 +444,7 @@ describe("moving saves to the new market", () => {
       };
     });
     const session = await openGameSession(T0);
-    expect(session.game?.version).toBe(25);
+    expect(session.game?.version).toBe(26);
     expect(session.log?.provenance).toBe("imported");
     expect((await readSaveBackup("save-backup:migration:v21"))?.save).toEqual(old);
     expect((await listSaveBackups()).map((backup) => backup.saveVersion)).toEqual([21]);

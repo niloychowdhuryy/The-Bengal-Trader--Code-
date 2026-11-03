@@ -962,7 +962,7 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
 ];
 
-export const SAVE_VERSION = 25;
+export const SAVE_VERSION = 26;
 export const STARTING_COINS = 5_000;
 export const PROSPEROUS_MERCHANT_COINS = 12_500;
 const CHITTAGONG_ALERT_SALT_SURCHARGE = 300;
@@ -994,7 +994,8 @@ const MARKET_DAILY_FLOW_BY_TIER: Record<MarketTier, number> = { 1: 1, 2: 2, 3: 3
 export const WAREHOUSE_PRICE = 7_500;
 export const WAREHOUSE_CAPACITY = 20;
 export const RESIDENCE_PRICE = 12_500;
-export const FARM_PRICE = 10_000;
+export const FARM_PRICE = 20_000;
+export const FARM_CROP_COST = 150;
 export const FARM_OUTPUT_CAPACITY = 20;
 export const FARM_DAILY_OUTPUT = 1;
 export const FARM_GOOD_ID: GoodId = "rice";
@@ -2137,7 +2138,7 @@ export function advanceFarmProduction(
 
 export function collectFarmOutput(
   state: GameState,
-): { state: GameState; collected: number; error?: "not-owned" | "empty" | "cargo-full" } {
+): { state: GameState; collected: number; error?: "not-owned" | "empty" | "cargo-full" | "coins" } {
   const port = state.currentTown;
   if (!state.ownedFarms.includes(port)) {
     return { state, collected: 0, error: "not-owned" };
@@ -2147,17 +2148,18 @@ export function collectFarmOutput(
   const space = getCargoCapacity(state) - getCargoUsed(state);
   if (space <= 0) return { state, collected: 0, error: "cargo-full" };
 
-  const collected = Math.min(stored, space);
+  // The crop is paid for as it's collected, as far as the purse allows.
+  const collected = Math.min(stored, space, Math.floor(state.coins / FARM_CROP_COST));
+  if (collected <= 0) return { state, collected: 0, error: "coins" };
+  const cropCost = collected * FARM_CROP_COST;
   const currentQuantity = state.cargo[FARM_GOOD_ID];
   const nextQuantity = currentQuantity + collected;
   const averagePurchasePrice =
-    currentQuantity === 0
-      ? 0
-      : (state.averagePurchasePrice[FARM_GOOD_ID] * currentQuantity) /
-        nextQuantity;
+    (state.averagePurchasePrice[FARM_GOOD_ID] * currentQuantity + cropCost) / nextQuantity;
   return {
     state: syncSelectedShip({
       ...state,
+      coins: state.coins - cropCost,
       cargo: {
         ...state.cargo,
         [FARM_GOOD_ID]: nextQuantity,
@@ -2170,7 +2172,7 @@ export function collectFarmOutput(
         ...state.farmOutput,
         [port]: stored - collected,
       },
-      lastMessage: `Collected ${collected} ${GOODS.find((good) => good.id === FARM_GOOD_ID)?.name} from the farm.`,
+      lastMessage: `Collected ${collected} ${GOODS.find((good) => good.id === FARM_GOOD_ID)?.name} from the farm for ${formatCoins(cropCost)} Coins.`,
     }),
     collected,
   };
@@ -2845,8 +2847,12 @@ export function getRecoveryOptions(state: GameState): RecoveryOption[] {
     options.push("warehouse");
   }
 
-  // Sailing grows a farm's crop, so any farm the ship can reach will pay in the end.
-  if (state.ownedFarms.some((port) => inReach(port) && (canSail || state.farmOutput[port] > 0))) {
+  // Sailing grows a farm's crop, so any farm the ship can reach will pay in the end, as long
+  // as the purse can pay for some of it.
+  if (
+    state.coins >= FARM_CROP_COST &&
+    state.ownedFarms.some((port) => inReach(port) && (canSail || state.farmOutput[port] > 0))
+  ) {
     options.push("farm");
   }
 

@@ -1831,6 +1831,12 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     save = migrateToLeaderboards(save);
   }
 
+  // No data changes, but farms now cost more to buy and run. A new version restarts the
+  // command log, since a game's old commands were made under the old prices.
+  if (save.version === 25) {
+    save = { ...save, version: 26 };
+  }
+
   return save.version === SAVE_VERSION
     ? reanchorPausedVoyage(
         repairPeak(save, "coins", "highestCoins", PROSPEROUS_MERCHANT_COINS),

@@ -1,7 +1,7 @@
 // Where a scripted player's Coins came from and went, noted from each command's effect.
 // It only reads game state, so keeping it can't change what the game does.
 import type { GameCommand } from "../game/commands";
-import { GOODS, type GameState } from "../game/model";
+import { FARM_CROP_COST, GOODS, type GameState } from "../game/model";
 
 export interface Ledger {
   tradeRevenue: number;
@@ -10,6 +10,8 @@ export interface Ledger {
   goodsBought: number;
   farmRevenue: number;
   farmUnitsSold: number;
+  /** What was paid to collect crops, whether or not they've been sold yet. */
+  cropCost: number;
   contractRewards: number;
   /** What the goods handed over to contracts had cost. */
   contractGoodsCost: number;
@@ -23,8 +25,8 @@ export interface Ledger {
   routeWithdrawn: number;
   /** Anything else that moved the purse, such as a residence, household or debt. */
   other: number;
-  /** Farm rice still on board, which has no purchase price to set against its sale. */
-  freeRiceHeld: number;
+  /** Farm rice still on board, kept apart so that its sale counts as farm income. */
+  farmRiceHeld: number;
 }
 
 export function createLedger(): Ledger {
@@ -34,6 +36,7 @@ export function createLedger(): Ledger {
     goodsBought: 0,
     farmRevenue: 0,
     farmUnitsSold: 0,
+    cropCost: 0,
     contractRewards: 0,
     contractGoodsCost: 0,
     contractsCompleted: 0,
@@ -45,7 +48,7 @@ export function createLedger(): Ledger {
     routeDeposits: 0,
     routeWithdrawn: 0,
     other: 0,
-    freeRiceHeld: 0,
+    farmRiceHeld: 0,
   };
 }
 
@@ -68,14 +71,16 @@ export function noteCommand(
   switch (command.type) {
     case "sellGood": {
       const held = before.cargo[command.good];
-      const free =
-        command.good === "rice" ? command.quantity * (ledger.freeRiceHeld / held) : 0;
-      const farmShare = free / command.quantity;
+      const fromFarm =
+        command.good === "rice" ? command.quantity * (ledger.farmRiceHeld / held) : 0;
+      const farmShare = fromFarm / command.quantity;
       ledger.farmRevenue += change * farmShare;
-      ledger.farmUnitsSold += free;
-      ledger.freeRiceHeld -= free;
+      ledger.farmUnitsSold += fromFarm;
+      ledger.farmRiceHeld -= fromFarm;
       ledger.tradeRevenue += change * (1 - farmShare);
-      ledger.tradeCost += (command.quantity - free) * before.averagePurchasePrice[command.good];
+      // The average price blends bought rice with crop cost, so take the crop's part out.
+      ledger.tradeCost +=
+        command.quantity * before.averagePurchasePrice[command.good] - fromFarm * FARM_CROP_COST;
       break;
     }
     case "buyGood":
@@ -83,8 +88,8 @@ export function noteCommand(
       ledger.goodsBought -= change;
       break;
     case "collectFarm":
-      ledger.freeRiceHeld += after.cargo.rice - before.cargo.rice;
-      ledger.other += change;
+      ledger.farmRiceHeld += after.cargo.rice - before.cargo.rice;
+      ledger.cropCost -= change;
       break;
     case "arrive":
       for (const { id: good } of GOODS) {
@@ -137,6 +142,7 @@ export function purseChange(ledger: Ledger): number {
     ledger.routeWithdrawn +
     ledger.other -
     ledger.goodsBought -
+    ledger.cropCost -
     ledger.repairs -
     ledger.upgrades -
     ledger.ships -

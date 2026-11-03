@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyCommand, type RecordedCommand } from "../game/commands";
-import { MARKET_MAX_STOCK, MARKET_PORTS, GOODS, createNewGame } from "../game/model";
+import { FARM_CROP_COST, MARKET_MAX_STOCK, MARKET_PORTS, GOODS, createNewGame } from "../game/model";
 import { isValidGameState, validateSave } from "../game/save-format";
 import savedGame from "../game/__fixtures__/save-v20.json";
 import { measureStrategies } from "./baseline";
@@ -24,8 +24,8 @@ import {
   playRecordedGame,
 } from "./recorded-game";
 import { STRATEGIES, replayMatches, runStrategy } from "./runner";
-import currentBaseline from "./__fixtures__/economy-baseline-v25.json";
-import benchmarkRecord from "./__fixtures__/economy-benchmark-v25.json";
+import currentBaseline from "./__fixtures__/economy-baseline-v26.json";
+import benchmarkRecord from "./__fixtures__/economy-benchmark-v26.json";
 import frozenBaseline from "./__fixtures__/economy-baseline-v20.json";
 import recorded from "./__fixtures__/recorded-game-v20.json";
 
@@ -75,7 +75,7 @@ describe("benchmark players", () => {
   });
 
   it("splits a sale of farm rice from a sale of bought rice", () => {
-    const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === "farms-3")!, { days: [60] });
+    const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === "farms-3")!, { days: [120] });
     expect(sim.ledger.farmRevenue).toBeGreaterThan(0);
     expect(sim.ledger.farmUnitsSold).toBeLessThanOrEqual(sim.farmUnitsCollected);
   });
@@ -170,11 +170,27 @@ describe("problems the Coins economy has fixed", () => {
 });
 
 // Step 4 and later balancing change these. A test that fails here should become a fix.
-describe("problems still known", () => {
-  it("lets farms out-earn trading by far", () => {
+describe("farm costs, in play", () => {
+  it("records every crop cost in the ledger, and no crop goes unpaid", () => {
+    const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === "farm-circuit")!, { days: [120] });
+    expect(sim.farmUnitsCollected).toBeGreaterThan(0);
+    expect(sim.ledger.cropCost).toBe(sim.farmUnitsCollected * FARM_CROP_COST);
+    expect(purseChange(sim.ledger)).toBeCloseTo(sim.state.coins - sim.base.coins, 2);
+    expect(replayMatches(sim)).toBe(true);
+  }, 30_000);
+
+  it("no longer lets six farms out-earn the casual trader by more than double", () => {
     const worth = (id: string) =>
       runStrategy(STRATEGIES.find((entry) => entry.id === id)!, { days: [200] }).result.snapshots[0].netWorth;
-    expect(worth("farming")).toBeGreaterThan(worth("manual") * 2);
+    expect(worth("farming")).toBeLessThan(worth("manual") * 2);
+  }, 30_000);
+});
+
+describe("problems still known", () => {
+  it("lets a skilled trader with farms pull well ahead", () => {
+    const worth = (id: string) =>
+      runStrategy(BENCHMARKS.find((entry) => entry.id === id)!, { days: [200] }).result.snapshots[0].netWorth;
+    expect(worth("skilled-farms")).toBeGreaterThan(worth("skilled") * 1.3);
   }, 30_000);
 });
 

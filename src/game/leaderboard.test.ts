@@ -67,7 +67,7 @@ describe("net worth", () => {
   it("counts property at 70% of cost, and stored goods at 80%", () => {
     const game = empty();
     expect(getPlayerNetWorth({ ...game, ownedWarehouses: ["dhaka"] })).toBe(SHIP_VALUE + 7_500 * 0.7);
-    expect(getPlayerNetWorth({ ...game, ownedFarms: ["dhaka"] })).toBe(SHIP_VALUE + 10_000 * 0.7);
+    expect(getPlayerNetWorth({ ...game, ownedFarms: ["dhaka"] })).toBe(SHIP_VALUE + 20_000 * 0.7);
     expect(getPlayerNetWorth({ ...game, residenceTown: "dhaka" })).toBe(SHIP_VALUE + 12_500 * 0.7);
     expect(
       getPlayerNetWorth({
@@ -295,7 +295,7 @@ describe("saves", () => {
   it("gives an older save a first count from its real state, with no movement", () => {
     const { leaderboards: _boards, ...old } = playedUntil(12);
     const migrated = validateSave(migrateLegacySave({ ...old, version: 24, debtOwed: 1_000, rescuesTaken: 1 }));
-    expect(migrated.version).toBe(25);
+    expect(migrated.version).toBe(26);
     expect(migrated.leaderboards.day).toBe(12);
     expect(migrated.leaderboards.wealth.every((entry) => entry.previousRank === null)).toBe(true);
     expect(migrated.leaderboards.wealth.find((entry) => entry.id === PLAYER_ENTRY_ID)?.value)

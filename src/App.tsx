@@ -25,6 +25,7 @@ import {
   getCargoUsed,
   getWarehouseCapacity,
   getWarehouseUsed,
+  FARM_CROP_COST,
   FARM_DAILY_OUTPUT,
   FARM_GOOD_ID,
   FARM_OUTPUT_CAPACITY,
@@ -2121,6 +2122,11 @@ function CityBuildingPanel({
   );
   const farmOutput = state.farmOutput[state.currentTown];
   const farmCargoSpace = getCargoCapacity(state) - getCargoUsed(state);
+  const farmCollectable = Math.min(
+    farmOutput,
+    farmCargoSpace,
+    Math.floor(state.coins / FARM_CROP_COST),
+  );
   const farmProgress = Math.min(
     1,
     Math.max(0, state.sailingDay - state.farmProductionDay[state.currentTown]),
@@ -2298,8 +2304,8 @@ function CityBuildingPanel({
               : `No warehouse is owned here. Purchase one for ${formatCoins(WAREHOUSE_PRICE)} Coins to add ${WAREHOUSE_CAPACITY} local storage spaces.`
             : buildingId === "farm"
               ? ownsFarm
-                ? `Owned here · ${state.farmOutput[state.currentTown]}/${FARM_OUTPUT_CAPACITY} Rice in local farm storage. Produces ${FARM_DAILY_OUTPUT} Rice per full in-game sailing day while the game is active.`
-                : `No farm is owned here. Purchase one for ${formatCoins(FARM_PRICE)} Coins. It produces ${FARM_DAILY_OUTPUT} Rice per full in-game sailing day into its own local storage, up to ${FARM_OUTPUT_CAPACITY}.`
+                ? `Owned here · ${state.farmOutput[state.currentTown]}/${FARM_OUTPUT_CAPACITY} Rice in local farm storage. Produces ${FARM_DAILY_OUTPUT} Rice per full in-game sailing day while the game is active. Collecting costs ${FARM_CROP_COST} Coins per Rice.`
+                : `No farm is owned here. Purchase one for ${formatCoins(FARM_PRICE)} Coins. It produces ${FARM_DAILY_OUTPUT} Rice per full in-game sailing day into its own local storage, up to ${FARM_OUTPUT_CAPACITY}, for ${FARM_CROP_COST} Coins per Rice when you collect it.`
               : buildingId === "home"
                 ? ownsResidence
                   ? "Your residence is established in this port. Ownership is saved; household and dynasty features are not included in this stage."
@@ -2379,7 +2385,7 @@ function CityBuildingPanel({
           <p>Ship cargo: {state.cargo[FARM_GOOD_ID]} · {farmCargoSpace} free spaces.</p>
           <button
             className="primary-button city-building-action"
-            disabled={farmOutput === 0 || farmCargoSpace === 0}
+            disabled={farmCollectable === 0}
             onClick={onCollectFarm}
           >
             <span>
@@ -2387,7 +2393,9 @@ function CityBuildingPanel({
                 ? "No Rice ready to collect"
                 : farmCargoSpace === 0
                   ? "Ship hold is full"
-                  : `Collect up to ${Math.min(farmOutput, farmCargoSpace)} Rice`}
+                  : farmCollectable === 0
+                    ? `Need ${FARM_CROP_COST} Coins to collect`
+                    : `Collect ${farmCollectable} Rice · ${formatCoins(farmCollectable * FARM_CROP_COST)} Coins`}
             </span>
             <span aria-hidden="true">→</span>
           </button>
@@ -2829,6 +2837,7 @@ export default function App() {
       "not-owned": "There is no farm here.",
       empty: "No Rice is ready to collect yet.",
       "cargo-full": "Your ship's hold is full.",
+      coins: `Collecting costs ${FARM_CROP_COST} Coins per Rice.`,
     });
   }, [runCommand]);
 

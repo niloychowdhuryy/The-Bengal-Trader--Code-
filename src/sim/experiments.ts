@@ -2,6 +2,7 @@
 // and known exploits. Each returns plain data, so it can be recorded and compared later.
 import { applyCommand } from "../game/commands";
 import {
+  FARM_CROP_COST,
   FARM_DAILY_OUTPUT,
   FARM_PRICE,
   GOODS,
@@ -357,13 +358,13 @@ export function measureRouteShip(
   };
 }
 
-/** Days for one farm to repay its price, selling each day's free rice at a typical price. */
+/** Days for one farm to repay its price, selling each day's rice at a typical price. */
 export function measureFarmPayback(): { riceSellMedian: number; coinsPerDay: number; paybackDays: number } {
   const start = createInitialMarketStock();
   const riceSellMedian = median(
     MARKET_PORTS.map((port) => getGoodPrice(port.id, "rice", "sell", false, start[port.id].rice)),
   );
-  const coinsPerDay = riceSellMedian * FARM_DAILY_OUTPUT;
+  const coinsPerDay = (riceSellMedian - FARM_CROP_COST) * FARM_DAILY_OUTPUT;
   return { riceSellMedian, coinsPerDay, paybackDays: round(FARM_PRICE / coinsPerDay, 0) };
 }
 

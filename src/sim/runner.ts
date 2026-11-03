@@ -93,6 +93,7 @@ export interface DaySnapshot {
   /** Coins held by routes, plus their goods at the value net worth gives them. */
   routeValue: number;
   commands: number;
+  farms: number;
   ledger: Ledger;
 }
 
@@ -145,6 +146,7 @@ function snapshot(sim: Sim, day: number): DaySnapshot {
       0,
     ),
     commands: sim.log.length,
+    farms: state.ownedFarms.length,
     ledger: { ...sim.ledger },
   };
 }

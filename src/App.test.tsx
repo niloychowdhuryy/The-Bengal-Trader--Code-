@@ -278,7 +278,7 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Farm" }));
     expect(screen.getByText(/produces 1 Rice per full in-game sailing day/i)).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Buy farm · 10,000 Coins" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy farm · 20,000 Coins" }));
 
     expect(await screen.findByText(/Owned here · 0\/20 Rice in local farm storage/))
       .toBeVisible();
@@ -303,10 +303,10 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter city" }));
     fireEvent.click(screen.getByRole("button", { name: "Farm" }));
     expect(screen.getByText(/20\/20 Rice in local farm storage/)).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Collect up to 9 Rice" }));
+    fireEvent.click(screen.getByRole("button", { name: "Collect 9 Rice · 1,350 Coins" }));
 
     expect(await screen.findByText(/11\/20 Rice in local farm storage/)).toBeVisible();
-    expect(screen.getByLabelText("Coins 5,000; cargo 12 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 3,650; cargo 12 of 12")).toBeInTheDocument();
     expect(screen.queryByText(/Storage is full/)).not.toBeInTheDocument();
   });
 
