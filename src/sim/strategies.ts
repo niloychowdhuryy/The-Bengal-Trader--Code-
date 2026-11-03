@@ -24,6 +24,7 @@ import {
   type GameState,
   type GoodId,
   type TownId,
+  type VesselClassId,
 } from "../game/model";
 import { sail, send, type Sim } from "./driver";
 
@@ -233,10 +234,10 @@ export function routeRules(state: GameState, origin: TownId, destination: TownId
 }
 
 /** Buys a bulk ship at a shipyard and sets it on the best route among ports already seen. */
-function buyRouteShip(sim: Sim): boolean {
+function buyRouteShip(sim: Sim, vesselClass: VesselClassId = "patello"): boolean {
   const state = sim.state;
   if (!SHIPYARD_PORTS.includes(state.currentTown)) return false;
-  const vessel = VESSEL_CLASSES.patello;
+  const vessel = VESSEL_CLASSES[vesselClass];
   if (state.coins < vessel.price + ROUTE_CAPITAL + ROUTE_SHIP_RESERVE) return false;
 
   let bestPort: TownId | null = null;
@@ -260,7 +261,7 @@ function buyRouteShip(sim: Sim): boolean {
   }
   if (!bestPort) return false;
 
-  send(sim, { type: "buyShip", vesselClass: "patello" });
+  send(sim, { type: "buyShip", vesselClass });
   const ship = sim.state.fleet.at(-1)!;
   send(sim, {
     type: "configureRoute",
@@ -272,21 +273,25 @@ function buyRouteShip(sim: Sim): boolean {
   return true;
 }
 
-function wantsRouteShip(state: GameState, limit: number): boolean {
+function wantsRouteShip(
+  state: GameState,
+  limit: number,
+  vesselClass: VesselClassId = "patello",
+): boolean {
   return (
     state.fleet.length - 1 < limit &&
-    state.coins >= VESSEL_CLASSES.patello.price + ROUTE_CAPITAL + ROUTE_SHIP_RESERVE
+    state.coins >= VESSEL_CLASSES[vesselClass].price + ROUTE_CAPITAL + ROUTE_SHIP_RESERVE
   );
 }
 
 /** Trades by hand until it can afford bulk ships, then leaves them running on routes. */
-export function automated(shipLimit = 2): Strategy {
+export function automated(shipLimit = 2, vesselClass: VesselClassId = "patello"): Strategy {
   return (sim, context) => {
     sellCargo(sim, context);
     repairIfNeeded(sim);
     buyHoldUpgrade(sim, 3_000);
-    if (wantsRouteShip(sim.state, shipLimit)) {
-      if (!buyRouteShip(sim) && !SHIPYARD_PORTS.includes(sim.state.currentTown)) {
+    if (wantsRouteShip(sim.state, shipLimit, vesselClass)) {
+      if (!buyRouteShip(sim, vesselClass) && !SHIPYARD_PORTS.includes(sim.state.currentTown)) {
         goTo(sim, "hooghly");
         return;
       }
@@ -438,3 +443,152 @@ export const mixed: Strategy = (sim, context) => {
   takeContracts(sim, context);
   tradeAndSail(sim, context, (port) => contractBonus(sim.state, port));
 };
+
+// ---- Benchmark players ----
+
+/** The whole round trip decides where to go, so it won't sail somewhere with no cargo back. */
+function tradeBothWays(sim: Sim): void {
+  const state = sim.state;
+  let best: { port: TownId; plan: CargoPlan; value: number } | null = null;
+  for (const town of TOWNS) {
+    if (town.id === state.currentTown) continue;
+    const time = getShipRoutePreview(state, town.id).travelTime;
+    if (!time) continue;
+    const out = planCargo(state, state.currentTown, town.id, room(state), state.coins);
+    const back = planCargo(state, town.id, state.currentTown, room(state), state.coins);
+    const value = (out.profit + back.profit) / (2 * Math.max(MIN_DAYS_FOR_VALUE, time.durationDays));
+    if (!best || value > best.value) best = { port: town.id, plan: out, value };
+  }
+  if (!best) throw new Error("The ship has nowhere to sail.");
+  buyPlan(sim, best.plan);
+  goTo(sim, best.port);
+}
+
+/** The engaged player: the same simple rules as manual, with better judgement of a round trip. */
+export function skilledManual(holdLevels = 0): Strategy {
+  return (sim, context) => {
+    sellCargo(sim, context);
+    repairIfNeeded(sim);
+    if (sim.state.upgrades.hold < holdLevels) buyHoldUpgrade(sim, 3_000);
+    tradeBothWays(sim);
+  };
+}
+
+/** A skilled trader who also runs ships on routes, whenever it's at a shipyard with the money. */
+export function skilledWithRoutes(shipLimit = 2, vesselClass: VesselClassId = "bora"): Strategy {
+  const trade = skilledManual();
+  return (sim, context) => {
+    if (
+      wantsRouteShip(sim.state, shipLimit, vesselClass) &&
+      SHIPYARD_PORTS.includes(sim.state.currentTown)
+    ) {
+      buyRouteShip(sim, vesselClass);
+    }
+    trade(sim, context);
+  };
+}
+
+export function skilledWithContracts(): Strategy {
+  const trade = skilledManual();
+  return (sim, context) => {
+    takeContracts(sim, context);
+    trade(sim, context);
+  };
+}
+
+/** Plays as usual, but changes to a new main ship as soon as it can afford one. */
+export function onMainShip(vesselClass: VesselClassId, play: Strategy): Strategy {
+  return (sim, context) => {
+    sellCargo(sim, context);
+    repairIfNeeded(sim);
+    const state = sim.state;
+    if (
+      state.fleet.every((ship) => ship.vesselClass !== vesselClass) &&
+      state.coins >= VESSEL_CLASSES[vesselClass].price + 8_000
+    ) {
+      if (!SHIPYARD_PORTS.includes(state.currentTown)) {
+        goTo(sim, "hooghly");
+        return;
+      }
+      send(sim, { type: "buyShip", vesselClass });
+      send(sim, { type: "selectShip", shipId: sim.state.fleet.at(-1)!.id });
+    }
+    play(sim, context);
+  };
+}
+
+const CONTRACT_PORT_BONUS = 400;
+
+/** Goes where contracts are, carrying what it can on the way. */
+export const contractFocused: Strategy = (sim, context) => {
+  takeContracts(sim, context);
+  sellCargo(sim, context);
+  repairIfNeeded(sim);
+  takeContracts(sim, context);
+  tradeAndSail(sim, context, (port) => {
+    const state = sim.state;
+    const onOffer =
+      state.missions.filter((mission) => mission.status === "active").length < 2 &&
+      state.missions.some(
+        (mission) =>
+          mission.status === "available" &&
+          mission.origin === port &&
+          mission.type !== "profitable_trade",
+      );
+    return contractBonus(state, port) + (onOffer ? CONTRACT_PORT_BONUS : 0);
+  });
+};
+
+/** Trades to fund up to a set number of farms, in the ports it happens to pass through. */
+export function farmFocused(limit: number): Strategy {
+  return (sim, context) => {
+    sellCargo(sim, context);
+    repairIfNeeded(sim);
+    workFarm(sim, FARM_RESERVE, limit);
+    sellCargo(sim, context);
+    tradeAndSail(sim, context);
+  };
+}
+
+const CIRCUIT_RESERVE = 2_000;
+const CIRCUIT_NEW_FARM_VALUE = 3_000;
+const CIRCUIT_RICE_VALUE = 330;
+
+/** The upper test for farms: goes out of its way to buy one in every port and keep them collected. */
+export const farmCircuit: Strategy = (sim, context) => {
+  sellCargo(sim, context);
+  repairIfNeeded(sim);
+  workFarm(sim, CIRCUIT_RESERVE, TOWNS.length);
+  sellCargo(sim, context);
+  workFarm(sim, CIRCUIT_RESERVE, TOWNS.length);
+  buyHoldUpgrade(sim, 12_000);
+  const state = sim.state;
+  let best: { port: TownId; plan: CargoPlan; value: number } | null = null;
+  for (const town of TOWNS) {
+    if (town.id === state.currentTown) continue;
+    const time = getShipRoutePreview(state, town.id).travelTime;
+    if (!time) continue;
+    const gain = state.ownedFarms.includes(town.id)
+      ? state.farmOutput[town.id] * CIRCUIT_RICE_VALUE
+      : state.coins >= FARM_PRICE + CIRCUIT_RESERVE
+        ? CIRCUIT_NEW_FARM_VALUE
+        : 0;
+    const plan = planCargo(state, state.currentTown, town.id, room(state), state.coins);
+    const value = (gain + plan.profit) / Math.max(MIN_DAYS_FOR_VALUE, time.durationDays);
+    if (!best || value > best.value) best = { port: town.id, plan, value };
+  }
+  if (!best) throw new Error("The ship has nowhere to sail.");
+  buyPlan(sim, best.plan);
+  goTo(sim, best.port);
+};
+
+/** Repeats one route, with a farm at each end. */
+export function farmsOnRoute(first: TownId, second: TownId): Strategy {
+  const loop = twoPort(first, second);
+  return (sim, context) => {
+    sellCargo(sim, context);
+    workFarm(sim, FARM_RESERVE, 2);
+    sellCargo(sim, context);
+    loop(sim, context);
+  };
+}

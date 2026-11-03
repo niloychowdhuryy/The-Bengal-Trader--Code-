@@ -1,0 +1,3159 @@
+{
+ "saveVersion": 25,
+ "seeds": 5,
+ "strategies": [
+  {
+   "id": "passive",
+   "label": "Passive",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 21680,
+      "median": 21680,
+      "max": 21680
+     },
+     "rank": 22,
+     "influenceRank": 27,
+     "reputation": 2,
+     "voyages": 21,
+     "commands": 63,
+     "realMinutes": 30,
+     "tradeProfit": 140,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1176110,
+     "richestRival": 115895,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 21280,
+      "median": 21280,
+      "max": 21280
+     },
+     "rank": 25,
+     "influenceRank": 27,
+     "reputation": 2,
+     "voyages": 63,
+     "commands": 190,
+     "realMinutes": 90,
+     "tradeProfit": 140,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1368650,
+     "richestRival": 130255,
+     "priceIndex": 1.002,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 20480,
+      "median": 20480,
+      "max": 20480
+     },
+     "rank": 27,
+     "influenceRank": 27,
+     "reputation": 2,
+     "voyages": 140,
+     "commands": 423,
+     "realMinutes": 200,
+     "tradeProfit": 140,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 1200,
+     "fleet": 1,
+     "npcTotalWorth": 1746950,
+     "richestRival": 157255,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 19280,
+      "median": 19280,
+      "max": 19280
+     },
+     "rank": 27,
+     "influenceRank": 27,
+     "reputation": 2,
+     "voyages": 280,
+     "commands": 846,
+     "realMinutes": 401,
+     "tradeProfit": 140,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 2400,
+     "fleet": 1,
+     "npcTotalWorth": 2405210,
+     "richestRival": 204235,
+     "priceIndex": 1.001,
+     "largestPriceMove": 0.17,
+     "stallsMoved": 10,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "two-port-start",
+   "label": "Two-port loop, Hooghly–Satgaon",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 34835,
+      "median": 35930,
+      "max": 37875
+     },
+     "rank": 14,
+     "influenceRank": 23,
+     "reputation": 7,
+     "voyages": 45,
+     "commands": 300,
+     "realMinutes": 31,
+     "tradeProfit": 14510,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1170560,
+     "richestRival": 115905,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 54490,
+      "median": 56020,
+      "max": 58210
+     },
+     "rank": 10,
+     "influenceRank": 26,
+     "reputation": 7,
+     "voyages": 137,
+     "commands": 928,
+     "realMinutes": 90,
+     "tradeProfit": 35400,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 1200,
+     "fleet": 1,
+     "npcTotalWorth": 1347295,
+     "richestRival": 127145,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 91255,
+      "median": 92055,
+      "max": 93790
+     },
+     "rank": 5,
+     "influenceRank": 26,
+     "reputation": 9,
+     "voyages": 307,
+     "commands": 2076,
+     "realMinutes": 200,
+     "tradeProfit": 73035,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 2800,
+     "fleet": 1,
+     "npcTotalWorth": 1673750,
+     "richestRival": 147310,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 17,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 157395,
+      "median": 159620,
+      "max": 160490
+     },
+     "rank": 3,
+     "influenceRank": 26,
+     "reputation": 9,
+     "voyages": 617,
+     "commands": 4168,
+     "realMinutes": 401,
+     "tradeProfit": 143800,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 6000,
+     "fleet": 1,
+     "npcTotalWorth": 2276025,
+     "richestRival": 194590,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "two-port-best",
+   "label": "Two-port loop, Kasimbazar–Tanda",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 27835,
+      "median": 28435,
+      "max": 29595
+     },
+     "rank": 19,
+     "influenceRank": 26,
+     "reputation": 6,
+     "voyages": 99,
+     "commands": 423,
+     "realMinutes": 30,
+     "tradeProfit": 7415,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1153080,
+     "richestRival": 115685,
+     "priceIndex": 1,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 33080,
+      "median": 34140,
+      "max": 35005
+     },
+     "rank": 18,
+     "influenceRank": 26,
+     "reputation": 6,
+     "voyages": 305,
+     "commands": 1316,
+     "realMinutes": 90,
+     "tradeProfit": 15120,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 2800,
+     "fleet": 1,
+     "npcTotalWorth": 1301105,
+     "richestRival": 126710,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 43345,
+      "median": 43685,
+      "max": 44785
+     },
+     "rank": 19,
+     "influenceRank": 26,
+     "reputation": 6,
+     "voyages": 683,
+     "commands": 2928,
+     "realMinutes": 200,
+     "tradeProfit": 28665,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 6800,
+     "fleet": 1,
+     "npcTotalWorth": 1568010,
+     "richestRival": 143845,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 59790,
+      "median": 60450,
+      "max": 61435
+     },
+     "rank": 19,
+     "influenceRank": 26,
+     "reputation": 6,
+     "voyages": 1370,
+     "commands": 5804,
+     "realMinutes": 400,
+     "tradeProfit": 52230,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 13600,
+     "fleet": 1,
+     "npcTotalWorth": 2081595,
+     "richestRival": 178795,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "manual",
+   "label": "Manual trading",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 24835,
+      "median": 26250,
+      "max": 28030
+     },
+     "rank": 19,
+     "influenceRank": 13,
+     "reputation": 16,
+     "voyages": 23,
+     "commands": 138,
+     "realMinutes": 31,
+     "tradeProfit": 9530,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1175685,
+     "richestRival": 114665,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.18,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 45430,
+      "median": 46370,
+      "max": 52355
+     },
+     "rank": 11,
+     "influenceRank": 8,
+     "reputation": 24,
+     "voyages": 62,
+     "commands": 394,
+     "realMinutes": 91,
+     "tradeProfit": 30135,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1361350,
+     "richestRival": 127970,
+     "priceIndex": 1,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 86085,
+      "median": 92770,
+      "max": 97460
+     },
+     "rank": 5,
+     "influenceRank": 10,
+     "reputation": 27,
+     "voyages": 133,
+     "commands": 885,
+     "realMinutes": 202,
+     "tradeProfit": 76280,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 1200,
+     "fleet": 1,
+     "npcTotalWorth": 1657245,
+     "richestRival": 148490,
+     "priceIndex": 1.002,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 158505,
+      "median": 165230,
+      "max": 167740
+     },
+     "rank": 2,
+     "influenceRank": 12,
+     "reputation": 29,
+     "voyages": 261,
+     "commands": 1756,
+     "realMinutes": 400,
+     "tradeProfit": 151940,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 2800,
+     "fleet": 1,
+     "npcTotalWorth": 2248890,
+     "richestRival": 185700,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "automated",
+   "label": "Automated routes",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 24835,
+      "median": 26250,
+      "max": 28030
+     },
+     "rank": 19,
+     "influenceRank": 13,
+     "reputation": 16,
+     "voyages": 23,
+     "commands": 138,
+     "realMinutes": 31,
+     "tradeProfit": 9530,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1175685,
+     "richestRival": 114665,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.18,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 45430,
+      "median": 46370,
+      "max": 52355
+     },
+     "rank": 11,
+     "influenceRank": 8,
+     "reputation": 24,
+     "voyages": 62,
+     "commands": 394,
+     "realMinutes": 91,
+     "tradeProfit": 30135,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1361350,
+     "richestRival": 127970,
+     "priceIndex": 1,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 73210,
+      "median": 88350,
+      "max": 93565
+     },
+     "rank": 6,
+     "influenceRank": 9,
+     "reputation": 29,
+     "voyages": 132,
+     "commands": 883,
+     "realMinutes": 201,
+     "tradeProfit": 77875,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 13620,
+     "invested": 67500,
+     "repairs": 1200,
+     "fleet": 2,
+     "npcTotalWorth": 1656295,
+     "richestRival": 144905,
+     "priceIndex": 1,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 163965,
+      "median": 231995,
+      "max": 252910
+     },
+     "rank": 1,
+     "influenceRank": 10,
+     "reputation": 32,
+     "voyages": 258,
+     "commands": 1728,
+     "realMinutes": 400,
+     "tradeProfit": 140375,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 118375,
+     "invested": 127500,
+     "repairs": 2400,
+     "fleet": 3,
+     "npcTotalWorth": 2193280,
+     "richestRival": 186000,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "warehouse",
+   "label": "Warehouses, Hooghly–Satgaon",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 34540,
+      "median": 35640,
+      "max": 38390
+     },
+     "rank": 14,
+     "influenceRank": 24,
+     "reputation": 7,
+     "voyages": 45,
+     "commands": 291,
+     "realMinutes": 31,
+     "tradeProfit": 18720,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 15000,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1174380,
+     "richestRival": 115905,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.19,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 57270,
+      "median": 57630,
+      "max": 59525
+     },
+     "rank": 9,
+     "influenceRank": 26,
+     "reputation": 7,
+     "voyages": 137,
+     "commands": 1041,
+     "realMinutes": 90,
+     "tradeProfit": 41510,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 15000,
+     "repairs": 1200,
+     "fleet": 1,
+     "npcTotalWorth": 1353815,
+     "richestRival": 124155,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.26,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 89910,
+      "median": 91665,
+      "max": 93945
+     },
+     "rank": 6,
+     "influenceRank": 26,
+     "reputation": 8,
+     "voyages": 307,
+     "commands": 2474,
+     "realMinutes": 200,
+     "tradeProfit": 77145,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 15000,
+     "repairs": 2800,
+     "fleet": 1,
+     "npcTotalWorth": 1661005,
+     "richestRival": 145260,
+     "priceIndex": 0.995,
+     "largestPriceMove": 0.26,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 150370,
+      "median": 153835,
+      "max": 154565
+     },
+     "rank": 3,
+     "influenceRank": 26,
+     "reputation": 8,
+     "voyages": 617,
+     "commands": 4958,
+     "realMinutes": 401,
+     "tradeProfit": 142484,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 15000,
+     "repairs": 6000,
+     "fleet": 1,
+     "npcTotalWorth": 2260095,
+     "richestRival": 194980,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "farming",
+   "label": "Farms",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 30555,
+      "median": 32865,
+      "max": 33600
+     },
+     "rank": 16,
+     "influenceRank": 11,
+     "reputation": 19,
+     "voyages": 21,
+     "commands": 132,
+     "realMinutes": 31,
+     "tradeProfit": 11640,
+     "farmRevenue": 3165,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 10000,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1176305,
+     "richestRival": 112945,
+     "priceIndex": 1.002,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 103890,
+      "median": 109875,
+      "max": 115925
+     },
+     "rank": 4,
+     "influenceRank": 9,
+     "reputation": 26,
+     "voyages": 61,
+     "commands": 442,
+     "realMinutes": 92,
+     "tradeProfit": 31115,
+     "farmRevenue": 62865,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 60000,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1355165,
+     "richestRival": 127695,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 329800,
+      "median": 352160,
+      "max": 366830
+     },
+     "rank": 1,
+     "influenceRank": 11,
+     "reputation": 26,
+     "voyages": 133,
+     "commands": 1073,
+     "realMinutes": 201,
+     "tradeProfit": 66315,
+     "farmRevenue": 262550,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 60000,
+     "repairs": 1200,
+     "fleet": 1,
+     "npcTotalWorth": 1664440,
+     "richestRival": 146905,
+     "priceIndex": 0.995,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 760200,
+      "median": 795890,
+      "max": 820900
+     },
+     "rank": 1,
+     "influenceRank": 12,
+     "reputation": 26,
+     "voyages": 261,
+     "commands": 2173,
+     "realMinutes": 402,
+     "tradeProfit": 137545,
+     "farmRevenue": 639893,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 60000,
+     "repairs": 2800,
+     "fleet": 1,
+     "npcTotalWorth": 2250050,
+     "richestRival": 189515,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "mixed-active",
+   "label": "Mixed, active at 4×",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 37710,
+      "median": 41860,
+      "max": 46820
+     },
+     "rank": 12,
+     "influenceRank": 1,
+     "reputation": 51,
+     "voyages": 23,
+     "commands": 156,
+     "realMinutes": 8,
+     "tradeProfit": 14220,
+     "farmRevenue": 0,
+     "contractRewards": 14700,
+     "contractProfit": 10507,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1166265,
+     "richestRival": 115290,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 66080,
+      "median": 71295,
+      "max": 75325
+     },
+     "rank": 5,
+     "influenceRank": 1,
+     "reputation": 77,
+     "voyages": 60,
+     "commands": 408,
+     "realMinutes": 23,
+     "tradeProfit": 39523,
+     "farmRevenue": 0,
+     "contractRewards": 22200,
+     "contractProfit": 15570,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1343625,
+     "richestRival": 128770,
+     "priceIndex": 1,
+     "largestPriceMove": 0.18,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 112130,
+      "median": 126105,
+      "max": 136810
+     },
+     "rank": 3,
+     "influenceRank": 1,
+     "reputation": 81,
+     "voyages": 132,
+     "commands": 875,
+     "realMinutes": 50,
+     "tradeProfit": 77283,
+     "farmRevenue": 4035,
+     "contractRewards": 22200,
+     "contractProfit": 15570,
+     "routeGain": 34190,
+     "invested": 87500,
+     "repairs": 1200,
+     "fleet": 2,
+     "npcTotalWorth": 1639765,
+     "richestRival": 147370,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.27,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 377755,
+      "median": 406320,
+      "max": 418485
+     },
+     "rank": 1,
+     "influenceRank": 1,
+     "reputation": 83,
+     "voyages": 253,
+     "commands": 1760,
+     "realMinutes": 100,
+     "tradeProfit": 156622,
+     "farmRevenue": 125128,
+     "contractRewards": 22200,
+     "contractProfit": 15570,
+     "routeGain": 120035,
+     "invested": 87500,
+     "repairs": 2400,
+     "fleet": 2,
+     "npcTotalWorth": 2181640,
+     "richestRival": 185905,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "mixed-casual",
+   "label": "Mixed, casual at 1×",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 37115,
+      "median": 37475,
+      "max": 39745
+     },
+     "rank": 13,
+     "influenceRank": 1,
+     "reputation": 53,
+     "voyages": 20,
+     "commands": 135,
+     "realMinutes": 31,
+     "tradeProfit": 12568,
+     "farmRevenue": 0,
+     "contractRewards": 12900,
+     "contractProfit": 9253,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1175235,
+     "richestRival": 116400,
+     "priceIndex": 1,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 63050,
+      "median": 68125,
+      "max": 72405
+     },
+     "rank": 5,
+     "influenceRank": 1,
+     "reputation": 78,
+     "voyages": 59,
+     "commands": 406,
+     "realMinutes": 91,
+     "tradeProfit": 35813,
+     "farmRevenue": 0,
+     "contractRewards": 22200,
+     "contractProfit": 15509,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1357580,
+     "richestRival": 130385,
+     "priceIndex": 1,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 107875,
+      "median": 119865,
+      "max": 146310
+     },
+     "rank": 4,
+     "influenceRank": 1,
+     "reputation": 80,
+     "voyages": 129,
+     "commands": 844,
+     "realMinutes": 201,
+     "tradeProfit": 72293,
+     "farmRevenue": 0,
+     "contractRewards": 22200,
+     "contractProfit": 15509,
+     "routeGain": 34130,
+     "invested": 77500,
+     "repairs": 1200,
+     "fleet": 2,
+     "npcTotalWorth": 1653685,
+     "richestRival": 149330,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 389290,
+      "median": 399390,
+      "max": 451790
+     },
+     "rank": 1,
+     "influenceRank": 1,
+     "reputation": 84,
+     "voyages": 242,
+     "commands": 1672,
+     "realMinutes": 402,
+     "tradeProfit": 143870,
+     "farmRevenue": 133841,
+     "contractRewards": 22200,
+     "contractProfit": 15509,
+     "routeGain": 119890,
+     "invested": 87500,
+     "repairs": 2400,
+     "fleet": 2,
+     "npcTotalWorth": 2167655,
+     "richestRival": 186410,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.24,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "skilled",
+   "label": "Skilled manual",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 57925,
+      "median": 59945,
+      "max": 67505
+     },
+     "rank": 5,
+     "influenceRank": 7,
+     "reputation": 24,
+     "voyages": 36,
+     "commands": 206,
+     "realMinutes": 30,
+     "tradeProfit": 38125,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1147390,
+     "richestRival": 112710,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 127360,
+      "median": 134325,
+      "max": 144055
+     },
+     "rank": 1,
+     "influenceRank": 6,
+     "reputation": 30,
+     "voyages": 113,
+     "commands": 670,
+     "realMinutes": 90,
+     "tradeProfit": 113485,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1296180,
+     "richestRival": 126370,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 257905,
+      "median": 274985,
+      "max": 277355
+     },
+     "rank": 1,
+     "influenceRank": 7,
+     "reputation": 34,
+     "voyages": 253,
+     "commands": 1511,
+     "realMinutes": 200,
+     "tradeProfit": 255780,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 2400,
+     "fleet": 1,
+     "npcTotalWorth": 1561750,
+     "richestRival": 141240,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 502145,
+      "median": 520595,
+      "max": 523730
+     },
+     "rank": 1,
+     "influenceRank": 6,
+     "reputation": 36,
+     "voyages": 503,
+     "commands": 2988,
+     "realMinutes": 400,
+     "tradeProfit": 503960,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 4800,
+     "fleet": 1,
+     "npcTotalWorth": 2041080,
+     "richestRival": 175535,
+     "priceIndex": 1,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "skilled-hold",
+   "label": "Skilled, 3 hold upgrades",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 50105,
+      "median": 54835,
+      "max": 58175
+     },
+     "rank": 7,
+     "influenceRank": 5,
+     "reputation": 26,
+     "voyages": 36,
+     "commands": 223,
+     "realMinutes": 30,
+     "tradeProfit": 36735,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1152465,
+     "richestRival": 114375,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 115585,
+      "median": 125580,
+      "max": 134635
+     },
+     "rank": 1,
+     "influenceRank": 4,
+     "reputation": 37,
+     "voyages": 92,
+     "commands": 589,
+     "realMinutes": 91,
+     "tradeProfit": 108685,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1284205,
+     "richestRival": 123180,
+     "priceIndex": 1,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 247055,
+      "median": 264420,
+      "max": 278865
+     },
+     "rank": 1,
+     "influenceRank": 3,
+     "reputation": 41,
+     "voyages": 198,
+     "commands": 1285,
+     "realMinutes": 200,
+     "tradeProfit": 250050,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 1600,
+     "fleet": 1,
+     "npcTotalWorth": 1504590,
+     "richestRival": 143015,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.27,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 503025,
+      "median": 518765,
+      "max": 524855
+     },
+     "rank": 1,
+     "influenceRank": 4,
+     "reputation": 41,
+     "voyages": 393,
+     "commands": 2563,
+     "realMinutes": 400,
+     "tradeProfit": 505585,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 3600,
+     "fleet": 1,
+     "npcTotalWorth": 1943295,
+     "richestRival": 179435,
+     "priceIndex": 1.001,
+     "largestPriceMove": 0.27,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "skilled-routes",
+   "label": "Skilled, 2 Bora routes",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 50270,
+      "median": 56190,
+      "max": 60645
+     },
+     "rank": 7,
+     "influenceRank": 6,
+     "reputation": 24,
+     "voyages": 39,
+     "commands": 219,
+     "realMinutes": 30,
+     "tradeProfit": 40880,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 955,
+     "invested": 32500,
+     "repairs": 0,
+     "fleet": 2,
+     "npcTotalWorth": 1149125,
+     "richestRival": 112085,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 124415,
+      "median": 126560,
+      "max": 136905
+     },
+     "rank": 1,
+     "influenceRank": 7,
+     "reputation": 30,
+     "voyages": 118,
+     "commands": 698,
+     "realMinutes": 91,
+     "tradeProfit": 106665,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 20040,
+     "invested": 65000,
+     "repairs": 800,
+     "fleet": 3,
+     "npcTotalWorth": 1287390,
+     "richestRival": 123885,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 283325,
+      "median": 289900,
+      "max": 307435
+     },
+     "rank": 1,
+     "influenceRank": 8,
+     "reputation": 32,
+     "voyages": 251,
+     "commands": 1497,
+     "realMinutes": 201,
+     "tradeProfit": 238530,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 57260,
+     "invested": 65000,
+     "repairs": 2400,
+     "fleet": 3,
+     "npcTotalWorth": 1528580,
+     "richestRival": 142795,
+     "priceIndex": 1,
+     "largestPriceMove": 0.26,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 568815,
+      "median": 580060,
+      "max": 587785
+     },
+     "rank": 1,
+     "influenceRank": 8,
+     "reputation": 37,
+     "voyages": 493,
+     "commands": 2934,
+     "realMinutes": 400,
+     "tradeProfit": 462590,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 122795,
+     "invested": 65000,
+     "repairs": 4800,
+     "fleet": 3,
+     "npcTotalWorth": 1993660,
+     "richestRival": 171105,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "skilled-contracts",
+   "label": "Skilled, with contracts",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 59035,
+      "median": 65980,
+      "max": 67530
+     },
+     "rank": 5,
+     "influenceRank": 3,
+     "reputation": 34,
+     "voyages": 41,
+     "commands": 245,
+     "realMinutes": 30,
+     "tradeProfit": 40087,
+     "farmRevenue": 0,
+     "contractRewards": 4500,
+     "contractProfit": 4500,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1152890,
+     "richestRival": 112380,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 134815,
+      "median": 136325,
+      "max": 145155
+     },
+     "rank": 1,
+     "influenceRank": 3,
+     "reputation": 39,
+     "voyages": 119,
+     "commands": 691,
+     "realMinutes": 90,
+     "tradeProfit": 110300,
+     "farmRevenue": 0,
+     "contractRewards": 6000,
+     "contractProfit": 5400,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1297745,
+     "richestRival": 122370,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 257445,
+      "median": 274925,
+      "max": 290675
+     },
+     "rank": 1,
+     "influenceRank": 3,
+     "reputation": 45,
+     "voyages": 258,
+     "commands": 1524,
+     "realMinutes": 200,
+     "tradeProfit": 249740,
+     "farmRevenue": 0,
+     "contractRewards": 6300,
+     "contractProfit": 6211,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 2400,
+     "fleet": 1,
+     "npcTotalWorth": 1539110,
+     "richestRival": 138805,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 508590,
+      "median": 516650,
+      "max": 533410
+     },
+     "rank": 1,
+     "influenceRank": 3,
+     "reputation": 48,
+     "voyages": 513,
+     "commands": 3072,
+     "realMinutes": 401,
+     "tradeProfit": 492554,
+     "farmRevenue": 0,
+     "contractRewards": 7500,
+     "contractProfit": 6211,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 4800,
+     "fleet": 1,
+     "npcTotalWorth": 2024290,
+     "richestRival": 173190,
+     "priceIndex": 1,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "skilled-patello",
+   "label": "Skilled, Patello as main ship",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 57925,
+      "median": 59945,
+      "max": 67505
+     },
+     "rank": 5,
+     "influenceRank": 7,
+     "reputation": 24,
+     "voyages": 36,
+     "commands": 206,
+     "realMinutes": 30,
+     "tradeProfit": 38125,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1147390,
+     "richestRival": 112710,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 98050,
+      "median": 108220,
+      "max": 117880
+     },
+     "rank": 4,
+     "influenceRank": 5,
+     "reputation": 33,
+     "voyages": 90,
+     "commands": 558,
+     "realMinutes": 91,
+     "tradeProfit": 106970,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 45000,
+     "repairs": 400,
+     "fleet": 2,
+     "npcTotalWorth": 1302220,
+     "richestRival": 122750,
+     "priceIndex": 1.001,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 194565,
+      "median": 229155,
+      "max": 244010
+     },
+     "rank": 1,
+     "influenceRank": 4,
+     "reputation": 37,
+     "voyages": 189,
+     "commands": 1190,
+     "realMinutes": 201,
+     "tradeProfit": 229920,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 45000,
+     "repairs": 2500,
+     "fleet": 2,
+     "npcTotalWorth": 1558345,
+     "richestRival": 142515,
+     "priceIndex": 1,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 403450,
+      "median": 420560,
+      "max": 445595
+     },
+     "rank": 1,
+     "influenceRank": 5,
+     "reputation": 40,
+     "voyages": 347,
+     "commands": 2244,
+     "realMinutes": 401,
+     "tradeProfit": 421340,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 45000,
+     "repairs": 4600,
+     "fleet": 2,
+     "npcTotalWorth": 2055285,
+     "richestRival": 176660,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "manual-bora",
+   "label": "Basic, Bora as main ship",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 24835,
+      "median": 26250,
+      "max": 28030
+     },
+     "rank": 19,
+     "influenceRank": 13,
+     "reputation": 16,
+     "voyages": 23,
+     "commands": 138,
+     "realMinutes": 31,
+     "tradeProfit": 9530,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1175685,
+     "richestRival": 114665,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.18,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 39155,
+      "median": 41045,
+      "max": 46100
+     },
+     "rank": 15,
+     "influenceRank": 8,
+     "reputation": 27,
+     "voyages": 65,
+     "commands": 408,
+     "realMinutes": 91,
+     "tradeProfit": 33620,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 32500,
+     "repairs": 400,
+     "fleet": 2,
+     "npcTotalWorth": 1358255,
+     "richestRival": 127160,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 81165,
+      "median": 91205,
+      "max": 91450
+     },
+     "rank": 6,
+     "influenceRank": 10,
+     "reputation": 29,
+     "voyages": 151,
+     "commands": 1000,
+     "realMinutes": 201,
+     "tradeProfit": 85060,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 32500,
+     "repairs": 1300,
+     "fleet": 2,
+     "npcTotalWorth": 1671205,
+     "richestRival": 146620,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.28,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 163440,
+      "median": 171450,
+      "max": 179815
+     },
+     "rank": 2,
+     "influenceRank": 10,
+     "reputation": 30,
+     "voyages": 307,
+     "commands": 2015,
+     "realMinutes": 400,
+     "tradeProfit": 166795,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 32500,
+     "repairs": 2800,
+     "fleet": 2,
+     "npcTotalWorth": 2250810,
+     "richestRival": 188605,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "manual-patello",
+   "label": "Basic, Patello as main ship",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 24835,
+      "median": 26250,
+      "max": 28030
+     },
+     "rank": 19,
+     "influenceRank": 13,
+     "reputation": 16,
+     "voyages": 23,
+     "commands": 138,
+     "realMinutes": 31,
+     "tradeProfit": 9530,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1175685,
+     "richestRival": 114665,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.18,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 45430,
+      "median": 46370,
+      "max": 52355
+     },
+     "rank": 11,
+     "influenceRank": 8,
+     "reputation": 24,
+     "voyages": 62,
+     "commands": 394,
+     "realMinutes": 91,
+     "tradeProfit": 30135,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1361350,
+     "richestRival": 127970,
+     "priceIndex": 1,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 59215,
+      "median": 64760,
+      "max": 70155
+     },
+     "rank": 12,
+     "influenceRank": 10,
+     "reputation": 29,
+     "voyages": 122,
+     "commands": 795,
+     "realMinutes": 202,
+     "tradeProfit": 69140,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 60000,
+     "repairs": 800,
+     "fleet": 2,
+     "npcTotalWorth": 1666260,
+     "richestRival": 147455,
+     "priceIndex": 1,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 103610,
+      "median": 112105,
+      "max": 123725
+     },
+     "rank": 6,
+     "influenceRank": 11,
+     "reputation": 29,
+     "voyages": 198,
+     "commands": 1326,
+     "realMinutes": 401,
+     "tradeProfit": 118305,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 60000,
+     "repairs": 1850,
+     "fleet": 2,
+     "npcTotalWorth": 2299350,
+     "richestRival": 190375,
+     "priceIndex": 1.001,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "automated-bora",
+   "label": "Basic, 2 Bora routes",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 24835,
+      "median": 26250,
+      "max": 28030
+     },
+     "rank": 19,
+     "influenceRank": 13,
+     "reputation": 16,
+     "voyages": 23,
+     "commands": 138,
+     "realMinutes": 31,
+     "tradeProfit": 9530,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1175685,
+     "richestRival": 114665,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.18,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 45430,
+      "median": 46370,
+      "max": 52355
+     },
+     "rank": 11,
+     "influenceRank": 8,
+     "reputation": 24,
+     "voyages": 62,
+     "commands": 394,
+     "realMinutes": 91,
+     "tradeProfit": 30135,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 7500,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1361350,
+     "richestRival": 127970,
+     "priceIndex": 1,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 88905,
+      "median": 98225,
+      "max": 106710
+     },
+     "rank": 4,
+     "influenceRank": 10,
+     "reputation": 28,
+     "voyages": 134,
+     "commands": 874,
+     "realMinutes": 201,
+     "tradeProfit": 70635,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 20655,
+     "invested": 40000,
+     "repairs": 1200,
+     "fleet": 2,
+     "npcTotalWorth": 1632275,
+     "richestRival": 149260,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 213605,
+      "median": 249770,
+      "max": 257990
+     },
+     "rank": 1,
+     "influenceRank": 12,
+     "reputation": 29,
+     "voyages": 252,
+     "commands": 1640,
+     "realMinutes": 401,
+     "tradeProfit": 147930,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 100930,
+     "invested": 72500,
+     "repairs": 2400,
+     "fleet": 3,
+     "npcTotalWorth": 2207185,
+     "richestRival": 191565,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "repeat-best",
+   "label": "One route repeated, Hooghly–Tanda",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 44990,
+      "median": 48175,
+      "max": 49125
+     },
+     "rank": 9,
+     "influenceRank": 23,
+     "reputation": 8,
+     "voyages": 34,
+     "commands": 237,
+     "realMinutes": 30,
+     "tradeProfit": 27150,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1165940,
+     "richestRival": 115165,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 102535,
+      "median": 105230,
+      "max": 107420
+     },
+     "rank": 4,
+     "influenceRank": 26,
+     "reputation": 8,
+     "voyages": 105,
+     "commands": 753,
+     "realMinutes": 91,
+     "tradeProfit": 84210,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1328295,
+     "richestRival": 125105,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 199265,
+      "median": 201275,
+      "max": 205595
+     },
+     "rank": 1,
+     "influenceRank": 26,
+     "reputation": 8,
+     "voyages": 234,
+     "commands": 1697,
+     "realMinutes": 200,
+     "tradeProfit": 181970,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 2000,
+     "fleet": 1,
+     "npcTotalWorth": 1617100,
+     "richestRival": 141695,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 369120,
+      "median": 375210,
+      "max": 393745
+     },
+     "rank": 1,
+     "influenceRank": 26,
+     "reputation": 8,
+     "voyages": 469,
+     "commands": 3422,
+     "realMinutes": 400,
+     "tradeProfit": 357790,
+     "farmRevenue": 0,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 4400,
+     "fleet": 1,
+     "npcTotalWorth": 2171745,
+     "richestRival": 183235,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.19,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "farms-3",
+   "label": "3 farms",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 30555,
+      "median": 32865,
+      "max": 33600
+     },
+     "rank": 16,
+     "influenceRank": 11,
+     "reputation": 19,
+     "voyages": 21,
+     "commands": 132,
+     "realMinutes": 31,
+     "tradeProfit": 11640,
+     "farmRevenue": 3165,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 10000,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1176305,
+     "richestRival": 112945,
+     "priceIndex": 1.002,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 96380,
+      "median": 97970,
+      "max": 99540
+     },
+     "rank": 4,
+     "influenceRank": 9,
+     "reputation": 26,
+     "voyages": 61,
+     "commands": 436,
+     "realMinutes": 90,
+     "tradeProfit": 32205,
+     "farmRevenue": 48080,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 30000,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1359655,
+     "richestRival": 124635,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 227845,
+      "median": 240970,
+      "max": 253800
+     },
+     "rank": 1,
+     "influenceRank": 11,
+     "reputation": 26,
+     "voyages": 136,
+     "commands": 1012,
+     "realMinutes": 201,
+     "tradeProfit": 66755,
+     "farmRevenue": 159385,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 30000,
+     "repairs": 1200,
+     "fleet": 1,
+     "npcTotalWorth": 1664020,
+     "richestRival": 149115,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 473315,
+      "median": 487225,
+      "max": 543470
+     },
+     "rank": 1,
+     "influenceRank": 13,
+     "reputation": 26,
+     "voyages": 266,
+     "commands": 2011,
+     "realMinutes": 401,
+     "tradeProfit": 136045,
+     "farmRevenue": 340420,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 30000,
+     "repairs": 2800,
+     "fleet": 1,
+     "npcTotalWorth": 2246755,
+     "richestRival": 179615,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "farm-circuit",
+   "label": "Farm circuit",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 31900,
+      "median": 32400,
+      "max": 37745
+     },
+     "rank": 15,
+     "influenceRank": 11,
+     "reputation": 18,
+     "voyages": 18,
+     "commands": 117,
+     "realMinutes": 32,
+     "tradeProfit": 8935,
+     "farmRevenue": 4645,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 10000,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1179145,
+     "richestRival": 114150,
+     "priceIndex": 1,
+     "largestPriceMove": 0.19,
+     "stallsMoved": 12,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 123260,
+      "median": 157290,
+      "max": 178480
+     },
+     "rank": 1,
+     "influenceRank": 3,
+     "reputation": 38,
+     "voyages": 78,
+     "commands": 552,
+     "realMinutes": 91,
+     "tradeProfit": 43425,
+     "farmRevenue": 101735,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 117500,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1357630,
+     "richestRival": 128435,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 17,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 697665,
+      "median": 735335,
+      "max": 772345
+     },
+     "rank": 1,
+     "influenceRank": 3,
+     "reputation": 51,
+     "voyages": 187,
+     "commands": 1418,
+     "realMinutes": 201,
+     "tradeProfit": 143265,
+     "farmRevenue": 579225,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 147500,
+     "repairs": 2000,
+     "fleet": 1,
+     "npcTotalWorth": 1604170,
+     "richestRival": 142680,
+     "priceIndex": 0.99,
+     "largestPriceMove": 0.25,
+     "stallsMoved": 18,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 1764460,
+      "median": 1795580,
+      "max": 1838180
+     },
+     "rank": 1,
+     "influenceRank": 2,
+     "reputation": 59,
+     "voyages": 387,
+     "commands": 3070,
+     "realMinutes": 401,
+     "tradeProfit": 322410,
+     "farmRevenue": 1465430,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 147500,
+     "repairs": 4000,
+     "fleet": 1,
+     "npcTotalWorth": 2099435,
+     "richestRival": 180175,
+     "priceIndex": 0.993,
+     "largestPriceMove": 0.28,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "farms-on-route",
+   "label": "2 farms on the best route",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 44605,
+      "median": 50780,
+      "max": 53475
+     },
+     "rank": 8,
+     "influenceRank": 22,
+     "reputation": 9,
+     "voyages": 34,
+     "commands": 256,
+     "realMinutes": 30,
+     "tradeProfit": 25335,
+     "farmRevenue": 9655,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 20000,
+     "repairs": 0,
+     "fleet": 1,
+     "npcTotalWorth": 1167150,
+     "richestRival": 115290,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 13,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 145055,
+      "median": 148205,
+      "max": 151285
+     },
+     "rank": 1,
+     "influenceRank": 26,
+     "reputation": 9,
+     "voyages": 105,
+     "commands": 903,
+     "realMinutes": 91,
+     "tradeProfit": 78740,
+     "farmRevenue": 53485,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 20000,
+     "repairs": 800,
+     "fleet": 1,
+     "npcTotalWorth": 1335820,
+     "richestRival": 127690,
+     "priceIndex": 0.997,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 308390,
+      "median": 317065,
+      "max": 323235
+     },
+     "rank": 1,
+     "influenceRank": 26,
+     "reputation": 9,
+     "voyages": 234,
+     "commands": 2096,
+     "realMinutes": 200,
+     "tradeProfit": 171570,
+     "farmRevenue": 131625,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 20000,
+     "repairs": 2000,
+     "fleet": 1,
+     "npcTotalWorth": 1616055,
+     "richestRival": 148345,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 17,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 611965,
+      "median": 620425,
+      "max": 635290
+     },
+     "rank": 1,
+     "influenceRank": 26,
+     "reputation": 9,
+     "voyages": 469,
+     "commands": 4264,
+     "realMinutes": 400,
+     "tradeProfit": 334915,
+     "farmRevenue": 274900,
+     "contractRewards": 0,
+     "contractProfit": 0,
+     "routeGain": 0,
+     "invested": 20000,
+     "repairs": 4400,
+     "fleet": 1,
+     "npcTotalWorth": 2160570,
+     "richestRival": 181850,
+     "priceIndex": 0.996,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  },
+  {
+   "id": "contract-focused",
+   "label": "Contract-focused",
+   "days": [
+    {
+     "day": 30,
+     "netWorth": {
+      "min": 46265,
+      "median": 47230,
+      "max": 50330
+     },
+     "rank": 9,
+     "influenceRank": 1,
+     "reputation": 51,
+     "voyages": 28,
+     "commands": 170,
+     "realMinutes": 31,
+     "tradeProfit": 17958,
+     "farmRevenue": 0,
+     "contractRewards": 12600,
+     "contractProfit": 9818,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 400,
+     "fleet": 1,
+     "npcTotalWorth": 1167965,
+     "richestRival": 114710,
+     "priceIndex": 1.001,
+     "largestPriceMove": 0.28,
+     "stallsMoved": 14,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 90,
+     "netWorth": {
+      "min": 78105,
+      "median": 81600,
+      "max": 85460
+     },
+     "rank": 5,
+     "influenceRank": 1,
+     "reputation": 62,
+     "voyages": 121,
+     "commands": 746,
+     "realMinutes": 90,
+     "tradeProfit": 51316,
+     "farmRevenue": 0,
+     "contractRewards": 17100,
+     "contractProfit": 11902,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 1200,
+     "fleet": 1,
+     "npcTotalWorth": 1314240,
+     "richestRival": 129095,
+     "priceIndex": 1,
+     "largestPriceMove": 0.26,
+     "stallsMoved": 17,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 200,
+     "netWorth": {
+      "min": 137280,
+      "median": 139470,
+      "max": 146640
+     },
+     "rank": 2,
+     "influenceRank": 1,
+     "reputation": 67,
+     "voyages": 328,
+     "commands": 1932,
+     "realMinutes": 200,
+     "tradeProfit": 108026,
+     "farmRevenue": 0,
+     "contractRewards": 18000,
+     "contractProfit": 12802,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 3200,
+     "fleet": 1,
+     "npcTotalWorth": 1574200,
+     "richestRival": 144630,
+     "priceIndex": 0.998,
+     "largestPriceMove": 0.26,
+     "stallsMoved": 15,
+     "stallsNearLimit": 0
+    },
+    {
+     "day": 400,
+     "netWorth": {
+      "min": 246240,
+      "median": 248515,
+      "max": 266700
+     },
+     "rank": 1,
+     "influenceRank": 1,
+     "reputation": 67,
+     "voyages": 678,
+     "commands": 3935,
+     "realMinutes": 400,
+     "tradeProfit": 221783,
+     "farmRevenue": 0,
+     "contractRewards": 18000,
+     "contractProfit": 12824,
+     "routeGain": 0,
+     "invested": 0,
+     "repairs": 6800,
+     "fleet": 1,
+     "npcTotalWorth": 2068730,
+     "richestRival": 182780,
+     "priceIndex": 0.999,
+     "largestPriceMove": 0.23,
+     "stallsMoved": 16,
+     "stallsNearLimit": 0
+    }
+   ],
+   "refusedCommands": 0,
+   "allRunsReplayExactly": true,
+   "ledgerBalances": true
+  }
+ ],
+ "withoutMerchants": [
+  {
+   "id": "passive",
+   "label": "Passive",
+   "netWorth": 20480
+  },
+  {
+   "id": "two-port-start",
+   "label": "Two-port loop, Hooghly–Satgaon",
+   "netWorth": 119060
+  },
+  {
+   "id": "two-port-best",
+   "label": "Two-port loop, Kasimbazar–Tanda",
+   "netWorth": 72165
+  },
+  {
+   "id": "manual",
+   "label": "Manual trading",
+   "netWorth": 152982.5
+  },
+  {
+   "id": "automated",
+   "label": "Automated routes",
+   "netWorth": 190267.5
+  },
+  {
+   "id": "warehouse",
+   "label": "Warehouses, Hooghly–Satgaon",
+   "netWorth": 120745
+  },
+  {
+   "id": "farming",
+   "label": "Farms",
+   "netWorth": 415422.5
+  },
+  {
+   "id": "mixed-active",
+   "label": "Mixed, active at 4×",
+   "netWorth": 342460
+  },
+  {
+   "id": "mixed-casual",
+   "label": "Mixed, casual at 1×",
+   "netWorth": 342630
+  },
+  {
+   "id": "skilled",
+   "label": "Skilled manual",
+   "netWorth": 484750
+  },
+  {
+   "id": "skilled-hold",
+   "label": "Skilled, 3 hold upgrades",
+   "netWorth": 463720
+  },
+  {
+   "id": "skilled-routes",
+   "label": "Skilled, 2 Bora routes",
+   "netWorth": 518315
+  },
+  {
+   "id": "skilled-contracts",
+   "label": "Skilled, with contracts",
+   "netWorth": 480335
+  },
+  {
+   "id": "skilled-patello",
+   "label": "Skilled, Patello as main ship",
+   "netWorth": 407530
+  },
+  {
+   "id": "manual-bora",
+   "label": "Basic, Bora as main ship",
+   "netWorth": 169890
+  },
+  {
+   "id": "manual-patello",
+   "label": "Basic, Patello as main ship",
+   "netWorth": 117220
+  },
+  {
+   "id": "automated-bora",
+   "label": "Basic, 2 Bora routes",
+   "netWorth": 212817.5
+  },
+  {
+   "id": "repeat-best",
+   "label": "One route repeated, Hooghly–Tanda",
+   "netWorth": 374565
+  },
+  {
+   "id": "farms-3",
+   "label": "3 farms",
+   "netWorth": 299065
+  },
+  {
+   "id": "farm-circuit",
+   "label": "Farm circuit",
+   "netWorth": 1027900
+  },
+  {
+   "id": "farms-on-route",
+   "label": "2 farms on the best route",
+   "netWorth": 511270
+  },
+  {
+   "id": "contract-focused",
+   "label": "Contract-focused",
+   "netWorth": 272317.5
+  }
+ ],
+ "farmPayback": {
+  "riceSellMedian": 345,
+  "coinsPerDay": 345,
+  "paybackDays": 29
+ },
+ "routeShips": [
+  {
+   "vessel": "river-boat",
+   "price": 25000,
+   "route": "hooghly>tanda",
+   "capitalStart": 15000,
+   "capitalEnd": 58795,
+   "coinsPerDay": 218.36,
+   "paybackDays": 114
+  },
+  {
+   "vessel": "bora",
+   "price": 17500,
+   "route": "hooghly>tanda",
+   "capitalStart": 15000,
+   "capitalEnd": 58795,
+   "coinsPerDay": 218.36,
+   "paybackDays": 80
+  },
+  {
+   "vessel": "patello",
+   "price": 45000,
+   "route": "hooghly>tanda",
+   "capitalStart": 15000,
+   "capitalEnd": 89970,
+   "coinsPerDay": 373.8,
+   "paybackDays": 120
+  }
+ ],
+ "routeSpread": [
+  {
+   "origin": "dhaka",
+   "destination": "sonargaon",
+   "coinsPerDay": -1.35
+  },
+  {
+   "origin": "dhaka",
+   "destination": "kasimbazar",
+   "coinsPerDay": -1.4
+  },
+  {
+   "origin": "dhaka",
+   "destination": "chittagong",
+   "coinsPerDay": -1.57
+  },
+  {
+   "origin": "dhaka",
+   "destination": "sylhet",
+   "coinsPerDay": 43.36
+  },
+  {
+   "origin": "dhaka",
+   "destination": "hooghly",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "dhaka",
+   "destination": "satgaon",
+   "coinsPerDay": 21.99
+  },
+  {
+   "origin": "dhaka",
+   "destination": "rajmahal",
+   "coinsPerDay": 51.99
+  },
+  {
+   "origin": "dhaka",
+   "destination": "tanda",
+   "coinsPerDay": 74.39
+  },
+  {
+   "origin": "dhaka",
+   "destination": "malda",
+   "coinsPerDay": 34.18
+  },
+  {
+   "origin": "dhaka",
+   "destination": "balasore",
+   "coinsPerDay": -0.17
+  },
+  {
+   "origin": "dhaka",
+   "destination": "jessore",
+   "coinsPerDay": 24.33
+  },
+  {
+   "origin": "dhaka",
+   "destination": "sandwip",
+   "coinsPerDay": 44.02
+  },
+  {
+   "origin": "dhaka",
+   "destination": "bakla-chandradwip",
+   "coinsPerDay": 44.7
+  },
+  {
+   "origin": "dhaka",
+   "destination": "patna",
+   "coinsPerDay": 34.4
+  },
+  {
+   "origin": "chittagong",
+   "destination": "dhaka",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "chittagong",
+   "destination": "sonargaon",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "chittagong",
+   "destination": "kasimbazar",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "chittagong",
+   "destination": "sylhet",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "chittagong",
+   "destination": "hooghly",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "chittagong",
+   "destination": "satgaon",
+   "coinsPerDay": 11.04
+  },
+  {
+   "origin": "chittagong",
+   "destination": "rajmahal",
+   "coinsPerDay": 4.98
+  },
+  {
+   "origin": "chittagong",
+   "destination": "tanda",
+   "coinsPerDay": 7.62
+  },
+  {
+   "origin": "chittagong",
+   "destination": "malda",
+   "coinsPerDay": 34.73
+  },
+  {
+   "origin": "chittagong",
+   "destination": "balasore",
+   "coinsPerDay": -8.64
+  },
+  {
+   "origin": "chittagong",
+   "destination": "jessore",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "chittagong",
+   "destination": "sandwip",
+   "coinsPerDay": 8.17
+  },
+  {
+   "origin": "chittagong",
+   "destination": "bakla-chandradwip",
+   "coinsPerDay": 21.6
+  },
+  {
+   "origin": "chittagong",
+   "destination": "patna",
+   "coinsPerDay": null
+  },
+  {
+   "origin": "hooghly",
+   "destination": "dhaka",
+   "coinsPerDay": 28.64
+  },
+  {
+   "origin": "hooghly",
+   "destination": "sonargaon",
+   "coinsPerDay": 34.85
+  },
+  {
+   "origin": "hooghly",
+   "destination": "kasimbazar",
+   "coinsPerDay": 59.02
+  },
+  {
+   "origin": "hooghly",
+   "destination": "chittagong",
+   "coinsPerDay": 28.96
+  },
+  {
+   "origin": "hooghly",
+   "destination": "sylhet",
+   "coinsPerDay": 30.68
+  },
+  {
+   "origin": "hooghly",
+   "destination": "satgaon",
+   "coinsPerDay": 150.23
+  },
+  {
+   "origin": "hooghly",
+   "destination": "rajmahal",
+   "coinsPerDay": 100.46
+  },
+  {
+   "origin": "hooghly",
+   "destination": "tanda",
+   "coinsPerDay": 218.19
+  },
+  {
+   "origin": "hooghly",
+   "destination": "malda",
+   "coinsPerDay": 111.18
+  },
+  {
+   "origin": "hooghly",
+   "destination": "balasore",
+   "coinsPerDay": 17.25
+  },
+  {
+   "origin": "hooghly",
+   "destination": "jessore",
+   "coinsPerDay": 25.67
+  },
+  {
+   "origin": "hooghly",
+   "destination": "sandwip",
+   "coinsPerDay": 86.12
+  },
+  {
+   "origin": "hooghly",
+   "destination": "bakla-chandradwip",
+   "coinsPerDay": 74.2
+  },
+  {
+   "origin": "hooghly",
+   "destination": "patna",
+   "coinsPerDay": 40.21
+  }
+ ],
+ "warehousePaybackDays": 730,
+ "exploits": {
+  "samePortStalls": 0,
+  "profitableCycles": 0
+ },
+ "approved": {
+  "saveVersion": 25,
+  "compared": 27,
+  "differences": [],
+  "mixedNpcWorth": 1639765
+ },
+ "targets": [
+  {
+   "label": "Strongest strategy against mixed, day 200",
+   "target": "at most 2.2×",
+   "measured": "5.83× (Farm circuit)",
+   "met": false
+  },
+  {
+   "label": "Strongest strategy against skilled manual, day 400",
+   "target": "at most 1.5×",
+   "measured": "3.45× (Farm circuit)",
+   "met": false
+  },
+  {
+   "label": "Mixed, day 30",
+   "target": "25,000–35,000",
+   "measured": "41,860",
+   "met": false
+  },
+  {
+   "label": "Mixed, day 90",
+   "target": "60,000–100,000",
+   "measured": "71,295",
+   "met": true
+  },
+  {
+   "label": "Mixed, day 200",
+   "target": "140,000–250,000",
+   "measured": "126,105",
+   "met": false
+  },
+  {
+   "label": "Skilled manual, day 200",
+   "target": "225,000–325,000",
+   "measured": "274,985",
+   "met": true
+  },
+  {
+   "label": "Basic manual, day 200",
+   "target": "at least 80,000",
+   "measured": "92,770",
+   "met": true
+  },
+  {
+   "label": "Passive ends behind every active strategy, every day measured",
+   "target": "always",
+   "measured": "yes",
+   "met": true
+  },
+  {
+   "label": "Farm-focused (6 farms), day 200",
+   "target": "120,000–220,000",
+   "measured": "352,160",
+   "met": false
+  },
+  {
+   "label": "Farm payback",
+   "target": "80–120 days",
+   "measured": "29 days",
+   "met": false
+  },
+  {
+   "label": "A good route's payback, by ship",
+   "target": "80–130 days",
+   "measured": "river-boat 114, bora 80, patello 120",
+   "met": true
+  },
+  {
+   "label": "Skilled with routes against skilled alone, day 200",
+   "target": "at least +5%",
+   "measured": "+5.4%",
+   "met": true
+  },
+  {
+   "label": "Contracts' share of mixed income, after goods costs, day 200",
+   "target": "15–30%",
+   "measured": "11.9%",
+   "met": false
+  },
+  {
+   "label": "Warehouse payback",
+   "target": "within 150 days",
+   "measured": "730 days",
+   "met": false
+  },
+  {
+   "label": "Patello as a skilled player's main ship against a River boat, day 400",
+   "target": "at least level",
+   "measured": "0.81×",
+   "met": false
+  },
+  {
+   "label": "Reputation of contract players, day 400",
+   "target": "under 150",
+   "measured": "83",
+   "met": true
+  },
+  {
+   "label": "Merchants' total wealth against the approved baseline, mixed play, day 200",
+   "target": "within ±5%",
+   "measured": "+0%",
+   "met": true
+  },
+  {
+   "label": "Stalls near empty or full, worst case",
+   "target": "under 15%",
+   "measured": "0%",
+   "met": true
+  },
+  {
+   "label": "Price index, across all strategies and days",
+   "target": "0.90–1.15",
+   "measured": "0.99–1.002",
+   "met": true
+  },
+  {
+   "label": "Same-port loops and closed round trips that profit",
+   "target": "none",
+   "measured": "0 and 0",
+   "met": true
+  }
+ ]
+}

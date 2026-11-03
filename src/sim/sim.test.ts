@@ -4,6 +4,7 @@ import { MARKET_MAX_STOCK, MARKET_PORTS, GOODS, createNewGame } from "../game/mo
 import { isValidGameState, validateSave } from "../game/save-format";
 import savedGame from "../game/__fixtures__/save-v20.json";
 import { measureStrategies } from "./baseline";
+import { BENCHMARK_DAYS, BENCHMARKS } from "./benchmarks";
 import { createSim, sail } from "./driver";
 import {
   demonstrateSamePortLoop,
@@ -15,6 +16,7 @@ import {
   measureNpcWorld,
   measureRecovery,
 } from "./experiments";
+import { purseChange } from "./ledger";
 import { estimateNetWorth } from "./metrics";
 import {
   ALL_COMMAND_TYPES,
@@ -23,6 +25,7 @@ import {
 } from "./recorded-game";
 import { STRATEGIES, replayMatches, runStrategy } from "./runner";
 import currentBaseline from "./__fixtures__/economy-baseline-v25.json";
+import benchmarkRecord from "./__fixtures__/economy-benchmark-v25.json";
 import frozenBaseline from "./__fixtures__/economy-baseline-v20.json";
 import recorded from "./__fixtures__/recorded-game-v20.json";
 
@@ -44,6 +47,60 @@ describe("simulation driver", () => {
   it("values a new game the same way every time", () => {
     expect(estimateNetWorth(createNewGame("A"))).toBe(estimateNetWorth(createNewGame("B")));
   });
+});
+
+describe("benchmark players", () => {
+  const added = BENCHMARKS.filter((entry) => !STRATEGIES.includes(entry));
+
+  for (const definition of added) {
+    it(`${definition.id}: asks for nothing refused, and replays exactly`, () => {
+      const { result, sim } = runStrategy(definition, { days: [30] });
+      expect(result.refused).toEqual([]);
+      expect(isValidGameState(sim.state)).toBe(true);
+      expect(replayMatches(sim)).toBe(true);
+    });
+  }
+
+  it("keeps the casual and mixed benchmarks exactly as they were", () => {
+    for (const id of ["manual", "mixed-active"]) {
+      expect(BENCHMARKS.find((entry) => entry.id === id)).toBe(STRATEGIES.find((entry) => entry.id === id));
+    }
+  });
+
+  it("accounts for every Coin in a player's purse", () => {
+    for (const id of ["skilled-routes", "mixed-active", "contract-focused", "farm-circuit"]) {
+      const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === id)!, { days: [90] });
+      expect(purseChange(sim.ledger)).toBeCloseTo(sim.state.coins - sim.base.coins, 2);
+    }
+  });
+
+  it("splits a sale of farm rice from a sale of bought rice", () => {
+    const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === "farms-3")!, { days: [60] });
+    expect(sim.ledger.farmRevenue).toBeGreaterThan(0);
+    expect(sim.ledger.farmUnitsSold).toBeLessThanOrEqual(sim.farmUnitsCollected);
+  });
+
+  it("gets the same skilled result every time, and merchants vary it between seeds", () => {
+    const skilled = BENCHMARKS.find((entry) => entry.id === "skilled")!;
+    const first = runStrategy(skilled, { seed: 2, days: [30] }).result;
+    expect(runStrategy(skilled, { seed: 2, days: [30] }).result).toEqual(first);
+    expect(runStrategy(skilled, { seed: 3, days: [30] }).result.snapshots[0].npcTotalWorth)
+      .not.toBe(first.snapshots[0].npcTotalWorth);
+  });
+
+  it.runIf(createNewGame("Simulated").version === benchmarkRecord.saveVersion)(
+    "still matches the recorded benchmarks for the skilled player",
+    () => {
+      const recorded = benchmarkRecord.strategies.find((entry) => entry.id === "skilled")!;
+      const worths = [1, 2, 3, 4, 5].map(
+        (seed) =>
+          runStrategy(BENCHMARKS.find((entry) => entry.id === "skilled")!, { seed, days: [30] }).result.snapshots[0].netWorth,
+      );
+      expect([...worths].sort((a, b) => a - b)[2]).toBe(recorded.days[0].netWorth.median);
+      expect(BENCHMARK_DAYS).toEqual(recorded.days.map((day) => day.day));
+    },
+    30_000,
+  );
 });
 
 describe("scripted players", () => {

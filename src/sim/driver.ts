@@ -3,6 +3,7 @@
 import { applyCommand, type CommandResult, type GameCommand, type RecordedCommand } from "../game/commands";
 import type { GameState, TownId } from "../game/model";
 import { replayCommands, type ReplayResult } from "../game/replay";
+import { createLedger, noteCommand, type Ledger } from "./ledger";
 import type { SailingSpeed } from "../game/travel-time";
 
 export const SIM_START_AT = 1_800_000_000_000;
@@ -26,6 +27,7 @@ export interface Sim {
   currentLeg: string | null;
   firstDay: Partial<Record<string, number>>;
   farmUnitsCollected: number;
+  ledger: Ledger;
   /** Called after each arrival, so a run can take its measurements. */
   onArrive?: () => void;
 }
@@ -44,6 +46,7 @@ export function createSim(base: GameState, speed: SailingSpeed = 1): Sim {
     currentLeg: null,
     firstDay: {},
     farmUnitsCollected: 0,
+    ledger: createLedger(),
   };
 }
 
@@ -72,6 +75,7 @@ export function send(sim: Sim, command: GameCommand): CommandResult {
   if (result.status === "noop") return result;
 
   sim.state = result.state;
+  noteCommand(sim.ledger, before, result.state, command);
   sim.log.push({ seq: sim.log.length + 1, at: sim.at, command });
 
   const event = FIRST_EVENTS[command.type];

@@ -52,7 +52,7 @@
 | Daily stock recovery toward each port's baseline | Implemented | 6–12% of the gap per day, at least 1–3 units, by what the town produces and buys |
 | Coins at 50×, 5,000 starting balance | Implemented | Older saves convert at exactly ×50 |
 | Dynamic market (production, shortages, events, explained prices) | Partially implemented | Stock moves prices and recovers by town. Merchants trade real stock, and markets note their recent trades. No seasons, shortages from events, or full price explanations yet |
-| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`, including 26 merchants. Some targets are missed, and farms, contracts and warehouses are out of balance |
+| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`, including 26 merchants. Rebalance benchmarks to day 400 are in `ECONOMY_BENCHMARKS.md`: 11 of 20 targets are met before any rule changes |
 
 ### Ships
 
@@ -146,6 +146,7 @@
 | `src/components/BengalMap.tsx`, `CityScene.tsx` | Map and towns |
 | `src/online/`, `src/components/AccountPanel.tsx` | Google sign-in |
 | `src/server/`, `supabase/` | Server logic, database schema, Edge Function |
+| `src/sim/` | Economy simulations: the baseline, the rebalance benchmarks and the income ledger |
 | `tools/nav/`, `tools/art/` | Generate the route network and art |
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
@@ -224,7 +225,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `5628866` | Economy Plan Step 3: pricing fix, deeper stock and world clock, save version 22 | Yes |
 | `4689530` | Economy Plan Step 4: 26 merchants and dead-end recovery, save version 24 | Yes |
 | `15ce0a3` | Economy Plan Step 5: offline rankings, save version 25 | Yes |
-| The commit after `15ce0a3` | Integration fixes: More menu scrolling and the pinned ranking card | Not when this was written |
+| `213dc62` | Integration fixes: More menu scrolling and the pinned ranking card | Not when this was written |
+| The commit after `213dc62` | Economy rebalance Stage 1: benchmarks, income ledger and proposal. No economy rule changed | Not when this was written |
 
 | Service | Status |
 |---|---|
@@ -295,7 +297,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 - No filter for offensive merchant names. Non-Latin names are untested.
 
 **Technical and business risks:**
-1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). The same-port exploit is fixed. Farms still out-earn trading by far, delivery contracts mostly lose money, and some wealth and pacing targets are missed with 26 merchants.
+1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md) and [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md), with the plan in [ECONOMY_REBALANCE_PROPOSAL.md](./ECONOMY_REBALANCE_PROPOSAL.md). The same-port exploit is fixed. A player building farms everywhere reaches 735,335 Coins by day 200, against 274,985 for the skilled trader and 92,770 for the casual one. Delivery contracts mostly lose money, and warehouses and larger main ships don't pay back.
 2. **Scale:** most of the planned game is still unbuilt.
 3. **Delaying cloud saves:** each new system adds saved data, and real-time farms can't be fully trusted without a server clock. Everything must stay in the command system so this can be added later.
 4. **Performance with 26 traders:** about 1.3 ms per world day on the development computer, with routes cached, measured partway through the Step 4 refinement. Not yet measured on a phone.
@@ -311,7 +313,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Rebalance farms, automated ships, contracts and warehouses:** investigation first (see `ROADMAP.md`).
+1. **Economy rebalance,** in stages: benchmarks (done), farms, contracts, routes, then a full checkpoint. See `ECONOMY_REBALANCE_PROPOSAL.md`.
 2. **Economy Plan Step 6:** review of time-away progression, which is not approved.
 3. **Full tests, type-check, build and browser checks** at each meaningful checkpoint.
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.

@@ -1,7 +1,9 @@
 // Runs a scripted player for a number of in-game days, measuring as it passes each one.
 import { createNewGame, type GameState } from "../game/model";
+import { goodsAtReference } from "../game/npc";
 import type { SailingSpeed } from "../game/travel-time";
 import { createSim, replaySim, type Sim } from "./driver";
+import type { Ledger } from "./ledger";
 import { estimateNetWorth, measureMarket, npcWorth, round, type MarketSnapshot } from "./metrics";
 import {
   automated,
@@ -86,6 +88,12 @@ export interface DaySnapshot {
   /** The player's place among all the merchants by net worth. 1 is the richest. */
   playerRank: number;
   richestRival: number;
+  /** The player's place among the merchants by reputation. 1 is the most influential. */
+  influenceRank: number;
+  /** Coins held by routes, plus their goods at the value net worth gives them. */
+  routeValue: number;
+  commands: number;
+  ledger: Ledger;
 }
 
 export interface RouteShare {
@@ -127,6 +135,17 @@ function snapshot(sim: Sim, day: number): DaySnapshot {
     playerRank:
       1 + state.npcMerchants.filter((merchant) => npcWorth(merchant) > estimateNetWorth(state)).length,
     richestRival: Math.max(0, ...state.npcMerchants.map(npcWorth)),
+    influenceRank:
+      1 + state.npcMerchants.filter((merchant) => merchant.reputation > state.reputation).length,
+    routeValue: state.fleet.reduce(
+      (total, ship) =>
+        ship.automatedRoute
+          ? total + ship.automatedRoute.capital + goodsAtReference(ship.cargo)
+          : total,
+      0,
+    ),
+    commands: sim.log.length,
+    ledger: { ...sim.ledger },
   };
 }
 
