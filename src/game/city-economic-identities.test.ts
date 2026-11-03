@@ -115,9 +115,9 @@ describe("city economic identity data", () => {
 
   it("keeps economic identities descriptive without changing existing stock or quotes", () => {
     const initialStock = createInitialMarketStock();
-    expect(initialStock.dhaka.muslin).toBe(24);
-    expect(initialStock.patna.saltpetre).toBe(24);
-    expect(initialStock.sandwip.salt).toBe(16);
+    expect(initialStock.dhaka.muslin).toBe(72);
+    expect(initialStock.patna.saltpetre).toBe(72);
+    expect(initialStock.sandwip.salt).toBe(48);
 
     expect(getMarketSupply("dhaka", "muslin")).toBe(3);
     expect(getMarketDemand("dhaka", "rice")).toBe(3);
@@ -147,7 +147,7 @@ describe("city economic identity data", () => {
         false,
         initialStock.patna.saltpetre,
       ),
-    ).toBe(800);
+    ).toBe(795);
     expect(
       getGoodPrice(
         "hooghly",
@@ -156,9 +156,9 @@ describe("city economic identity data", () => {
         false,
         initialStock.hooghly.saltpetre,
       ),
-    ).toBe(800);
+    ).toBe(795);
     expect(
       getGoodPrice("chittagong", "salt", "buy", true),
-    ).toBe(1000);
+    ).toBe(990);
   });
 });

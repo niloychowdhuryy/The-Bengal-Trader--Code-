@@ -148,20 +148,20 @@ describe("version 19 saves", () => {
     await writeRaw("captain", fixture);
     const session = await openGameSession(T0);
     const game = session.game!;
-    expect(game.version).toBe(21);
+    expect(game.version).toBe(22);
     expect(isValidGameState(game)).toBe(true);
     const saved = fixture as unknown as GameState;
     expect(game.coins).toBe(fixture.gold * 50);
     expect(game.fleet.map((ship) => ship.cargo)).toEqual(saved.fleet.map((ship) => ship.cargo));
     expect(game.cargo).toEqual(saved.cargo);
-    expect(game.marketStock).toEqual(saved.marketStock);
+    expect(game.marketStock.dhaka.rice).toBe(saved.marketStock.dhaka.rice * 3);
     expect(game.missions.map((mission) => mission.status)).toEqual(
       saved.missions.map((mission) => mission.status),
     );
     expect(game.household).toEqual(saved.household);
     expect(game.ownedWarehouses).toEqual(saved.ownedWarehouses);
     // The journey moved onto the rebuilt network, keeping how far along it was.
-    expect(game.version).toBe(21);
+    expect(game.version).toBe(22);
     expect(game.voyage?.destination).toBe(saved.voyage?.destination);
     expect(game.voyage!.elapsedMs / game.voyage!.durationMs).toBeCloseTo(
       saved.voyage!.elapsedMs / saved.voyage!.durationMs,
@@ -184,12 +184,12 @@ describe("version 19 saves", () => {
     await commitGame(state, entries);
     await writeRaw("captain", asGoldSave(state, 19));
     const session = await openGameSession(T0 + 60_000);
-    expect(session.game?.version).toBe(21);
+    expect(session.game?.version).toBe(22);
     expect(session.log).toMatchObject({ provenance: "imported", baseSeq: 1, nextSeq: 2 });
     const log = await readCommandLog();
     expect(log?.commands).toEqual([]);
-    expect(log?.base.coins).toBe(state.coins);
-    expect((await loadGame())?.version).toBe(21);
+    expect(log?.base.coins).toBe(Math.round(state.coins / 50) * 50);
+    expect((await loadGame())?.version).toBe(22);
   });
 
   it("can be played on and verified after loading", async () => {

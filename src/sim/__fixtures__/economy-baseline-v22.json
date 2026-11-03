@@ -1,0 +1,1691 @@
+{
+ "saveVersion": 22,
+ "newGameNetWorth": 21600,
+ "strategies": [
+  {
+   "id": "passive",
+   "label": "Passive",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 6040,
+      "median": 6040,
+      "max": 6040
+     },
+     "netWorth": {
+      "min": 21680,
+      "median": 21680,
+      "max": 21680
+     },
+     "coinsPerDay": 34.6,
+     "netWorthPerVoyage": 3.81,
+     "netWorthPerRealMinute": 2.66,
+     "voyages": 21,
+     "realMinutes": 30.06,
+     "reputation": 2,
+     "standing": 4,
+     "portsVisited": 2,
+     "milestones": 0,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.02,
+     "stallsMoved": 0,
+     "meanStockGap": 0.03,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 117,
+     "npcTotalWorth": 15240
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 5640,
+      "median": 5640,
+      "max": 5640
+     },
+     "netWorth": {
+      "min": 21280,
+      "median": 21280,
+      "max": 21280
+     },
+     "coinsPerDay": 7.1,
+     "netWorthPerVoyage": -5.08,
+     "netWorthPerRealMinute": -3.55,
+     "voyages": 63,
+     "realMinutes": 90.18,
+     "reputation": 2,
+     "standing": 12,
+     "portsVisited": 2,
+     "milestones": 0,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.03,
+     "stallsMoved": 0,
+     "meanStockGap": 0.02,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 119,
+     "npcTotalWorth": 12925
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 4840,
+      "median": 4840,
+      "max": 4840
+     },
+     "netWorth": {
+      "min": 20480,
+      "median": 20480,
+      "max": 20480
+     },
+     "coinsPerDay": -0.8,
+     "netWorthPerVoyage": -8,
+     "netWorthPerRealMinute": -5.59,
+     "voyages": 140,
+     "realMinutes": 200.4,
+     "reputation": 2,
+     "standing": 28,
+     "portsVisited": 2,
+     "milestones": 0,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.03,
+     "stallsMoved": 0,
+     "meanStockGap": 0.02,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 119,
+     "npcTotalWorth": 10995
+    }
+   ],
+   "firstDay": {
+    "upgrade": null,
+    "extraShip": null,
+    "patello": null,
+    "automatedRoute": null,
+    "warehouse": null,
+    "farm": null,
+    "river_explorer": null,
+    "trusted_trader": null,
+    "prosperous_merchant": null
+   },
+   "topRoutes": [
+    {
+     "route": "dhaka>sonargaon",
+     "voyageShare": 0.5,
+     "profit": 140
+    },
+    {
+     "route": "sonargaon>dhaka",
+     "voyageShare": 0.5,
+     "profit": 0
+    }
+   ],
+   "topRouteProfitShare": 1,
+   "farmUnitsCollected": 0,
+   "refusedCommands": 0,
+   "commands": 423,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "two-port-start",
+   "label": "Two-port loop, Hooghly–Satgaon",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 16410,
+      "median": 16410,
+      "max": 16410
+     },
+     "netWorth": {
+      "min": 31410,
+      "median": 31410,
+      "max": 31410
+     },
+     "coinsPerDay": 373.36,
+     "netWorthPerVoyage": 218,
+     "netWorthPerRealMinute": 321.01,
+     "voyages": 45,
+     "realMinutes": 30.56,
+     "reputation": 7,
+     "standing": 10,
+     "portsVisited": 3,
+     "milestones": 2,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 8,
+     "meanStockGap": 0.73,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 109,
+     "npcTotalWorth": 15240
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 22265,
+      "median": 22265,
+      "max": 22265
+     },
+     "netWorth": {
+      "min": 37265,
+      "median": 37265,
+      "max": 37265
+     },
+     "coinsPerDay": 191.66,
+     "netWorthPerVoyage": 114.34,
+     "netWorthPerRealMinute": 173.9,
+     "voyages": 137,
+     "realMinutes": 90.08,
+     "reputation": 7,
+     "standing": 28,
+     "portsVisited": 3,
+     "milestones": 2,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.19,
+     "stallsMoved": 7,
+     "meanStockGap": 0.63,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 12430
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 33115,
+      "median": 33115,
+      "max": 33115
+     },
+     "netWorth": {
+      "min": 48115,
+      "median": 48115,
+      "max": 48115
+     },
+     "coinsPerDay": 140.53,
+     "netWorthPerVoyage": 86.37,
+     "netWorthPerRealMinute": 132.53,
+     "voyages": 307,
+     "realMinutes": 200.07,
+     "reputation": 7,
+     "standing": 62,
+     "portsVisited": 3,
+     "milestones": 2,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.19,
+     "stallsMoved": 7,
+     "meanStockGap": 0.63,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 10545
+    }
+   ],
+   "firstDay": {
+    "upgrade": null,
+    "extraShip": null,
+    "patello": null,
+    "automatedRoute": null,
+    "warehouse": null,
+    "farm": null,
+    "river_explorer": null,
+    "trusted_trader": 4.03,
+    "prosperous_merchant": 6.62
+   },
+   "topRoutes": [
+    {
+     "route": "hooghly>satgaon",
+     "voyageShare": 0.5,
+     "profit": 29075
+    },
+    {
+     "route": "dhaka>hooghly",
+     "voyageShare": 0,
+     "profit": 20
+    },
+    {
+     "route": "satgaon>hooghly",
+     "voyageShare": 0.5,
+     "profit": 0
+    }
+   ],
+   "topRouteProfitShare": 1,
+   "farmUnitsCollected": 0,
+   "refusedCommands": 0,
+   "commands": 2150,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "two-port-best",
+   "label": "Two-port loop, Kasimbazar–Tanda",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 16585,
+      "median": 16585,
+      "max": 16585
+     },
+     "netWorth": {
+      "min": 31585,
+      "median": 31585,
+      "max": 31585
+     },
+     "coinsPerDay": 385.4,
+     "netWorthPerVoyage": 100.86,
+     "netWorthPerRealMinute": 332.17,
+     "voyages": 99,
+     "realMinutes": 30.06,
+     "reputation": 6,
+     "standing": 20,
+     "portsVisited": 3,
+     "milestones": 1,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 6,
+     "meanStockGap": 0.49,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 112,
+     "npcTotalWorth": 14735
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 20585,
+      "median": 20585,
+      "max": 20585
+     },
+     "netWorth": {
+      "min": 35585,
+      "median": 35585,
+      "max": 35585
+     },
+     "coinsPerDay": 173.13,
+     "netWorthPerVoyage": 45.85,
+     "netWorthPerRealMinute": 155.35,
+     "voyages": 305,
+     "realMinutes": 90.02,
+     "reputation": 6,
+     "standing": 62,
+     "portsVisited": 3,
+     "milestones": 1,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 6,
+     "meanStockGap": 0.48,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 113,
+     "npcTotalWorth": 12875
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 27585,
+      "median": 27585,
+      "max": 27585
+     },
+     "netWorth": {
+      "min": 42585,
+      "median": 42585,
+      "max": 42585
+     },
+     "coinsPerDay": 112.9,
+     "netWorthPerVoyage": 30.72,
+     "netWorthPerRealMinute": 104.9,
+     "voyages": 683,
+     "realMinutes": 200.05,
+     "reputation": 6,
+     "standing": 100,
+     "portsVisited": 3,
+     "milestones": 1,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.21,
+     "stallsMoved": 6,
+     "meanStockGap": 0.48,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 113,
+     "npcTotalWorth": 10285
+    }
+   ],
+   "firstDay": {
+    "upgrade": null,
+    "extraShip": null,
+    "patello": null,
+    "automatedRoute": null,
+    "warehouse": null,
+    "farm": null,
+    "river_explorer": null,
+    "trusted_trader": null,
+    "prosperous_merchant": 2.99
+   },
+   "topRoutes": [
+    {
+     "route": "kasimbazar>tanda",
+     "voyageShare": 0.5,
+     "profit": 27425
+    },
+    {
+     "route": "dhaka>kasimbazar",
+     "voyageShare": 0,
+     "profit": 140
+    },
+    {
+     "route": "tanda>kasimbazar",
+     "voyageShare": 0.5,
+     "profit": 0
+    }
+   ],
+   "topRouteProfitShare": 0.99,
+   "farmUnitsCollected": 0,
+   "refusedCommands": 0,
+   "commands": 3264,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "manual",
+   "label": "Manual trading",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 585,
+      "median": 5825,
+      "max": 10375
+     },
+     "netWorth": {
+      "min": 30485,
+      "median": 31085,
+      "max": 34195
+     },
+     "coinsPerDay": 26.45,
+     "netWorthPerVoyage": 379.4,
+     "netWorthPerRealMinute": 304.1,
+     "voyages": 25,
+     "realMinutes": 31.19,
+     "reputation": 15,
+     "standing": 6,
+     "portsVisited": 6,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.09,
+     "stallsMoved": 1,
+     "meanStockGap": 0.18,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 14145
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 36440,
+      "median": 38415,
+      "max": 47025
+     },
+     "netWorth": {
+      "min": 64880,
+      "median": 67035,
+      "max": 74525
+     },
+     "coinsPerDay": 370.25,
+     "netWorthPerVoyage": 631.04,
+     "netWorthPerRealMinute": 503.43,
+     "voyages": 72,
+     "realMinutes": 90.25,
+     "reputation": 20,
+     "standing": 14,
+     "portsVisited": 8,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.14,
+     "stallsMoved": 2,
+     "meanStockGap": 0.31,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 108,
+     "npcTotalWorth": 12685
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 105910,
+      "median": 107415,
+      "max": 118490
+     },
+     "netWorth": {
+      "min": 131955,
+      "median": 134690,
+      "max": 143910
+     },
+     "coinsPerDay": 511,
+     "netWorthPerVoyage": 720.32,
+     "netWorthPerRealMinute": 564.27,
+     "voyages": 157,
+     "realMinutes": 200.42,
+     "reputation": 23,
+     "standing": 32,
+     "portsVisited": 8,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.09,
+     "stallsMoved": 3,
+     "meanStockGap": 0.32,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 10690
+    }
+   ],
+   "firstDay": {
+    "upgrade": 0,
+    "extraShip": null,
+    "patello": null,
+    "automatedRoute": null,
+    "warehouse": null,
+    "farm": null,
+    "river_explorer": 5.87,
+    "trusted_trader": 3.75,
+    "prosperous_merchant": 26.19
+   },
+   "topRoutes": [
+    {
+     "route": "satgaon>tanda",
+     "voyageShare": 0.15,
+     "profit": 23565
+    },
+    {
+     "route": "malda>tanda",
+     "voyageShare": 0.21,
+     "profit": 23145
+    },
+    {
+     "route": "rajmahal>satgaon",
+     "voyageShare": 0.16,
+     "profit": 20380
+    }
+   ],
+   "topRouteProfitShare": 0.19,
+   "farmUnitsCollected": 0,
+   "refusedCommands": 0,
+   "commands": 1042,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "automated",
+   "label": "Automated routes",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 585,
+      "median": 5825,
+      "max": 10375
+     },
+     "netWorth": {
+      "min": 30485,
+      "median": 31085,
+      "max": 34195
+     },
+     "coinsPerDay": 26.45,
+     "netWorthPerVoyage": 379.4,
+     "netWorthPerRealMinute": 304.1,
+     "voyages": 25,
+     "realMinutes": 31.19,
+     "reputation": 15,
+     "standing": 6,
+     "portsVisited": 6,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.09,
+     "stallsMoved": 1,
+     "meanStockGap": 0.18,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 14145
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 36440,
+      "median": 38415,
+      "max": 47025
+     },
+     "netWorth": {
+      "min": 64880,
+      "median": 67035,
+      "max": 74525
+     },
+     "coinsPerDay": 370.25,
+     "netWorthPerVoyage": 631.04,
+     "netWorthPerRealMinute": 503.43,
+     "voyages": 72,
+     "realMinutes": 90.25,
+     "reputation": 20,
+     "standing": 14,
+     "portsVisited": 8,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.14,
+     "stallsMoved": 2,
+     "meanStockGap": 0.31,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 108,
+     "npcTotalWorth": 12685
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 27060,
+      "median": 34355,
+      "max": 47345
+     },
+     "netWorth": {
+      "min": 155610,
+      "median": 159215,
+      "max": 178520
+     },
+     "coinsPerDay": 146.68,
+     "netWorthPerVoyage": 923.59,
+     "netWorthPerRealMinute": 687.63,
+     "voyages": 149,
+     "realMinutes": 200.13,
+     "reputation": 27,
+     "standing": 30,
+     "portsVisited": 9,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 2,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.11,
+     "stallsMoved": 6,
+     "meanStockGap": 0.56,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 101,
+     "npcTotalWorth": 10585
+    }
+   ],
+   "firstDay": {
+    "upgrade": 0,
+    "extraShip": 115.45,
+    "patello": 115.45,
+    "automatedRoute": 115.45,
+    "warehouse": null,
+    "farm": null,
+    "river_explorer": 5.87,
+    "trusted_trader": 3.75,
+    "prosperous_merchant": 26.19
+   },
+   "topRoutes": [
+    {
+     "route": "malda>tanda",
+     "voyageShare": 0.18,
+     "profit": 14845
+    },
+    {
+     "route": "satgaon>tanda",
+     "voyageShare": 0.1,
+     "profit": 14505
+    },
+    {
+     "route": "rajmahal>satgaon",
+     "voyageShare": 0.11,
+     "profit": 13185
+    }
+   ],
+   "topRouteProfitShare": 0.15,
+   "farmUnitsCollected": 0,
+   "refusedCommands": 0,
+   "commands": 990,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "warehouse",
+   "label": "Warehouses, Hooghly–Satgaon",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 10450,
+      "median": 10450,
+      "max": 10450
+     },
+     "netWorth": {
+      "min": 30700,
+      "median": 30700,
+      "max": 30700
+     },
+     "coinsPerDay": 178.34,
+     "netWorthPerVoyage": 202.22,
+     "netWorthPerRealMinute": 297.77,
+     "voyages": 45,
+     "realMinutes": 30.56,
+     "reputation": 7,
+     "standing": 10,
+     "portsVisited": 3,
+     "milestones": 2,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.22,
+     "stallsMoved": 8,
+     "meanStockGap": 0.72,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 109,
+     "npcTotalWorth": 15240
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 10490,
+      "median": 10490,
+      "max": 10490
+     },
+     "netWorth": {
+      "min": 35990,
+      "median": 35990,
+      "max": 35990
+     },
+     "coinsPerDay": 60.95,
+     "netWorthPerVoyage": 105.04,
+     "netWorthPerRealMinute": 159.75,
+     "voyages": 137,
+     "realMinutes": 90.08,
+     "reputation": 7,
+     "standing": 28,
+     "portsVisited": 3,
+     "milestones": 2,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 7,
+     "meanStockGap": 0.63,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 12430
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 22990,
+      "median": 22990,
+      "max": 22990
+     },
+     "netWorth": {
+      "min": 48490,
+      "median": 48490,
+      "max": 48490
+     },
+     "coinsPerDay": 89.92,
+     "netWorthPerVoyage": 87.59,
+     "netWorthPerRealMinute": 134.4,
+     "voyages": 307,
+     "realMinutes": 200.07,
+     "reputation": 7,
+     "standing": 62,
+     "portsVisited": 3,
+     "milestones": 2,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.2,
+     "stallsMoved": 7,
+     "meanStockGap": 0.63,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 10545
+    }
+   ],
+   "firstDay": {
+    "upgrade": null,
+    "extraShip": null,
+    "patello": null,
+    "automatedRoute": null,
+    "warehouse": 6.62,
+    "farm": null,
+    "river_explorer": null,
+    "trusted_trader": 4.03,
+    "prosperous_merchant": 6.62
+   },
+   "topRoutes": [
+    {
+     "route": "hooghly>satgaon",
+     "voyageShare": 0.5,
+     "profit": 33950
+    },
+    {
+     "route": "dhaka>hooghly",
+     "voyageShare": 0,
+     "profit": 20
+    },
+    {
+     "route": "satgaon>hooghly",
+     "voyageShare": 0.5,
+     "profit": 0
+    }
+   ],
+   "topRouteProfitShare": 1,
+   "farmUnitsCollected": 0,
+   "refusedCommands": 0,
+   "commands": 2148,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "farming",
+   "label": "Farms",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 610,
+      "median": 745,
+      "max": 1380
+     },
+     "netWorth": {
+      "min": 39660,
+      "median": 40625,
+      "max": 40810
+     },
+     "coinsPerDay": -129.84,
+     "netWorthPerVoyage": 792.71,
+     "netWorthPerRealMinute": 580.56,
+     "voyages": 24,
+     "realMinutes": 32.77,
+     "reputation": 16,
+     "standing": 4,
+     "portsVisited": 6,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0,
+     "largestPriceMove": 0.11,
+     "stallsMoved": 1,
+     "meanStockGap": 0.19,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 110,
+     "npcTotalWorth": 14975
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 65810,
+      "median": 75095,
+      "max": 81980
+     },
+     "netWorth": {
+      "min": 148090,
+      "median": 153860,
+      "max": 159300
+     },
+     "coinsPerDay": 775.99,
+     "netWorthPerVoyage": 1916.81,
+     "netWorthPerRealMinute": 1464.19,
+     "voyages": 69,
+     "realMinutes": 90.33,
+     "reputation": 24,
+     "standing": 14,
+     "portsVisited": 8,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.15,
+     "stallsMoved": 3,
+     "meanStockGap": 0.51,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 105,
+     "npcTotalWorth": 12775
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 323590,
+      "median": 329265,
+      "max": 335605
+     },
+     "netWorth": {
+      "min": 407470,
+      "median": 412845,
+      "max": 414425
+     },
+     "coinsPerDay": 1616.56,
+     "netWorthPerVoyage": 2591.03,
+     "netWorthPerRealMinute": 1950.47,
+     "voyages": 151,
+     "realMinutes": 200.59,
+     "reputation": 26,
+     "standing": 30,
+     "portsVisited": 8,
+     "milestones": 3,
+     "contractsDone": 0,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.17,
+     "stallsMoved": 7,
+     "meanStockGap": 0.59,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 105,
+     "npcTotalWorth": 10635
+    }
+   ],
+   "firstDay": {
+    "upgrade": null,
+    "extraShip": null,
+    "patello": null,
+    "automatedRoute": null,
+    "warehouse": null,
+    "farm": 9.79,
+    "river_explorer": 5.87,
+    "trusted_trader": 3.75,
+    "prosperous_merchant": 7.28
+   },
+   "topRoutes": [
+    {
+     "route": "tanda>rajmahal",
+     "voyageShare": 0.14,
+     "profit": 69825
+    },
+    {
+     "route": "rajmahal>satgaon",
+     "voyageShare": 0.14,
+     "profit": 66175
+    },
+    {
+     "route": "satgaon>tanda",
+     "voyageShare": 0.14,
+     "profit": 64265
+    }
+   ],
+   "topRouteProfitShare": 0.19,
+   "farmUnitsCollected": 742,
+   "refusedCommands": 0,
+   "commands": 1249,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "mixed-active",
+   "label": "Mixed, active at 4×",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 16895,
+      "median": 26610,
+      "max": 37635
+     },
+     "netWorth": {
+      "min": 48475,
+      "median": 52270,
+      "max": 57135
+     },
+     "coinsPerDay": 710.86,
+     "netWorthPerVoyage": 1277.92,
+     "netWorthPerRealMinute": 4035.53,
+     "voyages": 24,
+     "realMinutes": 7.6,
+     "reputation": 57,
+     "standing": 64,
+     "portsVisited": 12,
+     "milestones": 3,
+     "contractsDone": 12,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.18,
+     "stallsMoved": 5,
+     "meanStockGap": 0.58,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 106,
+     "npcTotalWorth": 14755
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 2040,
+      "median": 12175,
+      "max": 13890
+     },
+     "netWorth": {
+      "min": 94495,
+      "median": 96535,
+      "max": 105935
+     },
+     "coinsPerDay": 78.62,
+     "netWorthPerVoyage": 1101.99,
+     "netWorthPerRealMinute": 3283.74,
+     "voyages": 68,
+     "realMinutes": 22.82,
+     "reputation": 79,
+     "standing": 119,
+     "portsVisited": 15,
+     "milestones": 3,
+     "contractsDone": 21,
+     "fleet": 2,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.11,
+     "stallsMoved": 5,
+     "meanStockGap": 0.53,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 102,
+     "npcTotalWorth": 12575
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 104670,
+      "median": 118930,
+      "max": 144165
+     },
+     "netWorth": {
+      "min": 283585,
+      "median": 293040,
+      "max": 302510
+     },
+     "coinsPerDay": 568.68,
+     "netWorthPerVoyage": 1952.81,
+     "netWorthPerRealMinute": 5419.05,
+     "voyages": 139,
+     "realMinutes": 50.09,
+     "reputation": 81,
+     "standing": 133,
+     "portsVisited": 15,
+     "milestones": 3,
+     "contractsDone": 21,
+     "fleet": 2,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.15,
+     "stallsMoved": 5,
+     "meanStockGap": 0.6,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 104,
+     "npcTotalWorth": 10845
+    }
+   ],
+   "firstDay": {
+    "upgrade": 0,
+    "extraShip": 63.07,
+    "patello": 63.07,
+    "automatedRoute": 63.07,
+    "warehouse": null,
+    "farm": 93.03,
+    "river_explorer": 6.14,
+    "trusted_trader": 8.85,
+    "prosperous_merchant": 17.75
+   },
+   "topRoutes": [
+    {
+     "route": "malda>tanda",
+     "voyageShare": 0.17,
+     "profit": 58989
+    },
+    {
+     "route": "tanda>malda",
+     "voyageShare": 0.15,
+     "profit": 37980
+    },
+    {
+     "route": "satgaon>tanda",
+     "voyageShare": 0.11,
+     "profit": 16765
+    }
+   ],
+   "topRouteProfitShare": 0.19,
+   "farmUnitsCollected": 172,
+   "refusedCommands": 0,
+   "commands": 966,
+   "allRunsReplayExactly": true
+  },
+  {
+   "id": "mixed-casual",
+   "label": "Mixed, casual at 1×",
+   "seeds": 5,
+   "days": [
+    {
+     "day": 30,
+     "coins": {
+      "min": 17005,
+      "median": 29290,
+      "max": 35530
+     },
+     "netWorth": {
+      "min": 48585,
+      "median": 53270,
+      "max": 57415
+     },
+     "coinsPerDay": 786.34,
+     "netWorthPerVoyage": 1319.58,
+     "netWorthPerRealMinute": 1024.92,
+     "voyages": 24,
+     "realMinutes": 30.9,
+     "reputation": 51,
+     "standing": 64,
+     "portsVisited": 11,
+     "milestones": 3,
+     "contractsDone": 12,
+     "fleet": 1,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.14,
+     "stallsMoved": 3,
+     "meanStockGap": 0.46,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 104,
+     "npcTotalWorth": 14705
+    },
+    {
+     "day": 90,
+     "coins": {
+      "min": 1185,
+      "median": 5755,
+      "max": 12695
+     },
+     "netWorth": {
+      "min": 95125,
+      "median": 102690,
+      "max": 106155
+     },
+     "coinsPerDay": 8.27,
+     "netWorthPerVoyage": 1287.14,
+     "netWorthPerRealMinute": 888.75,
+     "voyages": 63,
+     "realMinutes": 91.24,
+     "reputation": 77,
+     "standing": 117,
+     "portsVisited": 15,
+     "milestones": 3,
+     "contractsDone": 21,
+     "fleet": 2,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.12,
+     "stallsMoved": 4,
+     "meanStockGap": 0.57,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 104,
+     "npcTotalWorth": 12905
+    },
+    {
+     "day": 200,
+     "coins": {
+      "min": 105665,
+      "median": 122310,
+      "max": 126030
+     },
+     "netWorth": {
+      "min": 280910,
+      "median": 299755,
+      "max": 308810
+     },
+     "coinsPerDay": 585.12,
+     "netWorthPerVoyage": 2173.09,
+     "netWorthPerRealMinute": 1387.38,
+     "voyages": 128,
+     "realMinutes": 200.49,
+     "reputation": 80,
+     "standing": 131,
+     "portsVisited": 15,
+     "milestones": 3,
+     "contractsDone": 21,
+     "fleet": 2,
+     "priceIndex": 1,
+     "priceMovement": 0.01,
+     "largestPriceMove": 0.19,
+     "stallsMoved": 6,
+     "meanStockGap": 0.7,
+     "stallsNearEmpty": 0,
+     "stallsNearFull": 0,
+     "stallsAtStart": 103,
+     "npcTotalWorth": 10330
+    }
+   ],
+   "firstDay": {
+    "upgrade": 0,
+    "extraShip": 61,
+    "patello": 61,
+    "automatedRoute": 61,
+    "warehouse": null,
+    "farm": 90.26,
+    "river_explorer": 6.14,
+    "trusted_trader": 7.59,
+    "prosperous_merchant": 15.06
+   },
+   "topRoutes": [
+    {
+     "route": "satgaon>rajmahal",
+     "voyageShare": 0.06,
+     "profit": 34255
+    },
+    {
+     "route": "tanda>malda",
+     "voyageShare": 0.1,
+     "profit": 27585
+    },
+    {
+     "route": "satgaon>tanda",
+     "voyageShare": 0.05,
+     "profit": 15110
+    }
+   ],
+   "topRouteProfitShare": 0.15,
+   "farmUnitsCollected": 189,
+   "refusedCommands": 0,
+   "commands": 903,
+   "allRunsReplayExactly": true
+  }
+ ],
+ "firstTrips": [
+  {
+   "vessel": "river-boat",
+   "routes": 210,
+   "profitableRoutes": 132,
+   "best": {
+    "from": "kasimbazar",
+    "to": "tanda",
+    "good": "silk",
+    "units": 12,
+    "profit": 5460,
+    "days": 0.29,
+    "profitPerDay": 18757.7
+   },
+   "topTenthPerDay": 991.4,
+   "medianPerDay": 212.64999999999998,
+   "dominance": 18.9
+  },
+  {
+   "vessel": "bora",
+   "routes": 210,
+   "profitableRoutes": 132,
+   "best": {
+    "from": "kasimbazar",
+    "to": "tanda",
+    "good": "silk",
+    "units": 8,
+    "profit": 4175,
+    "days": 0.23,
+    "profitPerDay": 17928.9
+   },
+   "topTenthPerDay": 1054.5,
+   "medianPerDay": 256,
+   "dominance": 17
+  },
+  {
+   "vessel": "patello",
+   "routes": 182,
+   "profitableRoutes": 120,
+   "best": {
+    "from": "kasimbazar",
+    "to": "tanda",
+    "good": "silk",
+    "units": 20,
+    "profit": 6460,
+    "days": 0.36,
+    "profitPerDay": 17754.6
+   },
+   "topTenthPerDay": 839.2,
+   "medianPerDay": 180.1,
+   "dominance": 21.2
+  }
+ ],
+ "sustainedRoutes": {
+  "days": 90,
+  "pairs": 105,
+  "best": [
+   {
+    "first": "rajmahal",
+    "second": "bakla-chandradwip",
+    "coinsPerDay": 469.64,
+    "lateVsEarly": 3.18
+   },
+   {
+    "first": "tanda",
+    "second": "jessore",
+    "coinsPerDay": 446.43,
+    "lateVsEarly": 0.83
+   },
+   {
+    "first": "tanda",
+    "second": "bakla-chandradwip",
+    "coinsPerDay": 427.4,
+    "lateVsEarly": 1.64
+   },
+   {
+    "first": "hooghly",
+    "second": "tanda",
+    "coinsPerDay": 413.19,
+    "lateVsEarly": 0.74
+   },
+   {
+    "first": "hooghly",
+    "second": "bakla-chandradwip",
+    "coinsPerDay": 399.85,
+    "lateVsEarly": 1.26
+   }
+  ],
+  "worst": [
+   {
+    "first": "sylhet",
+    "second": "balasore",
+    "coinsPerDay": 13.01,
+    "lateVsEarly": 0
+   },
+   {
+    "first": "sonargaon",
+    "second": "balasore",
+    "coinsPerDay": 11.21,
+    "lateVsEarly": 0
+   },
+   {
+    "first": "sonargaon",
+    "second": "sylhet",
+    "coinsPerDay": 7.23,
+    "lateVsEarly": -0.19
+   }
+  ],
+  "topTenthPerDay": 274.78,
+  "medianPerDay": 127.32,
+  "dominance": 1.7,
+  "routesThatTire": 36
+ },
+ "recovery": [
+  {
+   "label": "Dhaka silk, emptied",
+   "startStock": 0,
+   "targetStock": 60,
+   "daysToHalfway": 9,
+   "daysToFull": 32
+  },
+  {
+   "label": "Dhaka silk, half emptied",
+   "startStock": 30,
+   "targetStock": 60,
+   "daysToHalfway": 9,
+   "daysToFull": 24
+  },
+  {
+   "label": "Dhaka silk, full",
+   "startStock": 120,
+   "targetStock": 60,
+   "daysToHalfway": 9,
+   "daysToFull": 32
+  },
+  {
+   "label": "Producer: Dhaka cotton, emptied",
+   "startStock": 0,
+   "targetStock": 72,
+   "daysToHalfway": 6,
+   "daysToFull": 26
+  },
+  {
+   "label": "Scarce: Sandwip salt's opposite, Patna salt, emptied",
+   "startStock": 0,
+   "targetStock": 60,
+   "daysToHalfway": 9,
+   "daysToFull": 32
+  },
+  {
+   "label": "Big buyer: Dhaka rice, full",
+   "startStock": 120,
+   "targetStock": 60,
+   "daysToHalfway": 6,
+   "daysToFull": 24
+  },
+  {
+   "label": "Small buyer: Dhaka saltpetre, full",
+   "startStock": 120,
+   "targetStock": 60,
+   "daysToHalfway": 12,
+   "daysToFull": 38
+  }
+ ],
+ "marketImpact": [
+  {
+   "hold": 12,
+   "stall": "hooghly sugar",
+   "startPrice": 525,
+   "buyRise": 0.124,
+   "sellFall": 0.099,
+   "roundTripLossShare": 0.124
+  },
+  {
+   "hold": 8,
+   "stall": "hooghly sugar",
+   "startPrice": 525,
+   "buyRise": 0.076,
+   "sellFall": 0.066,
+   "roundTripLossShare": 0.124
+  },
+  {
+   "hold": 30,
+   "stall": "hooghly sugar",
+   "startPrice": 525,
+   "buyRise": 0.4,
+   "sellFall": 0.22,
+   "roundTripLossShare": 0.124
+  }
+ ],
+ "investments": {
+  "farm": {
+   "riceSellMedian": 345,
+   "coinsPerDay": 345,
+   "paybackDays": 29
+  },
+  "routeShips": [
+   {
+    "vessel": "river-boat",
+    "price": 25000,
+    "route": "hooghly>tanda",
+    "capitalStart": 15000,
+    "capitalEnd": 83520,
+    "coinsPerDay": 341.64,
+    "paybackDays": 73
+   },
+   {
+    "vessel": "bora",
+    "price": 17500,
+    "route": "hooghly>tanda",
+    "capitalStart": 15000,
+    "capitalEnd": 83520,
+    "coinsPerDay": 341.64,
+    "paybackDays": 51
+   },
+   {
+    "vessel": "patello",
+    "price": 45000,
+    "route": "hooghly>tanda",
+    "capitalStart": 15000,
+    "capitalEnd": 151300,
+    "coinsPerDay": 679.58,
+    "paybackDays": 66
+   }
+  ]
+ },
+ "contracts": [
+  {
+   "type": "delivery",
+   "count": 15,
+   "averageReward": 1200,
+   "averageGoodsCost": 2198.33,
+   "worthDoing": 1
+  },
+  {
+   "type": "purchase_delivery",
+   "count": 15,
+   "averageReward": 1500,
+   "averageGoodsCost": 2286,
+   "worthDoing": 5
+  },
+  {
+   "type": "visit",
+   "count": 15,
+   "averageReward": 900,
+   "averageGoodsCost": 0,
+   "worthDoing": 15
+  },
+  {
+   "type": "profitable_trade",
+   "count": 15,
+   "averageReward": 1100,
+   "averageGoodsCost": 0,
+   "worthDoing": 15
+  }
+ ],
+ "npcWorld": {
+  "days": 200,
+  "merchants": [
+   {
+    "id": "abdul-rahman",
+    "name": "Abdul Rahman",
+    "purseAt": {
+     "30": 3305,
+     "90": 1655,
+     "200": 365
+    },
+    "worthAt": {
+     "30": 3945,
+     "90": 2295,
+     "200": 365
+    },
+    "trips": 44,
+    "unitsBought": 82,
+    "unitsSold": 82,
+    "lastTradeDay": 176,
+    "daysDockedWithCargo": 0,
+    "estimatedIncomeLostToCap": 0
+   },
+   {
+    "id": "mariam-banu",
+    "name": "Mariam Banu",
+    "purseAt": {
+     "30": 5125,
+     "90": 9000,
+     "200": 9000
+    },
+    "worthAt": {
+     "30": 7045,
+     "90": 9000,
+     "200": 9000
+    },
+    "trips": 58,
+    "unitsBought": 116,
+    "unitsSold": 116,
+    "lastTradeDay": 200,
+    "daysDockedWithCargo": 0,
+    "estimatedIncomeLostToCap": 16835
+   },
+   {
+    "id": "govinda-das",
+    "name": "Govinda Das",
+    "purseAt": {
+     "30": 2655,
+     "90": 745,
+     "200": 745
+    },
+    "worthAt": {
+     "30": 2655,
+     "90": 745,
+     "200": 745
+    },
+    "trips": 22,
+    "unitsBought": 28,
+    "unitsSold": 28,
+    "lastTradeDay": 66,
+    "daysDockedWithCargo": 0,
+    "estimatedIncomeLostToCap": 0
+   },
+   {
+    "id": "fatima-khatun",
+    "name": "Fatima Khatun",
+    "purseAt": {
+     "30": 1595,
+     "90": 885,
+     "200": 885
+    },
+    "worthAt": {
+     "30": 1595,
+     "90": 885,
+     "200": 885
+    },
+    "trips": 21,
+    "unitsBought": 36,
+    "unitsSold": 36,
+    "lastTradeDay": 42,
+    "daysDockedWithCargo": 0,
+    "estimatedIncomeLostToCap": 0
+   }
+  ],
+  "marketAt": {
+   "30": {
+    "priceIndex": 1,
+    "priceMovement": 0,
+    "largestPriceMove": 0.022,
+    "stallsMoved": 0,
+    "meanStockGap": 0.033,
+    "stallsNearEmpty": 0,
+    "stallsNearFull": 0,
+    "stallsAtStart": 117,
+    "stalls": 120
+   },
+   "90": {
+    "priceIndex": 1,
+    "priceMovement": 0,
+    "largestPriceMove": 0.026,
+    "stallsMoved": 0,
+    "meanStockGap": 0.017,
+    "stallsNearEmpty": 0,
+    "stallsNearFull": 0,
+    "stallsAtStart": 119,
+    "stalls": 120
+   },
+   "200": {
+    "priceIndex": 1,
+    "priceMovement": 0,
+    "largestPriceMove": 0.026,
+    "stallsMoved": 0,
+    "meanStockGap": 0.017,
+    "stallsNearEmpty": 0,
+    "stallsNearFull": 0,
+    "stallsAtStart": 119,
+    "stalls": 120
+   }
+  },
+  "stalledAtEnd": 2,
+  "unitsMovedPerDay": 2.62
+ },
+ "exploits": {
+  "samePortLoop": {
+   "stallsExposed": 0,
+   "stallsExposedWithinOneHold": 0,
+   "cheapest": [],
+   "atLowStock": {
+    "dhakaSilk": [
+     {
+      "stock": 60,
+      "coinsPer100Loops": -19500
+     },
+     {
+      "stock": 30,
+      "coinsPer100Loops": -29000
+     },
+     {
+      "stock": 15,
+      "coinsPer100Loops": -38500
+     },
+     {
+      "stock": 6,
+      "coinsPer100Loops": -48000
+     },
+     {
+      "stock": 1,
+      "coinsPer100Loops": -48000
+     }
+    ],
+    "dhakaOpium": [
+     {
+      "stock": 60,
+      "coinsPer100Loops": -24000
+     },
+     {
+      "stock": 30,
+      "coinsPer100Loops": -36000
+     },
+     {
+      "stock": 15,
+      "coinsPer100Loops": -48000
+     },
+     {
+      "stock": 6,
+      "coinsPer100Loops": -60000
+     },
+     {
+      "stock": 1,
+      "coinsPer100Loops": -60000
+     }
+    ]
+   },
+   "demonstration": null
+  },
+  "closedLoops": {
+   "cycles": 8400,
+   "worstProfit": -80,
+   "profitableCycles": 0
+  },
+  "closedTimeChangesNothing": true,
+  "checkpointsChangeNothing": true
+ }
+}

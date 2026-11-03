@@ -394,7 +394,7 @@ export interface GameState {
   voyagesStarted: number;
   npcMerchants: NpcMerchant[];
   npcActivity: NpcActivity[];
-  npcSimulationDay: number;
+  worldDay: number;
   farmOutput: Record<MarketPortId, number>;
   farmProductionDay: Record<MarketPortId, number>;
   warehouseStock: Record<MarketPortId, Record<GoodId, number>>;
@@ -918,7 +918,7 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
 ];
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 export const STARTING_COINS = 5_000;
 export const PROSPEROUS_MERCHANT_COINS = 12_500;
 const CHITTAGONG_ALERT_SALT_SURCHARGE = 300;
@@ -929,12 +929,21 @@ export function formatCoins(amount: number): string {
 }
 
 export const EVENT_LAST_DAY = 36;
-export const MARKET_TARGET_STOCK = 20;
-export const MARKET_MAX_STOCK = 40;
-export const MARKET_MAX_BUY_PRICE = 7_800;
+export const MARKET_TARGET_STOCK = 60;
+export const MARKET_SUPPLY_TIER_STOCK = 12;
+export const MARKET_MAX_STOCK = 120;
+// Softens the stock curve, so a stall's price at its usual stock doesn't swing on one sale.
+const MARKET_STOCK_CUSHION = 30;
+// Prices stay between these shares of a good's base price, before any event.
+export const MARKET_MIN_PRICE_SHARE = 0.4;
+export const MARKET_MAX_PRICE_SHARE = 2.5;
 // Quotes move in whole steps of this many Coins.
-export const MARKET_PRICE_STEP = 50;
-export const MARKET_SELL_SPREAD = 150;
+export const MARKET_PRICE_STEP = 5;
+export const MARKET_SELL_SPREAD = 0.12;
+// The share of the gap to its usual stock that a stall closes each day, at least one unit.
+// Producers restock faster and big buyers use up a surplus faster, which is what makes one
+// town's shortage last longer than another's.
+const MARKET_RECOVERY_BY_TIER: Record<MarketTier, number> = { 1: 0.06, 2: 0.08, 3: 0.12 };
 export const WAREHOUSE_PRICE = 7_500;
 export const WAREHOUSE_CAPACITY = 20;
 export const RESIDENCE_PRICE = 12_500;
@@ -1129,7 +1138,7 @@ export function createInitialMarketStock(): GameState["marketStock"] {
       Object.fromEntries(
         GOODS.map((good) => [
           good.id,
-          MARKET_TARGET_STOCK + (getMarketSupply(port.id, good.id) - 2) * 4,
+          MARKET_TARGET_STOCK + (getMarketSupply(port.id, good.id) - 2) * MARKET_SUPPLY_TIER_STOCK,
         ]),
       ),
     ]),
@@ -1813,19 +1822,28 @@ function advanceAutomatedShipDay(
   };
 }
 
-export function advanceNpcWorld(
+/**
+ * The world clock. Every whole day runs once, in one order: stalls recover, then merchants
+ * act, then automated ships. It only moves with sailing, so opening screens or reloading
+ * can't move it, and checkpointing a voyage more or less often gives the same world.
+ */
+export function advanceWorld(
   state: GameState,
   sailingDay: number,
 ): GameState {
-  if (!Number.isFinite(sailingDay) || sailingDay < state.npcSimulationDay) {
-    throw new Error("NPC simulation time must be finite and cannot move backward.");
+  if (!Number.isFinite(sailingDay) || sailingDay < state.worldDay) {
+    throw new Error("World time must be finite and cannot move backward.");
   }
 
   const targetDay = Math.floor(sailingDay);
   let next = state;
-  while (Math.floor(next.npcSimulationDay) < targetDay) {
-    const day = Math.floor(next.npcSimulationDay) + 1;
-    next = { ...next, npcSimulationDay: day };
+  while (next.worldDay < targetDay) {
+    const day = next.worldDay + 1;
+    next = {
+      ...next,
+      worldDay: day,
+      marketStock: advanceMarketStock(next.marketStock, 1),
+    };
     for (const merchant of [...next.npcMerchants]) {
       const current = next.npcMerchants.find((entry) => entry.id === merchant.id);
       if (!current) continue;
@@ -1934,37 +1952,45 @@ export function tradeWithNpcMerchant(
   return { state: syncSelectedShip(traded) };
 }
 
+function recoverStall(
+  port: MarketPortId,
+  good: GoodId,
+  stock: number,
+  target: number,
+): number {
+  const gap = target - stock;
+  if (gap === 0) return stock;
+  const rate = MARKET_RECOVERY_BY_TIER[
+    gap > 0 ? getMarketSupply(port, good) : getMarketDemand(port, good)
+  ];
+  const step = Math.min(Math.abs(gap), Math.max(1, Math.round(Math.abs(gap) * rate)));
+  return stock + Math.sign(gap) * step;
+}
+
 export function advanceMarketStock(
   marketStock: GameState["marketStock"],
-  sailingDays: number,
+  days: number,
 ): GameState["marketStock"] {
-  if (!Number.isFinite(sailingDays)) {
-    throw new Error("Market time must be a finite number of sailing days.");
+  if (!Number.isFinite(days)) {
+    throw new Error("Market time must be a finite number of days.");
   }
-  const days = Math.min(
-    MARKET_MAX_STOCK,
-    Math.max(0, Math.floor(sailingDays)),
-  );
-  if (days === 0) return marketStock;
+  const wholeDays = Math.max(0, Math.floor(days));
+  if (wholeDays === 0) return marketStock;
 
   const targets = createInitialMarketStock();
-  const nextStock = { ...marketStock };
+  const next = { ...marketStock };
   for (const port of MARKET_PORTS) {
     const portStock = { ...marketStock[port.id] };
     for (const good of GOODS) {
-      const target = targets[port.id][good.id];
-      const current = Math.max(
-        0,
-        Math.min(MARKET_MAX_STOCK, marketStock[port.id][good.id]),
-      );
-      portStock[good.id] =
-        current < target
-          ? Math.min(target, current + days)
-          : Math.max(target, current - days);
+      let stock = Math.max(0, Math.min(MARKET_MAX_STOCK, portStock[good.id]));
+      for (let day = 0; day < wholeDays; day += 1) {
+        stock = recoverStall(port.id, good.id, stock, targets[port.id][good.id]);
+      }
+      portStock[good.id] = stock;
     }
-    nextStock[port.id] = portStock;
+    next[port.id] = portStock;
   }
-  return nextStock;
+  return next;
 }
 
 export function createNewGame(captainName: string): GameState {
@@ -2023,7 +2049,7 @@ export function createNewGame(captainName: string): GameState {
     voyagesStarted: 0,
     npcMerchants: createNpcMerchants(),
     npcActivity: [],
-    npcSimulationDay: 0,
+    worldDay: 0,
     farmOutput: createEmptyFarmOutput(),
     farmProductionDay: createEmptyFarmProductionDays(),
     warehouseStock: createEmptyWarehouseStock(),
@@ -2738,7 +2764,7 @@ export function checkpointVoyageProgress(
   const sailingDay =
     state.sailingDay +
     (elapsedMs / state.voyage.durationMs) * state.voyage.durationDays;
-  return advanceNpcWorld(checkpointed, sailingDay);
+  return advanceWorld(checkpointed, sailingDay);
 }
 
 export function resumeVoyage(
@@ -2765,8 +2791,6 @@ export function arriveAtDestination(state: GameState): GameState {
 
   const voyage = state.voyage;
   const sailingDay = state.sailingDay + voyage.durationDays;
-  const elapsedWholeSailingDays =
-    Math.floor(sailingDay) - Math.floor(state.sailingDay);
   const triggerIntroduction =
     voyage.destination === "chittagong" &&
     !state.chittagongIntroductionSeen;
@@ -2790,10 +2814,6 @@ export function arriveAtDestination(state: GameState): GameState {
         ? Math.max(0, state.shipHull - 1)
         : state.shipHull,
     sailingDay,
-    marketStock: advanceMarketStock(
-      state.marketStock,
-      elapsedWholeSailingDays,
-    ),
     sailingSpeed:
       triggerIntroduction || state.encounterPending
         ? 1
@@ -2813,7 +2833,7 @@ export function arriveAtDestination(state: GameState): GameState {
     : updateProgress(arrived);
   return syncSelectedShip(
     resolveArrivalMissions(
-      advanceNpcWorld(recordedVisit, sailingDay),
+      advanceWorld(recordedVisit, sailingDay),
       voyage.destination,
     ),
   );
@@ -2857,6 +2877,38 @@ export function resolveRiverEncounter(
   };
 }
 
+/** What a stall's good is worth at a stock level, before the seller's discount. */
+function getMarketPrice(
+  town: MarketPortId,
+  good: GoodId,
+  routeAlertActive: boolean,
+  stock: number,
+): number {
+  const supply = getMarketSupply(town, good);
+  const demand = getMarketDemand(town, good);
+  const supplyDemandFactor = 1 + (demand - supply) * 0.15;
+  const stockFactor =
+    (MARKET_TARGET_STOCK + MARKET_STOCK_CUSHION) /
+    (Math.max(0, Math.min(MARKET_MAX_STOCK, stock)) + MARKET_STOCK_CUSHION);
+  const base = MARKET_BASE_PRICES[good];
+  const price = Math.min(
+    base * MARKET_MAX_PRICE_SHARE,
+    Math.max(base * MARKET_MIN_PRICE_SHARE, base * supplyDemandFactor * stockFactor),
+  );
+  return (
+    MARKET_PRICE_STEP * Math.round(price / MARKET_PRICE_STEP) +
+    (routeAlertActive && town === "chittagong" && good === "salt"
+      ? CHITTAGONG_ALERT_SALT_SURCHARGE
+      : 0)
+  );
+}
+
+/**
+ * The one price function for everybody. A unit is priced at the stock level the stall holds
+ * with that unit in it: buying from `stock` uses `stock`, and selling into `stock` uses
+ * `stock + 1`. So a unit bought and sold back meets the same price both ways, less the
+ * discount, and no sequence of trades at a stall can earn money without time passing.
+ */
 export function getGoodPrice(
   town: MarketPortId,
   good: GoodId,
@@ -2864,28 +2916,9 @@ export function getGoodPrice(
   routeAlertActive = false,
   stock = MARKET_TARGET_STOCK,
 ): number {
-  const supply = getMarketSupply(town, good);
-  const demand = getMarketDemand(town, good);
-  const supplyDemandFactor = 1 + (demand - supply) * 0.15;
-  const stockFactor =
-    (MARKET_TARGET_STOCK + 10) /
-    (Math.max(0, Math.min(MARKET_MAX_STOCK, stock)) + 10);
-  const localPrice = Math.min(
-    MARKET_MAX_BUY_PRICE,
-    Math.max(
-      MARKET_PRICE_STEP,
-      MARKET_PRICE_STEP *
-        Math.round(
-          (MARKET_BASE_PRICES[good] / MARKET_PRICE_STEP) * supplyDemandFactor * stockFactor,
-        ) +
-        (routeAlertActive && town === "chittagong" && good === "salt"
-          ? CHITTAGONG_ALERT_SALT_SURCHARGE
-          : 0),
-    ),
-  );
-  return type === "buy"
-    ? localPrice
-    : Math.max(MARKET_PRICE_STEP, localPrice - MARKET_SELL_SPREAD);
+  if (type === "buy") return getMarketPrice(town, good, routeAlertActive, stock);
+  const price = getMarketPrice(town, good, routeAlertActive, stock + 1);
+  return MARKET_PRICE_STEP * Math.floor((price * (1 - MARKET_SELL_SPREAD)) / MARKET_PRICE_STEP);
 }
 
 export type TradeFailure =

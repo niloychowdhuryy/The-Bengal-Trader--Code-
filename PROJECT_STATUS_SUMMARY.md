@@ -11,9 +11,9 @@
 **Read this first:**
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
-- Saves are now version 21, counting in Coins. Older saves convert at exactly ×50 on load, keeping the original as a backup (Economy Plan Step 2, committed locally, not pushed).
+- Saves are now version 22, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The market rules, stock and world clock are new in Economy Plan Step 3, committed locally and not pushed.
 - The economy has a simulation harness and a recorded baseline (Economy Plan Step 1). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
-- Most of the planned commercial game is **not built**. In particular, markets are simple, and there are no ads or leaderboards.
+- Most of the planned commercial game is **not built**. In particular, NPC merchants barely affect markets yet, and there are no ads or leaderboards.
 
 ## 1. The game
 
@@ -47,12 +47,12 @@
 | Feature | Status | Notes |
 |---|---|---|
 | Eight goods at all 15 ports | Implemented | Rice, cotton textiles, salt, raw silk, sugar, saltpetre, opium, lac resin |
-| Finite stock with stock-sensitive prices | Implemented | Stock 0–40, buy price 50–7,800 Coins |
+| Finite stock with stock-sensitive prices | Implemented | Usually 48–72 units, at most 120. Prices within 40–250% of base |
 | Weighted-average cargo cost and profit estimates | Implemented | |
-| Daily stock recovery toward each port's baseline | Implemented | One unit per sailing day |
+| Daily stock recovery toward each port's baseline | Implemented | 6–12% of the gap per day, by what the town produces and buys |
 | Coins at 50×, 5,000 starting balance | Implemented | Older saves convert at exactly ×50 |
-| Dynamic market (production, shortages, events, explained prices) | Partially implemented | Only stock movement and one fixed Chittagong salt event exist |
-| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`. Balance targets are not met yet |
+| Dynamic market (production, shortages, events, explained prices) | Partially implemented | Stock moves prices and recovers by town. No seasons, shortages from events, or explained prices yet, and NPCs barely affect markets until Step 4 |
+| Economic simulations | Partially implemented | Harness and baseline exist, in `ECONOMY_BASELINE.md`. 12 of 13 targets met. Farms, automated ships and contracts still out of balance |
 
 ### Ships
 
@@ -146,11 +146,11 @@
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
 
-**Tests:** 478 passing across 22 test files, plus a passing type-check and production build, at the Economy Plan Step 2 checkpoint.
+**Tests:** 502 passing across 23 test files, plus a passing type-check and production build, at the Economy Plan Step 3 checkpoint.
 
 ## 4. Saves
 
-**Current format:** version 21. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
+**Current format:** version 22. The database itself stays at IndexedDB version 2. Older saves migrate step by step on load.
 
 | Version | Added |
 |---|---|
@@ -165,6 +165,7 @@
 | 19 | Vessel classes, return orders |
 | 20 | New route network. Voyages move to it at the same percentage of progress |
 | 21 | Coins. Every amount of money ×50, and gold fields renamed |
+| 22 | Stalls hold three times the stock, keeping their share, and the NPC clock becomes the world clock |
 
 A repair on load also fixes saves affected by an earlier gold-peak bug. After a migration, the command log restarts and the game is marked `imported`, because old commands used old rules.
 
@@ -212,7 +213,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `7f1fa25` | Online Stage 2: Google sign-in and profiles | Yes |
 | `d45a93d` | Navigation rebuild, map fix and port panel, save version 20 | Yes |
 | `c01862b` | Economy Plan Step 1: simulation harness and baseline | Yes |
-| Latest | Economy Plan Step 2: Coins and save backup, save version 21 | **No, awaiting the owner's instruction** |
+| `cbe2404` | Economy Plan Step 2: Coins and save backup, save version 21 | Yes |
+| Latest | Economy Plan Step 3: pricing fix, deeper stock and world clock, save version 22 | **No, awaiting the owner's instruction** |
 
 | Service | Status |
 |---|---|
@@ -283,7 +285,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 - No filter for offensive merchant names. Non-Latin names are untested.
 
 **Technical and business risks:**
-1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). Same-port trading can create money, farms and automated ships out-earn trading, and NPC merchants barely affect markets. None of this is fixed yet.
+1. **Economy balance:** measured in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). The same-port exploit is fixed. Farms and automated Patellos still out-earn trading, delivery contracts mostly lose money, and NPC merchants barely affect markets.
 2. **Scale:** most of the planned game is still unbuilt.
 3. **Delaying cloud saves:** each new system adds saved data, and real-time farms can't be fully trusted without a server clock. Everything must stay in the command system so this can be added later.
 4. **Performance with 25+ traders:** untested. The current planner is not optimised for many routes per day.
@@ -299,9 +301,9 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Pricing, stock and the world tick** (Economy Plan Step 3), once the owner approves it. Which commit staging runs is still unconfirmed.
-2. **Farms, automated trading and contracts stay on the balance list** (see `ROADMAP.md`). Later balance depends on it.
-3. **The 25+ NPC traders, then offline leaderboards** (Stage 5, Economy Plan Steps 4–5). Traders are the main force on stock and prices, so they should be built and balanced together.
+1. **The 25+ NPC traders** (Stage 5, Economy Plan Step 4), once the owner approves it. Traders are the main force on stock and prices, so they should be built and balanced together. Which commit staging runs is still unconfirmed.
+2. **Offline leaderboards** (Economy Plan Step 5).
+3. **Rebalance farms, automated ships, contracts and warehouses,** once the NPC economy is measured (see `ROADMAP.md`).
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.
 5. **City unlocks and reputation** (Stage 8).
 6. **Buildings, missions and town identities** (Stage 9).

@@ -4,7 +4,7 @@ import {
   GOODS,
   CURRENT_MARKET_GOODS,
   MARKET_MAX_STOCK,
-  MARKET_MAX_BUY_PRICE,
+  MARKET_MAX_PRICE_SHARE,
   MARKET_PORTS,
   ADDITIONAL_SHIP_PRICE,
   MAX_AUTOMATED_ROUTE_CAPITAL,
@@ -12,7 +12,7 @@ import {
   SHIPYARD_PORTS,
   TOWNS,
   advanceMarketStock,
-  advanceNpcWorld,
+  advanceWorld,
   acceptMission,
   advanceFarmProduction,
   arriveAtDestination,
@@ -102,8 +102,8 @@ describe("first playable journey", () => {
         expect(merchant.homePort).toBe("dhaka");
         expect(merchant.cargoCapacity).toBe(3);
 
-        const firstDay = advanceNpcWorld(game, 1);
-        expect(advanceNpcWorld(structuredClone(game), 1)).toEqual(firstDay);
+        const firstDay = advanceWorld(game, 1);
+        expect(advanceWorld(structuredClone(game), 1)).toEqual(firstDay);
         const traveling = firstDay.npcMerchants.find((entry) => entry.id === merchant.id)!;
         expect(traveling.phase).toBe("traveling");
         expect(traveling.destinationPort).not.toBe(traveling.currentPort);
@@ -128,7 +128,7 @@ describe("first playable journey", () => {
         let arrived = firstDay;
         const daysToArrival = traveling.travelDaysRemaining;
         for (let day = 0; day < daysToArrival; day += 1) {
-          arrived = advanceNpcWorld(arrived, arrived.npcSimulationDay + 1);
+          arrived = advanceWorld(arrived, arrived.worldDay + 1);
         }
         const traderAfterSale = arrived.npcMerchants.find((entry) => entry.id === merchant.id)!;
         expect(traderAfterSale.currentPort).toBe(traveling.destinationPort);
@@ -168,8 +168,8 @@ describe("first playable journey", () => {
         expect(getNpcTradingIntent(arbitrage)).toContain("best price difference");
         expect(getNpcTradingIntent(regional)).toContain("nearby ports");
 
-        const simulated = advanceNpcWorld(game, 1);
-        expect(advanceNpcWorld(structuredClone(game), 1)).toEqual(simulated);
+        const simulated = advanceWorld(game, 1);
+        expect(advanceWorld(structuredClone(game), 1)).toEqual(simulated);
         const arbitrageMerchant = simulated.npcMerchants[1];
         const arbitrageGood = GOODS.find(
           (good) => arbitrageMerchant.cargo[good.id] > 0,
@@ -266,13 +266,13 @@ describe("first playable journey", () => {
           sailing,
           firstDayCheckpointAt,
         );
-        expect(checkpointed.npcSimulationDay).toBe(1);
+        expect(checkpointed.worldDay).toBe(1);
         const savedMerchants = structuredClone(checkpointed.npcMerchants);
         const savedMarket = structuredClone(checkpointed.marketStock);
         const reopened = resumeVoyage(checkpointed, 86_461_000);
         expect(reopened.npcMerchants).toEqual(savedMerchants);
         expect(reopened.marketStock).toEqual(savedMarket);
-        expect(reopened.npcSimulationDay).toBe(1);
+        expect(reopened.worldDay).toBe(1);
       });
     });
 
@@ -581,12 +581,12 @@ describe("first playable journey", () => {
   it("buys and sells goods with the displayed local prices", () => {
     const game = createNewGame("Maya");
     const bought = buyGood(game, "salt");
-    expect(bought.state.coins).toBe(4_300);
+    expect(bought.state.coins).toBe(4_310);
     expect(bought.state.cargo.salt).toBe(1);
     const sold = sellGood(bought.state, "salt");
-    expect(sold.state.coins).toBe(4_850);
+    expect(sold.state.coins).toBe(4_915);
     expect(sold.state.cargo.salt).toBe(0);
-    expect(getGoodPrice("dhaka", "salt", "sell", false, 19)).toBe(550);
+    expect(getGoodPrice("dhaka", "salt", "sell", false, 59)).toBe(605);
     expect(sellGood(game, "salt").error).toBe("empty");
   });
 
@@ -1192,13 +1192,14 @@ describe("first playable journey", () => {
       dhaka: {
         ...starting.marketStock.dhaka,
         rice: 10,
-        salt: 30,
+        salt: 90,
       },
     };
     const recovered = advanceMarketStock(alteredStock, 1.9);
 
-    expect(recovered.dhaka.rice).toBe(11);
-    expect(recovered.dhaka.salt).toBe(29);
+    // One whole day. Rice closes 8% of its gap, and Dhaka, a big salt buyer, 12% of its surplus.
+    expect(recovered.dhaka.rice).toBe(14);
+    expect(recovered.dhaka.salt).toBe(86);
     expect(recovered.dhaka.muslin).toBe(
       starting.marketStock.dhaka.muslin,
     );
@@ -1240,7 +1241,7 @@ describe("first playable journey", () => {
             );
             expect(quote).toBeGreaterThanOrEqual(1);
             if (type === "buy") {
-              expect(quote).toBeLessThanOrEqual(MARKET_MAX_BUY_PRICE);
+              expect(quote).toBeLessThanOrEqual(2_000 * MARKET_MAX_PRICE_SHARE + 300);
             }
           }
         }
@@ -1266,15 +1267,13 @@ describe("first playable journey", () => {
     ).durationDays;
     const expectedTicks = Math.floor(starting.sailingDay + durationDays) -
       Math.floor(starting.sailingDay);
-    const isolatedFromNpcTrades = {
-      ...starting,
-      npcSimulationDay: Math.floor(starting.sailingDay + durationDays),
-    };
+    const isolatedFromNpcTrades = { ...starting, npcMerchants: [] };
     const voyage = startVoyage(isolatedFromNpcTrades, 1_000);
     expect(voyage.marketStock.dhaka.rice).toBe(10);
 
     const arrival = arriveAtDestination(voyage);
-    expect(arrival.marketStock.dhaka.rice).toBe(10 + expectedTicks);
+    expect(arrival.marketStock).toEqual(advanceMarketStock(voyage.marketStock, expectedTicks));
+    expect(arrival.marketStock.dhaka.rice).toBeGreaterThan(10);
     expect(arrival.sailingDay).toBe(starting.sailingDay + durationDays);
   });
 
@@ -1354,8 +1353,8 @@ describe("first playable journey", () => {
       market = buyGood(market, "rice").state;
     }
 
-    expect(market.marketStock.dhaka.rice).toBe(15);
-    expect(getGoodPrice("dhaka", "rice", "buy", false, 15)).toBe(550);
+    expect(market.marketStock.dhaka.rice).toBe(55);
+    expect(getGoodPrice("dhaka", "rice", "buy", false, 55)).toBe(485);
 
     const seller = {
       ...createNewGame("Maya"),
@@ -1375,8 +1374,8 @@ describe("first playable journey", () => {
       afterSales = sellGood(afterSales, "salt").state;
     }
 
-    expect(afterSales.marketStock.dhaka.salt).toBe(25);
-    expect(getGoodPrice("dhaka", "salt", "sell", false, 25)).toBe(450);
+    expect(afterSales.marketStock.dhaka.salt).toBe(65);
+    expect(getGoodPrice("dhaka", "salt", "sell", false, 65)).toBe(565);
     expect(buyGood({ ...market, marketStock: { ...market.marketStock, dhaka: { ...market.marketStock.dhaka, rice: 0 } } }, "rice").error).toBe("out-of-stock");
   });
 
@@ -1617,8 +1616,8 @@ describe("first playable journey", () => {
     expect(travel.voyage?.durationDays).toBe(
       (travel.voyage!.arrivalAt - travel.voyage!.startedAt) / 60_000,
     );
-    expect(getGoodPrice("chittagong", "salt", "buy", true)).toBe(1_000);
-    expect(getGoodPrice("chittagong", "salt", "sell", true)).toBe(850);
+    expect(getGoodPrice("chittagong", "salt", "buy", true)).toBe(990);
+    expect(getGoodPrice("chittagong", "salt", "sell", true)).toBe(860);
 
     const alertOver = { ...game, sailingDay: 36 };
     expect(isHistoricalRouteAlertActive(alertOver)).toBe(false);
@@ -1771,8 +1770,8 @@ describe("first playable journey", () => {
       ),
     };
 
-    const firstTick = advanceNpcWorld(configured, 1);
-    const baselineTick = advanceNpcWorld(withoutAutomation, 1);
+    const firstTick = advanceWorld(configured, 1);
+    const baselineTick = advanceWorld(withoutAutomation, 1);
     const tradingShip = firstTick.fleet[1];
     expect(tradingShip.cargo.lac).toBe(1);
     const purchasePrice = getGoodPrice(
@@ -1792,20 +1791,20 @@ describe("first playable journey", () => {
 
     const travelDays = tradingShip.automatedRoute!.travelDaysTotal;
     const arrivalDay = 1 + travelDays;
-    const arrived = advanceNpcWorld(firstTick, arrivalDay);
+    const arrived = advanceWorld(firstTick, arrivalDay);
     expect(arrived.fleet[1].currentPort).toBe("sonargaon");
     expect(arrived.fleet[1].automatedRoute?.phase).toBe("docked");
     const destinationBeforeSale = arrived.marketStock.sonargaon.lac;
-    const sold = advanceNpcWorld(arrived, arrivalDay + 1);
+    const sold = advanceWorld(arrived, arrivalDay + 1);
     expect(sold.fleet[1].cargo.lac).toBe(0);
     expect(sold.marketStock.sonargaon.lac).toBe(destinationBeforeSale + 1);
     expect(sold.fleet[1].automatedRoute?.capital).toBeGreaterThan(
       arrived.fleet[1].automatedRoute!.capital,
     );
 
-    const jumped = advanceNpcWorld(configured, 5);
+    const jumped = advanceWorld(configured, 5);
     let stepped = configured;
-    for (let day = 1; day <= 5; day += 1) stepped = advanceNpcWorld(stepped, day);
+    for (let day = 1; day <= 5; day += 1) stepped = advanceWorld(stepped, day);
     expect(jumped.fleet).toEqual(stepped.fleet);
     expect(jumped.marketStock).toEqual(stepped.marketStock);
   });
@@ -1825,13 +1824,13 @@ describe("first playable journey", () => {
       400,
     ).state;
     const paused = setAutomatedTradeRouteStatus(configured, shipId, "paused").state;
-    const held = advanceNpcWorld(paused, 3);
+    const held = advanceWorld(paused, 3);
     expect(held.fleet[1].currentPort).toBe("dhaka");
     expect(held.fleet[1].cargo.lac).toBe(0);
     expect(held.fleet[1].automatedRoute?.status).toBe("paused");
 
     const resumed = setAutomatedTradeRouteStatus(held, shipId, "running").state;
-    const traveling = advanceNpcWorld(resumed, 4);
+    const traveling = advanceWorld(resumed, 4);
     expect(traveling.fleet[1].automatedRoute?.phase).toBe("traveling");
     expect(setAutomatedTradeRouteStatus(traveling, shipId, "paused").error).toBe("not-docked");
     expect(cancelAutomatedTradeRoute(traveling, shipId).error).toBe("not-docked");
@@ -2014,7 +2013,7 @@ describe("first playable journey", () => {
       ).error,
     ).toBe("active-ship");
 
-    const underway = advanceNpcWorld(sailing, 1);
+    const underway = advanceWorld(sailing, 1);
     expect(underway.voyage).not.toBeNull();
     expect(underway.fleet[1].automatedRoute?.phase).toBe("traveling");
     expect(configureAutomatedTradeRoute(underway, shipId, "sonargaon", rules, 0).error)
@@ -2050,7 +2049,7 @@ describe("first playable journey", () => {
           : entry,
       ),
     };
-    const noPurchase = advanceNpcWorld(fullHold, 1);
+    const noPurchase = advanceWorld(fullHold, 1);
     expect(noPurchase.fleet[1].cargo.lac).toBe(ship.cargo.lac);
     expect(noPurchase.marketStock.dhaka.lac).toBe(configured.marketStock.dhaka.lac);
 
@@ -2061,9 +2060,9 @@ describe("first playable journey", () => {
         dhaka: { ...configured.marketStock.dhaka, lac: 0 },
       },
     };
-    expect(advanceNpcWorld(noStock, 1).fleet[1].cargo.lac).toBe(0);
+    expect(advanceWorld(noStock, 1).fleet[1].cargo.lac).toBe(0);
 
-    const fractional = advanceNpcWorld(configured, 0.99);
+    const fractional = advanceWorld(configured, 0.99);
     expect(fractional.fleet[1]).toEqual(configured.fleet[1]);
     expect(fractional.marketStock).toEqual(configured.marketStock);
 
@@ -2087,9 +2086,11 @@ describe("first playable journey", () => {
           : entry,
       ),
     };
-    const noSale = advanceNpcWorld(atDestination, 1);
+    const noSale = advanceWorld(atDestination, 1);
     expect(noSale.fleet[1].cargo.lac).toBe(1);
-    expect(noSale.marketStock.sonargaon.lac).toBe(0);
+    expect(noSale.marketStock.sonargaon.lac).toBe(
+      advanceMarketStock(atDestination.marketStock, 1).sonargaon.lac,
+    );
     expect(noSale.fleet[1].automatedRoute?.capital).toBe(
       MAX_AUTOMATED_ROUTE_CAPITAL,
     );
@@ -2114,8 +2115,9 @@ describe("first playable journey", () => {
           : entry,
       ),
     };
-    const marketHeld = advanceNpcWorld(fullMarket, 1);
-    expect(marketHeld.fleet[1].cargo.lac).toBe(1);
-    expect(marketHeld.marketStock.sonargaon.lac).toBe(MARKET_MAX_STOCK);
+    // Stalls use up a surplus before ships sell, so even a full stall has room by then.
+    const marketHeld = advanceWorld(fullMarket, 1);
+    expect(marketHeld.marketStock.sonargaon.lac).toBeLessThanOrEqual(MARKET_MAX_STOCK);
+    expect(marketHeld.marketStock.sonargaon.lac).toBeLessThan(MARKET_MAX_STOCK);
   });
 });

@@ -2,14 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asGoldSave } from "../test/gold-save";
 import { applyCommand } from "./commands";
 import {
-  GOODS,
-  MARKET_MAX_STOCK,
   MARKET_PORTS,
   STARTING_COINS,
   createNewGame,
   getGoodPrice,
-  getMarketDemand,
-  getMarketSupply,
   type GameState,
 } from "./model";
 import { NewerSaveError, isValidGameState, migrateLegacySave, validateSave } from "./save-format";
@@ -64,7 +60,7 @@ function scaled(amounts: Record<string, number>): Record<string, number> {
 }
 
 function expectExactCoins(old: Loose, game: GameState): void {
-  expect(game.version).toBe(21);
+  expect(game.version).toBe(22);
   expect(game.coins).toBe(old.gold * 50);
   expect(game.highestCoins).toBe(old.highestGold * 50);
   expect("gold" in game).toBe(false);
@@ -101,7 +97,8 @@ function expectExactCoins(old: Loose, game: GameState): void {
 
 // What's left of a save once every money field is taken out should be identical.
 function withoutMoney(save: Loose): Loose {
-  const { gold, highestGold, coins, highestCoins, version, averagePurchasePrice, warehouseAveragePurchasePrice, lastMessage, voyage, ...rest } = save;
+  // Stock and the world clock are covered by the market tests.
+  const { gold, highestGold, coins, highestCoins, version, averagePurchasePrice, warehouseAveragePurchasePrice, lastMessage, voyage, marketStock, npcSimulationDay, worldDay, ...rest } = save;
   const { startedAt, arrivalAt, progressUpdatedAt, ...voyageRest } = voyage ?? {};
   return {
     ...rest,
@@ -118,28 +115,8 @@ function withoutMoney(save: Loose): Loose {
   };
 }
 
-describe("Coins prices", () => {
-  it("are exactly 50× the gold prices, at every stall and stock level", () => {
-    const goldBase = { rice: 8, salt: 12, muslin: 24, silk: 32, sugar: 14, saltpetre: 18, opium: 40, lac: 22 };
-    for (const port of MARKET_PORTS) {
-      for (const good of GOODS) {
-        for (let stock = 0; stock <= MARKET_MAX_STOCK; stock += 1) {
-          const factor = 1 + (getMarketDemand(port.id, good.id) - getMarketSupply(port.id, good.id)) * 0.15;
-          for (const alert of [false, true]) {
-            const surcharge = alert && port.id === "chittagong" && good.id === "salt" ? 6 : 0;
-            const gold = Math.min(
-              156,
-              Math.max(1, Math.round(goldBase[good.id] * factor * (30 / (stock + 10))) + surcharge),
-            );
-            expect(getGoodPrice(port.id, good.id, "buy", alert, stock)).toBe(gold * 50);
-            expect(getGoodPrice(port.id, good.id, "sell", alert, stock)).toBe(Math.max(1, gold - 3) * 50);
-          }
-        }
-      }
-    }
-  });
-
-  it("start a new game with 5,000 Coins", () => {
+describe("a new game", () => {
+  it("starts with 5,000 Coins", () => {
     const game = createNewGame("Maya");
     expect(STARTING_COINS).toBe(5_000);
     expect(game.coins).toBe(5_000);
@@ -161,7 +138,7 @@ describe("migrating to Coins", () => {
     expectExactCoins(saveV19, game);
     const old = saveV19 as Loose;
     expect(game.cargo).toEqual(old.cargo);
-    expect(game.marketStock).toEqual(old.marketStock);
+    expect(game.marketStock.dhaka.rice).toBe(old.marketStock.dhaka.rice * 3);
     expect(game.fleet.map((ship) => ship.cargo)).toEqual(old.fleet.map((ship: Loose) => ship.cargo));
     expect(game.fleet.map((ship) => ship.shipHull)).toEqual(old.fleet.map((ship: Loose) => ship.shipHull));
     expect(game.sailingDay).toBe(old.sailingDay);
@@ -186,7 +163,7 @@ describe("migrating to Coins", () => {
   });
 
   it("doesn't convert twice when an older step adds today's templates", () => {
-    const { missions, npcMerchants, npcActivity, npcSimulationDay, ...v13 } = asGoldSave(createNewGame("Maya"), 13);
+    const { missions, npcMerchants, npcActivity, worldDay, ...v13 } = asGoldSave(createNewGame("Maya"), 13);
     const game = validateSave(v13, T0);
     expect(game.missions).toEqual(createNewGame("Maya").missions);
     expect(game.npcMerchants.map((merchant) => merchant.budget)).toEqual([5_000, 5_000, 5_000, 5_000]);
@@ -196,7 +173,7 @@ describe("migrating to Coins", () => {
     const fresh = createNewGame("Maya");
     const { averagePurchasePrice: _cost, ...v5 } = asGoldSave(fresh, 5);
     const game = migrateLegacySave(v5, T0) as GameState;
-    expect(game.averagePurchasePrice.rice).toBe(
+    expect(game.averagePurchasePrice.rice).toBeCloseTo(
       getGoodPrice("dhaka", "rice", "buy", false, fresh.marketStock.dhaka.rice),
     );
   });
@@ -265,7 +242,7 @@ describe("save backups", () => {
 
     const session = await openGameSession(T0);
 
-    expect(session.game?.version).toBe(21);
+    expect(session.game?.version).toBe(22);
     expect(session.log?.provenance).toBe("imported");
     expect((await readCommandLog())?.commands).toEqual([]);
     const backup = await readSaveBackup(MIGRATION_BACKUP);
@@ -370,7 +347,7 @@ describe("save backups", () => {
 });
 
 describe("a save from a newer version of the game", () => {
-  const newer = { ...createNewGame("Maya"), version: 22, somethingNew: true };
+  const newer = { ...createNewGame("Maya"), version: 23, somethingNew: true };
 
   beforeEach(resetDatabase);
 

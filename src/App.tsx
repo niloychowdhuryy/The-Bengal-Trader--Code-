@@ -626,8 +626,8 @@ function MarketPanel({
         <span className="eyebrow">THE BUSY QUAYSIDE</span>
         <h2>Market at {getTown(state.currentTown).name}</h2>
         <p>
-          Local prices reflect supply, demand and stall stock. Each full sailing
-          day moves stalls one item toward their usual stock.
+          Local prices reflect supply, demand and stall stock. As days pass at sea,
+          stalls drift back toward their usual stock.
         </p>
       </div>
       {eventIsActive && (

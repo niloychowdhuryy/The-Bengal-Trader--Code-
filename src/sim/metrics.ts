@@ -20,7 +20,7 @@ import {
 const GOODS_SHARE = 0.8;
 const SHIP_SHARE = 0.6;
 const PROPERTY_SHARE = 0.7;
-const STALL_NEAR_LIMIT = 2;
+const STALL_NEAR_LIMIT = 6;
 
 function goodsValue(goods: Record<GoodId, number>): number {
   return GOODS.reduce(
@@ -58,6 +58,12 @@ export function npcWorth(merchant: NpcMerchant): number {
 export interface MarketSnapshot {
   /** Average of each stall's price against its starting price. 1 means unchanged. */
   priceIndex: number;
+  /** Average distance of each stall's price from its starting price, as a share of it. */
+  priceMovement: number;
+  /** The most any one stall's price has moved from its start, as a share. */
+  largestPriceMove: number;
+  /** Stalls whose price is at least 5% from where it started. */
+  stallsMoved: number;
   meanStockGap: number;
   stallsNearEmpty: number;
   stallsNearFull: number;
@@ -68,6 +74,9 @@ export interface MarketSnapshot {
 export function measureMarket(state: GameState): MarketSnapshot {
   const start = createInitialMarketStock();
   let priceRatio = 0;
+  let movement = 0;
+  let largestMove = 0;
+  let moved = 0;
   let gap = 0;
   let nearEmpty = 0;
   let nearFull = 0;
@@ -77,9 +86,13 @@ export function measureMarket(state: GameState): MarketSnapshot {
     for (const good of GOODS) {
       const stock = state.marketStock[port.id][good.id];
       const startStock = start[port.id][good.id];
-      priceRatio +=
+      const ratio =
         getGoodPrice(port.id, good.id, "buy", false, stock) /
         getGoodPrice(port.id, good.id, "buy", false, startStock);
+      priceRatio += ratio;
+      movement += Math.abs(ratio - 1);
+      largestMove = Math.max(largestMove, Math.abs(ratio - 1));
+      if (Math.abs(ratio - 1) >= 0.05) moved += 1;
       gap += Math.abs(stock - startStock);
       if (stock <= STALL_NEAR_LIMIT) nearEmpty += 1;
       if (stock >= MARKET_MAX_STOCK - STALL_NEAR_LIMIT) nearFull += 1;
@@ -89,6 +102,9 @@ export function measureMarket(state: GameState): MarketSnapshot {
   }
   return {
     priceIndex: round(priceRatio / stalls, 3),
+    priceMovement: round(movement / stalls, 3),
+    largestPriceMove: round(largestMove, 3),
+    stallsMoved: moved,
     meanStockGap: round(gap / stalls, 3),
     stallsNearEmpty: nearEmpty,
     stallsNearFull: nearFull,

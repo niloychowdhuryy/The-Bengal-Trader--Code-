@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 import BengalMap from "../components/BengalMap";
 import { applyCommand, type RecordedCommand } from "./commands";
 import {
-  advanceNpcWorld,
+  advanceWorld,
   buyPlayerShip,
   checkpointVoyageProgress,
   configureAutomatedTradeRoute,
@@ -141,7 +141,7 @@ describe("other ships under the new network", () => {
     let state = routed.state;
     const reached = new Set<string>();
     for (let day = 1; day <= 40; day += 1) {
-      state = advanceNpcWorld({ ...state, sailingDay: day }, day);
+      state = advanceWorld({ ...state, sailingDay: day }, day);
       const ship = state.fleet[1];
       reached.add(ship.currentPort);
       expect(ship.cargo.rice).toBeLessThanOrEqual(ship.cargoCapacity);
@@ -173,7 +173,7 @@ describe("other ships under the new network", () => {
     expect(plan?.destination).toBe("dhaka");
     let state = orderShipReturn(stranded, "player-ship-1").state;
     const cargo = state.fleet[0].cargo;
-    for (let day = 1; day <= plan!.days; day += 1) state = advanceNpcWorld({ ...state, sailingDay: day }, day);
+    for (let day = 1; day <= plan!.days; day += 1) state = advanceWorld({ ...state, sailingDay: day }, day);
     expect(state.fleet[0].currentPort).toBe("dhaka");
     expect(state.fleet[0].cargo).toEqual(cargo);
     expect(state.fleet[0].returnOrder).toBeNull();
@@ -184,7 +184,7 @@ describe("existing saves", () => {
   it("moves a version 19 voyage onto the new network, keeping its progress and cargo", () => {
     const saved = fixture as unknown as GameState;
     const game = validateSave(fixture, T0);
-    expect(game.version).toBe(21);
+    expect(game.version).toBe(22);
     expect(isValidGameState(game)).toBe(true);
     expect(game.cargo).toEqual(saved.cargo);
     expect(game.coins).toBe(fixture.gold * 50);
@@ -208,7 +208,7 @@ describe("existing saves", () => {
       [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
       15_000,
     ).state;
-    for (let day = 1; day <= 3; day += 1) state = advanceNpcWorld({ ...state, sailingDay: day }, day);
+    for (let day = 1; day <= 3; day += 1) state = advanceWorld({ ...state, sailingDay: day }, day);
     const gold = asGoldSave(state, 19);
     const asOld = {
       ...gold,
@@ -219,7 +219,7 @@ describe("existing saves", () => {
       ),
     };
     const migrated = validateSave(asOld, T0);
-    expect(migrated.version).toBe(21);
+    expect(migrated.version).toBe(22);
     for (const merchant of migrated.npcMerchants) {
       if (merchant.phase === "traveling") {
         expect(merchant.travelDaysRemaining).toBeLessThanOrEqual(merchant.travelDaysTotal);

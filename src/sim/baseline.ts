@@ -5,9 +5,12 @@ import {
   demonstrateSamePortLoop,
   findSamePortLoops,
   measureBreakInvariance,
+  measureCheckpointInvariance,
+  measureClosedLoops,
   measureContracts,
   measureFarmPayback,
   measureLoopAtLowStock,
+  measureMarketImpact,
   measureNpcWorld,
   measureRecovery,
   measureRouteShip,
@@ -52,6 +55,9 @@ export interface StrategyDay {
   contractsDone: number;
   fleet: number;
   priceIndex: number;
+  priceMovement: number;
+  largestPriceMove: number;
+  stallsMoved: number;
   meanStockGap: number;
   stallsNearEmpty: number;
   stallsNearFull: number;
@@ -127,6 +133,9 @@ function summariseStrategy(
         contractsDone: middle((snapshot) => snapshot.contractsDone, index),
         fleet: middle((snapshot) => snapshot.fleet, index),
         priceIndex: middle((snapshot) => snapshot.market.priceIndex, index),
+        priceMovement: middle((snapshot) => snapshot.market.priceMovement, index),
+        largestPriceMove: middle((snapshot) => snapshot.market.largestPriceMove, index),
+        stallsMoved: middle((snapshot) => snapshot.market.stallsMoved, index),
         meanStockGap: middle((snapshot) => snapshot.market.meanStockGap, index),
         stallsNearEmpty: middle((snapshot) => snapshot.market.stallsNearEmpty, index),
         stallsNearFull: middle((snapshot) => snapshot.market.stallsNearFull, index),
@@ -182,6 +191,7 @@ export function buildBaseline(base: GameState = createNewGame("Simulated")) {
       routesThatTire: sustained.filter((route) => route.lateVsEarly > 0 && route.lateVsEarly < 0.9).length,
     },
     recovery: measureRecovery(),
+    marketImpact: measureMarketImpact(),
     investments: {
       farm: measureFarmPayback(),
       routeShips: VESSEL_CLASS_IDS.map((vessel) => measureRouteShip(vessel)),
@@ -199,7 +209,9 @@ export function buildBaseline(base: GameState = createNewGame("Simulated")) {
         },
         demonstration: demonstrateSamePortLoop(200, base),
       },
+      closedLoops: measureClosedLoops(),
       closedTimeChangesNothing: measureBreakInvariance(),
+      checkpointsChangeNothing: measureCheckpointInvariance(),
     },
   };
 }

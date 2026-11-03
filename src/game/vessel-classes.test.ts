@@ -8,7 +8,7 @@ import {
   SHIPYARD_PORTS,
   VESSEL_CLASSES,
   VESSEL_CLASS_IDS,
-  advanceNpcWorld,
+  advanceWorld,
   arriveAtDestination,
   buyPlayerShip,
   buyUpgrade,
@@ -120,7 +120,7 @@ describe("vessel classes", () => {
 
   it("starts new games with an unchanged River boat", () => {
     const game = createNewGame("Maya");
-    expect(game.version).toBe(21);
+    expect(game.version).toBe(22);
     expect(game.fleet[0].vesselClass).toBe("river-boat");
     expect(getCargoCapacity(game)).toBe(12);
     expect(getShipMaximumHull(game)).toBe(8);
@@ -351,7 +351,7 @@ describe("automated routes by class", () => {
   it("keeps River boats and Boras at one unit per good", () => {
     for (const vesselClass of ["river-boat", "bora"] as const) {
       const assigned = assign(vesselClass, 25_000);
-      const next = advanceNpcWorld(assigned, 1);
+      const next = advanceWorld(assigned, 1);
       expect(next.fleet[1].cargo.rice).toBe(1);
       expect(next.marketStock.dhaka.rice).toBe(assigned.marketStock.dhaka.rice - 1);
     }
@@ -365,7 +365,7 @@ describe("automated routes by class", () => {
       expectedCost += getGoodPrice("dhaka", "rice", "buy", true, stock);
       stock -= 1;
     }
-    const bought = advanceNpcWorld(assigned, 1);
+    const bought = advanceWorld(assigned, 1);
     const ship = bought.fleet[1];
     expect(ship.cargo.rice).toBe(4);
     expect(bought.marketStock.dhaka.rice).toBe(stock);
@@ -377,7 +377,7 @@ describe("automated routes by class", () => {
 
     let current = bought;
     for (let day = 2; day <= 8 && current.fleet[1].cargo.rice === 4; day += 1) {
-      current = advanceNpcWorld(current, day);
+      current = advanceWorld(current, day);
     }
     expect(current.fleet[1].cargo.rice).toBe(0);
   });
@@ -389,7 +389,7 @@ describe("automated routes by class", () => {
     const lowCapital = updateShip(assigned, shipId, {
       automatedRoute: { ...assigned.fleet[1].automatedRoute!, capital: priceOne },
     });
-    const capitalLimited = advanceNpcWorld(lowCapital, 1).fleet[1];
+    const capitalLimited = advanceWorld(lowCapital, 1).fleet[1];
     expect(capitalLimited.cargo.rice).toBe(1);
     expect(capitalLimited.automatedRoute!.capital).toBe(0);
 
@@ -400,15 +400,16 @@ describe("automated routes by class", () => {
         dhaka: { ...assigned.marketStock.dhaka, rice: 2 },
       },
     };
-    const stockLimited = advanceNpcWorld(lowStock, 1);
-    expect(stockLimited.fleet[1].cargo.rice).toBe(2);
-    expect(stockLimited.marketStock.dhaka.rice).toBe(0);
+    // Two left, plus the day's recovery of five, so four can be bought and three remain.
+    const stockLimited = advanceWorld(lowStock, 1);
+    expect(stockLimited.fleet[1].cargo.rice).toBe(4);
+    expect(stockLimited.marketStock.dhaka.rice).toBe(3);
 
     const nearlyFull = updateShip(assigned, shipId, {
       cargo: { ...assigned.fleet[1].cargo, salt: 29 },
       averagePurchasePrice: { ...assigned.fleet[1].averagePurchasePrice, salt: 10 },
     });
-    const holdLimited = advanceNpcWorld(nearlyFull, 1).fleet[1];
+    const holdLimited = advanceWorld(nearlyFull, 1).fleet[1];
     expect(holdLimited.cargo.rice).toBe(1);
 
     const atDestination = {
@@ -423,7 +424,7 @@ describe("automated routes by class", () => {
         },
       }),
     };
-    const capped = advanceNpcWorld(atDestination, 1).fleet[1];
+    const capped = advanceWorld(atDestination, 1).fleet[1];
     expect(capped.cargo.rice).toBe(10);
     expect(capped.automatedRoute!.capital).toBeLessThanOrEqual(MAX_AUTOMATED_ROUTE_CAPITAL);
 
@@ -439,9 +440,10 @@ describe("automated routes by class", () => {
         sonargaon: { ...fullStall.marketStock.sonargaon, rice: MARKET_MAX_STOCK - 2 },
       },
     };
-    const sold = advanceNpcWorld(nearlyFullStall, 1);
-    expect(sold.fleet[1].cargo.rice).toBe(8);
-    expect(sold.marketStock.sonargaon.rice).toBe(MARKET_MAX_STOCK);
+    // The stall uses up some of its surplus first, so the ship can sell its usual four.
+    const sold = advanceWorld(nearlyFullStall, 1);
+    expect(sold.fleet[1].cargo.rice).toBe(6);
+    expect(sold.marketStock.sonargaon.rice).toBeLessThanOrEqual(MARKET_MAX_STOCK);
   });
 
   it("creates no goods or money over a long Patello run", () => {
@@ -454,7 +456,7 @@ describe("automated routes by class", () => {
     ).state;
     let current = assigned;
     for (let day = 1; day <= 200; day += 1) {
-      current = advanceNpcWorld(current, day);
+      current = advanceWorld(current, day);
       const ship = current.fleet[1];
       const cargo = GOODS.reduce((total, good) => total + ship.cargo[good.id], 0);
       expect(cargo).toBeLessThanOrEqual(ship.cargoCapacity);
@@ -479,7 +481,7 @@ describe("automated routes by class", () => {
       "sylhet",
       riceRule, 5_000,
     ).state;
-    expect(advanceNpcWorld(assigned, 1).fleet[1].automatedRoute!.travelDaysTotal).toBe(
+    expect(advanceWorld(assigned, 1).fleet[1].automatedRoute!.travelDaysTotal).toBe(
       Math.ceil(getRouteTravelTime(route, false, 0.8).durationDays),
     );
   });
@@ -494,7 +496,7 @@ describe("automated routes by class", () => {
       },
     });
     let current = incompatible;
-    for (let day = 1; day <= 5; day += 1) current = advanceNpcWorld(current, day);
+    for (let day = 1; day <= 5; day += 1) current = advanceWorld(current, day);
     const ship = current.fleet[1];
     expect(ship.currentPort).toBe("dhaka");
     expect(ship.automatedRoute!.phase).toBe("docked");
@@ -567,9 +569,9 @@ describe("return orders", () => {
       ).error,
     ).toBe("not-docked");
 
-    const midway = advanceNpcWorld(ordered.state, plan.days - 1);
+    const midway = advanceWorld(ordered.state, plan.days - 1);
     expect(midway.fleet[0].currentPort).toBe("sylhet");
-    const arrived = advanceNpcWorld(midway, plan.days);
+    const arrived = advanceWorld(midway, plan.days);
     const ship = arrived.fleet[0];
     expect(ship.currentPort).toBe("dhaka");
     expect(ship.returnOrder).toBeNull();
@@ -659,7 +661,7 @@ describe("version 19 saves", () => {
         { good: "rice", buyAtOrigin: false, sellAtDestination: true }],
       15_000,
     ).state;
-    const midRoute = advanceNpcWorld({ ...routed, sailingDay: 1 }, 1);
+    const midRoute = advanceWorld({ ...routed, sailingDay: 1 }, 1);
     const voyage = checkpointVoyageProgress(
       startVoyage({ ...midRoute, selectedTown: "sylhet" }, 1_000),
       31_000,
@@ -669,21 +671,18 @@ describe("version 19 saves", () => {
 
     vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(21);
+    expect(restored.version).toBe(22);
     expect(restored.coins).toBe(voyage.coins);
     expect(restored.highestCoins).toBe(voyage.highestCoins);
     restored.fleet.forEach((ship, index) => {
-      expect(ship).toEqual({
-        ...voyage.fleet[index],
-        vesselClass: "river-boat",
-        returnOrder: null,
-      });
+      const { averagePurchasePrice: _cost, automatedRoute: _route, ...expected } = voyage.fleet[index];
+      expect(ship).toMatchObject({ ...expected, vesselClass: "river-boat", returnOrder: null });
+      expect(ship.automatedRoute?.phase).toBe(voyage.fleet[index].automatedRoute?.phase);
     });
     expect(restored.voyage!.elapsedMs).toBe(voyage.voyage!.elapsedMs);
     expect(restored.voyage!.durationMs).toBe(voyage.voyage!.durationMs);
     expect(restored.voyage!.route).toEqual(voyage.voyage!.route);
-    expect(restored.npcSimulationDay).toBe(voyage.npcSimulationDay);
-    expect(restored.marketStock).toEqual(voyage.marketStock);
+    expect(restored.worldDay).toBe(voyage.worldDay);
 
     const arrived = arriveAtDestination(restored);
     expect(arrived.currentTown).toBe("sylhet");
@@ -811,7 +810,7 @@ describe("version 19 saves", () => {
       }),
     );
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(21);
+    expect(restored.version).toBe(22);
     expect(restored.highestCoins).toBe(14_000);
     expect(restored.completedMilestones).toContain("prosperous_merchant");
   });

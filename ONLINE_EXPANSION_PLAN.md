@@ -154,11 +154,11 @@ price = base value × city demand × stock pressure × regional pressure × even
 sell price = price × (1 − spread)
 ```
 
-- **Stock pressure** keeps today's curve: fewer goods, higher price.
+- **Stock pressure** keeps the same curve at three times the depth: fewer goods, higher price.
 - **Local production and consumption** move stock toward a city-specific target each day.
 - **Regional pressure:** a small, capped effect from nearby ports, so shortages spread.
 - **Bounds:** prices stay within 40–250% of base, stock within limits, recovery is gradual.
-- **Spread** becomes a percentage (starting near 12%), so buying and reselling at one port always loses money.
+- **Spread** is 12%, and a sale is priced at the stock level after it, so buying and reselling at one port always loses money.
 - **Everyone shares it:** manual trades, automated routes, NPCs and production deliveries use one pricing function.
 - **"Why this price?"** Each good shows plain reasons, such as "Low stock" or "Grown locally".
 - **Starting five:** Each lacks several goods at good prices, and some goods are scarce until cities unlock.
@@ -269,6 +269,7 @@ Manual trading · automated routes · farm-focused · warehouse-focused · mixed
 - Automated trading is profitable and useful, but doesn't outperform active trading so far that manual play becomes pointless.
 - Delivery contracts have a proper profitability and risk model, giving a genuine financial incentive to accept suitable ones.
 - Farms stay a viable investment, but don't dominate trading through excessive or effectively free production.
+- Warehouses offer meaningful strategic value.
 
 **Automated failure conditions, run with the normal tests:**
 
@@ -292,7 +293,7 @@ Your order is kept, with these adjustments: the command layer went first because
 | N | Correct water and land navigation, version 20 save, map fix, collapsible port panel (Part 15) — **implemented and committed** | Yes |
 | 3 | Cloud saves, linking, conflict handling, multi-tab safety | Logic yes; live sync needs your setup |
 | 4 | Coins, version 21 migration, simulation harness — **harness and baseline done; Coins and save backup done. See Economy Plan steps in `ROADMAP.md`** | Yes |
-| 5 | Dynamic markets, and at least 25 active NPC traders (owner's requirement; 4 exist) | Yes |
+| 5 | Dynamic markets, and at least 25 active NPC traders (owner's requirement; 4 exist) — **pricing, stock and the world clock done; NPCs are Economy Plan Step 4** | Yes |
 | 6 | Farm production orders | Yes |
 | 7 | Warehouse network | Yes |
 | 8 | City unlocks, reputation levels | Yes |
@@ -345,9 +346,14 @@ Environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` i
 | 2 Nov 2026 | Public names are chosen by players and never copied from Google; age is a self-declared 13+ check | Privacy, and the plan's age decision. Legal review is still required |
 | 3 Nov 2026 | The simulation harness uses the proposed net worth formula as its own estimate, with goods at 80% of base price rather than 100% | So buying goods can't instantly raise a rank. Step 5 builds the real shared valuation |
 | 3 Nov 2026 | Automated trading, delivery contracts and farms each have a balance requirement for later simulations | Owner's decision after the baseline showed all three out of balance, so they aren't forgotten when NPCs and leaderboards arrive |
-| 3 Nov 2026 | Market quotes move in steps of 50 Coins for now | Keeps every price exactly 50× its gold price. Step 3's pricing replaces it |
+| 3 Nov 2026 | A sale is priced at the stock level after it, less 12%. Quotes move in steps of 5 Coins, within 40–250% of base | Buying and selling back meet the same price both ways, so the exploit can't exist at any stock. Tested: 16% takes mixed play below its day-200 target, 20% left a scripted player unable to pay for repairs, and 8% raises what hand trading earns by about half (see `ECONOMY_BASELINE.md`) |
+| 3 Nov 2026 | Stalls hold three times the stock: usually 48–72, at most 120 | A River boat's hold moves a price about 12%, which is visible without punishing a whole voyage. At 2× depth it's 19%, and hand trading earns about a quarter less. At 5× it's 7%, and the best route pulls ahead |
+| 3 Nov 2026 | Each day a stall closes 6%, 8% or 12% of its gap, by what the town produces and buys, at least one unit | Emptied stalls get halfway back in 6–12 days. Shortages last, but none is permanent, and towns behave differently. Doubling the rate raised the best repeated route from about 470 to about 1,000 Coins a day, making repetition too good |
+| 3 Nov 2026 | Market recovery moves into the world clock (`advanceWorld`, `worldDay`), running daily with NPCs and automated ships | One order and no double counting, however often a voyage is saved. Farms stay on their own saved day for now, because it can't double count and they're due for redesign |
+| 3 Nov 2026 | Day-30 mixed wealth misses its target (52,270 against 15,000–30,000), and the target is not changed | Contracts pay mostly early, and the contract model is a known later requirement. The target also predates counting the starter ship's value of about 21,600 in net worth, so it should be reviewed with contracts |
 | 3 Nov 2026 | Short price labels use "c", such as "700c", and the top bar shortens balances from 100,000 ("174k", "1.23M"), rounding down | Keeps phone layouts unchanged, without overstating a balance. The full amount is available to screen readers |
 | 3 Nov 2026 | A backup is written in the same transaction as the upgraded save, not as a separate step before it | Either both are stored or the original stays as it was, so no half-finished state can exist |
+| 3 Nov 2026 | Farms, automated ships, contracts and warehouses are rebalanced only after the NPC economy is implemented and measured | Owner's decision. NPCs change what these systems earn, so balancing them first would be wasted |
 | 3 Nov 2026 | Time-away progression stays unapproved, and the world stays paused while the game is closed | Owner's decision until Economy Plan Step 6 reviews it |
 | 2 Nov 2026 | Added Milestones S, N and T as essential work | Owner's requirement |
 | 2 Nov 2026 | The port panel floats over the map, the camera can move past the south edge, and phones drag in all directions | Stops the panel hiding ports without shrinking the map. Moved up from Stage 8 at the owner's request |

@@ -223,11 +223,18 @@ Visual polish is committed. The owner has approved a larger online expansion, wh
 - **Milestone T, individual town identities:** every town gets its own look, layout and landmarks, with every important building functional. Built with Stage 9; see [TOWN_IDENTITY_PLAN.md](./TOWN_IDENTITY_PLAN.md).
 
 - **At least 25 active NPC traders: planned, owner's requirement.** Four exist today. Recommended alongside dynamic markets.
-- **Economy plan:** six steps, separate from the stages above: 1 simulation harness and baseline (**done**, see [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 2 Coins and save backup (**done**); 3 pricing fix, deeper stock and a single world tick; 4 26 NPC merchants; 5 offline leaderboards; 6 review of time-away progression, which is **not approved**.
+- **Economy plan:** six steps, separate from the stages above: 1 simulation harness and baseline (**done**, see [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 2 Coins and save backup (**done**); 3 pricing fix, deeper stock and a single world tick (**done**, results in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 4 26 NPC merchants; 5 offline leaderboards; 6 review of time-away progression, which is **not approved**.
 - **Economy balancing requirements, owner's decision:** these must be built into later simulation and balancing work, and not dropped when NPCs and leaderboards arrive. Simulations check them from the stage that changes each system, and the full balancing pass must meet all three.
   1. **Automated trading** must be profitable and useful, but must not outperform active trading so significantly that manual play becomes pointless. At the baseline, a Bora on a route earns 7.88 gold a day against 6.45 for manual trading.
   2. **Delivery contracts** need a proper profitability and risk model, so a player has a genuine financial incentive to accept suitable ones. At the baseline, only 1 of 15 pays more than the goods handed over.
   3. **Farms** must remain a viable investment but must not dominate trading through excessive or effectively free production. At the baseline, the farm player ends 2.6× ahead of manual trading.
+  4. **Warehouses** must offer meaningful strategic value. After Step 3, warehouses roughly break even on the route measured, at 48,490 net worth against 48,115 without them.
+- **To address after the NPC economy is implemented and measured, owner's decision:** these systems aren't changed before then, and later balancing must meet all of them.
+  - Farms must not dominate manual trading.
+  - Automated ships must remain useful without outperforming active trading by a large margin.
+  - NPCs must become genuine market participants, with meaningful cargo, money, travel and trading activity. Economy Plan Step 4 builds this.
+  - Contracts and warehouses still need proper economic value.
+- **Measured after Step 3, still to be solved:** the farm player ends 3.1× ahead of manual trading (412,845 against 134,690), a Patello on a route earns 680 Coins a day against 511 for manual trading, and only 1 of 15 delivery contracts pays more than its goods. NPC merchants still barely affect markets until Step 4.
 - **Login and cloud-save setup: postponed by the owner** until the main game is built.
 
 Current status of everything is in [PROJECT_STATUS_SUMMARY.md](./PROJECT_STATUS_SUMMARY.md). Exit checks are in the plan. Each stage gets its own commit, passing tests and build, and a report. Physical mobile testing is a later dedicated phase.

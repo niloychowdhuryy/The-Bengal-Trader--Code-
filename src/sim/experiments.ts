@@ -11,7 +11,8 @@ import {
   VESSEL_CLASSES,
   VESSEL_CLASS_IDS,
   advanceMarketStock,
-  advanceNpcWorld,
+  advanceWorld,
+  checkpointVoyageProgress,
   createInitialMarketStock,
   createNewGame,
   getGoodPrice,
@@ -181,21 +182,125 @@ function daysToRecover(port: MarketPortId, good: GoodId, startStock: number, tar
   return { daysToHalfway, daysToFull: day };
 }
 
+function recoveryCase(label: string, port: MarketPortId, good: GoodId, startStock: number): RecoveryCase {
+  const target = createInitialMarketStock()[port][good];
+  return { label, startStock, targetStock: target, ...daysToRecover(port, good, startStock, target) };
+}
+
 export function measureRecovery(): RecoveryCase[] {
-  const start = createInitialMarketStock();
-  const port: MarketPortId = "dhaka";
-  const good: GoodId = "silk";
-  const target = start[port][good];
   return [
-    { label: "Stall emptied", startStock: 0 },
-    { label: "Stall half emptied", startStock: Math.floor(target / 2) },
-    { label: "Stall full", startStock: MARKET_MAX_STOCK },
-  ].map(({ label, startStock }) => ({
-    label,
-    startStock,
-    targetStock: target,
-    ...daysToRecover(port, good, startStock, target),
-  }));
+    recoveryCase("Dhaka silk, emptied", "dhaka", "silk", 0),
+    recoveryCase("Dhaka silk, half emptied", "dhaka", "silk", 30),
+    recoveryCase("Dhaka silk, full", "dhaka", "silk", MARKET_MAX_STOCK),
+    recoveryCase("Producer: Dhaka cotton, emptied", "dhaka", "muslin", 0),
+    recoveryCase("Scarce: Sandwip salt's opposite, Patna salt, emptied", "patna", "salt", 0),
+    recoveryCase("Big buyer: Dhaka rice, full", "dhaka", "rice", MARKET_MAX_STOCK),
+    recoveryCase("Small buyer: Dhaka saltpetre, full", "dhaka", "saltpetre", MARKET_MAX_STOCK),
+  ];
+}
+
+export interface MarketImpact {
+  hold: number;
+  stall: string;
+  startPrice: number;
+  /** Price of the last unit bought, against the first, as a share. */
+  buyRise: number;
+  /** Price of the last unit sold into a fresh stall, against the first, as a share. */
+  sellFall: number;
+  /** Lost to the discount and price movement if the whole hold is bought and sold back. */
+  roundTripLossShare: number;
+}
+
+/** How far one hold moves a typical stall, for each vessel's base hold. */
+export function measureMarketImpact(port: MarketPortId = "hooghly", good: GoodId = "sugar"): MarketImpact[] {
+  const start = createInitialMarketStock()[port][good];
+  return VESSEL_CLASS_IDS.map((vessel) => {
+    const hold = VESSEL_CLASSES[vessel].baseHold;
+    let paid = 0;
+    let received = 0;
+    for (let unit = 0; unit < hold; unit += 1) {
+      paid += getGoodPrice(port, good, "buy", false, start - unit);
+      received += getGoodPrice(port, good, "sell", false, start - hold + unit);
+    }
+    const first = getGoodPrice(port, good, "buy", false, start);
+    const last = getGoodPrice(port, good, "buy", false, start - hold + 1);
+    const firstSale = getGoodPrice(port, good, "sell", false, start);
+    const lastSale = getGoodPrice(port, good, "sell", false, start + hold - 1);
+    return {
+      hold,
+      stall: `${port} ${good}`,
+      startPrice: first,
+      buyRise: round(last / first - 1, 3),
+      sellFall: round(1 - lastSale / firstSale, 3),
+      roundTripLossShare: round(1 - received / paid, 3),
+    };
+  });
+}
+
+export interface ClosedLoopCheck {
+  cycles: number;
+  worstProfit: number;
+  profitableCycles: number;
+}
+
+/**
+ * Carries one good from one port to another and straight back, with no recovery between, so
+ * nothing but the price function decides the result. Every cycle of the same units must lose.
+ */
+export function measureClosedLoops(units: readonly number[] = [1, 6, 12, 30, 48]): ClosedLoopCheck {
+  const stock = createInitialMarketStock();
+  let cycles = 0;
+  let worstProfit = Number.NEGATIVE_INFINITY;
+  let profitableCycles = 0;
+  for (const first of MARKET_PORTS) {
+    for (const second of MARKET_PORTS) {
+      if (first.id === second.id) continue;
+      for (const { id: good } of GOODS) {
+        for (const quantity of units) {
+          let a = stock[first.id][good];
+          let b = stock[second.id][good];
+          if (quantity > a || b + quantity > MARKET_MAX_STOCK) continue;
+          let money = 0;
+          for (let unit = 0; unit < quantity; unit += 1) {
+            money -= getGoodPrice(first.id, good, "buy", false, a);
+            a -= 1;
+            money += getGoodPrice(second.id, good, "sell", false, b);
+            b += 1;
+          }
+          for (let unit = 0; unit < quantity; unit += 1) {
+            money -= getGoodPrice(second.id, good, "buy", false, b);
+            b -= 1;
+            money += getGoodPrice(first.id, good, "sell", false, a);
+            a += 1;
+          }
+          cycles += 1;
+          worstProfit = Math.max(worstProfit, money);
+          if (money > 0) profitableCycles += 1;
+        }
+      }
+    }
+  }
+  return { cycles, worstProfit, profitableCycles };
+}
+
+/** Whether saving a voyage's progress more or less often changes the world. */
+export function measureCheckpointInvariance(): boolean {
+  const play = (checkpoints: number) => {
+    const sim = createSim(createNewGame("Simulated"));
+    for (const port of ["hooghly", "sonargaon", "chittagong", "dhaka"] as const) {
+      depart(sim, port);
+      const voyage = sim.state.voyage!;
+      for (let step = 1; step <= checkpoints; step += 1) {
+        sim.state = checkpointVoyageProgress(
+          sim.state,
+          Math.floor(voyage.startedAt + ((voyage.arrivalAt - voyage.startedAt) * step) / (checkpoints + 1)),
+        );
+      }
+      arrive(sim);
+    }
+    return JSON.stringify({ ...sim.state, voyage: null });
+  };
+  return play(0) === play(7);
 }
 
 // ---- Investments ----
@@ -343,7 +448,7 @@ export function measureNpcWorld(days = 200, marks: readonly number[] = [30, 90, 
   for (let day = 1; day <= days; day += 1) {
     const before = state;
     const recovered = advanceMarketStock(before.marketStock, 1);
-    state = advanceNpcWorld({ ...before, sailingDay: day, marketStock: recovered }, day);
+    state = advanceWorld({ ...before, sailingDay: day }, day);
 
     for (const merchant of state.npcMerchants) {
       const previous = before.npcMerchants.find((entry) => entry.id === merchant.id)!;
@@ -533,7 +638,7 @@ export function demonstrateSamePortLoop(loops = 200, base = createNewGame("Simul
 export function measureLoopAtLowStock(
   port: MarketPortId,
   good: GoodId,
-  stocks: readonly number[] = [20, 12, 8, 5, 2],
+  stocks: readonly number[] = [60, 30, 15, 6, 1],
 ): { stock: number; coinsPer100Loops: number }[] {
   return stocks.map((stock) => {
     const fresh = createNewGame("Simulated");

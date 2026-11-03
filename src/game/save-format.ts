@@ -18,6 +18,7 @@ import {
   createMissionBoard,
   createNpcMerchants,
   NPC_MAX_BUDGET,
+  advanceMarketStock,
   createEmptyWarehouseStock,
   createEmptyWarehousePurchasePrices,
   STARTER_SHIP_ID,
@@ -951,8 +952,8 @@ export function isValidGameState(value: unknown): value is GameState {
     !isNonnegativeInteger(value.voyagesStarted) ||
     !isValidNpcMerchants(npcMerchants) ||
     !isValidNpcActivity(npcActivity, maximumNpcDay) ||
-    !isNonnegativeInteger(value.npcSimulationDay) ||
-    Number(value.npcSimulationDay) > Math.floor(maximumNpcDay) ||
+    !isNonnegativeInteger(value.worldDay) ||
+    Number(value.worldDay) > Math.floor(maximumNpcDay) ||
     !isValidRouteConditions(value.navigationConditions) ||
     !isNonnegativeInteger(value.shipHull) ||
     typeof value.sailingDay !== "number" ||
@@ -1037,6 +1038,60 @@ function createGoldNpcMerchants(): NpcMerchant[] {
     ...merchant,
     budget: merchant.budget / COINS_PER_GOLD,
   }));
+}
+
+// Stalls held a third of today's stock before version 22.
+const STOCK_PER_OLD_UNIT = 3;
+
+function createOldMarketStock(): ReturnType<typeof createInitialMarketStock> {
+  return Object.fromEntries(
+    Object.entries(createInitialMarketStock()).map(([port, stalls]) => [
+      port,
+      Object.fromEntries(
+        Object.entries(stalls).map(([good, stock]) => [good, stock / STOCK_PER_OLD_UNIT]),
+      ),
+    ]),
+  ) as ReturnType<typeof createInitialMarketStock>;
+}
+
+function isCompleteMarket(value: unknown): value is ReturnType<typeof createInitialMarketStock> {
+  return (
+    isRecord(value) &&
+    MARKET_PORTS.every((port) => {
+      const stalls = value[port.id];
+      return isRecord(stalls) && GOODS.every((good) => typeof stalls[good.id] === "number");
+    })
+  );
+}
+
+// Stalls get three times the depth, so old stock levels keep the same share of it. The
+// world clock replaces the NPC clock, and now recovers stock as it goes. A voyage under way
+// had its recovery still to come on arrival, so those days are applied here, once.
+function migrateToWorldClock(save: Record<string, unknown>): Record<string, unknown> {
+  const { npcSimulationDay, ...rest } = save;
+  let marketStock = save.marketStock;
+  if (isRecord(marketStock)) {
+    marketStock = Object.fromEntries(
+      Object.entries(marketStock).map(([port, stalls]) => [
+        port,
+        isRecord(stalls)
+          ? Object.fromEntries(
+              Object.entries(stalls).map(([good, stock]) => [
+                good,
+                typeof stock === "number" ? stock * STOCK_PER_OLD_UNIT : stock,
+              ]),
+            )
+          : stalls,
+      ]),
+    );
+    const pendingDays = isRecord(save.voyage)
+      ? Number(npcSimulationDay) - Math.floor(Number(save.sailingDay))
+      : 0;
+    if (pendingDays > 0 && isCompleteMarket(marketStock)) {
+      marketStock = advanceMarketStock(marketStock, pendingDays);
+    }
+  }
+  return { ...rest, version: 22, worldDay: npcSimulationDay, marketStock };
 }
 
 function goldToCoins(value: unknown): unknown {
@@ -1279,7 +1334,7 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     save = {
       ...save,
       version: 2,
-      marketStock: createInitialMarketStock(),
+      marketStock: createOldMarketStock(),
       navigationConditions: {},
       voyage,
     };
@@ -1373,7 +1428,7 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
   if (save.version === 4) {
     if (!isRecord(save.cargo) || !isRecord(save.marketStock)) return save;
 
-    const initialStock = createInitialMarketStock();
+    const initialStock = createOldMarketStock();
     const cargo: Record<string, unknown> = { ...save.cargo };
     const oldGoods: GoodId[] = ["rice", "salt", "muslin"];
     for (const good of GOODS) {
@@ -1418,7 +1473,7 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     const port = isTownId(save.currentTown) ? save.currentTown : "dhaka";
     const portStock = isRecord(marketStock[port])
       ? marketStock[port]
-      : createInitialMarketStock()[port];
+      : createOldMarketStock()[port];
     const averagePurchasePrice = Object.fromEntries(
       GOODS.map((good) => [
         good.id,
@@ -1429,7 +1484,7 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
               "buy",
               false,
               isNonnegativeInteger(portStock[good.id])
-                ? Number(portStock[good.id])
+                ? Number(portStock[good.id]) * STOCK_PER_OLD_UNIT
                 : createInitialMarketStock()[port][good.id],
             ) / COINS_PER_GOLD
           : 0,
@@ -1634,6 +1689,10 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
   // The peak repair for gold saves checks a gold amount, so it has to run before Coins.
   if (save.version === 20) {
     save = migrateToCoins(repairPeak(save, "gold", "highestGold", 250));
+  }
+
+  if (save.version === 21) {
+    save = migrateToWorldClock(save);
   }
 
   return save.version === SAVE_VERSION
