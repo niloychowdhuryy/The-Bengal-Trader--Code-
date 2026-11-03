@@ -215,6 +215,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   bottom: 10px;
   display: grid;
   width: min(250px, calc(100% - 20px));
+  max-height: calc(100% - 20px);
+  overflow-y: auto;
   gap: 5px;
   padding: 8px;
   background: var(--paper) var(--paper-texture);
@@ -624,7 +626,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 .rank-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .rank-tabs button { min-height: 44px; color: var(--ink-soft); font: 400 18px var(--display); background: rgb(255 248 226 / 45%); border: 1px solid var(--paper-line); border-radius: 3px; cursor: pointer; }
 .rank-tabs .rank-tab-active { color: var(--paper-light); background: var(--jade); border-color: var(--jade-deep); }
-.rank-summary { position: sticky; z-index: 2; top: 0; display: flex; align-items: center; gap: 10px; padding: 9px 10px; color: var(--ink); background: var(--paper-light); border: 1px solid var(--brass-dark); border-left: 4px solid var(--madder); border-radius: 3px; box-shadow: 0 3px 8px rgb(42 27 16 / 18%); }
+.rank-summary { position: sticky; z-index: 2; top: 68px; display: flex; align-items: center; gap: 10px; padding: 9px 10px; color: var(--ink); background: var(--paper-light); border: 1px solid var(--brass-dark); border-left: 4px solid var(--madder); border-radius: 3px; box-shadow: 0 3px 8px rgb(42 27 16 / 18%); }
 .rank-summary > div { flex: 1; min-width: 0; }
 .rank-summary strong { font: 400 18px/1.15 var(--display); }
 .rank-summary p { color: var(--ink-soft); font-size: 14px; }

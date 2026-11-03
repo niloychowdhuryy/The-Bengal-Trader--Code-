@@ -305,7 +305,7 @@ The game's economy as it stood before Coins. All amounts in this record are in *
 
 ## Strategies
 
-Each ran on 5 seeds, using only real commands. The game has no randomness of its own yet, so seeds only vary how a bot misjudges opportunities: strategies with no misjudgement play the same every time. A new game's net worth is 422: 90 gold, starting cargo and the ship. Net worth uses the proposed formula: goods at 80% of base price, ships and upgrades at 60% of cost, property at 70%, plus gold and route capital.
+Each ran on 5 seeds, using only real commands. The game has no randomness of its own yet, so seeds only vary how a bot misjudges opportunities: strategies with no misjudgement play the same every time. A new game's net worth is 422: 90 gold, starting cargo and the ship. Net worth uses the formula the game now implements: goods at 80% of base price, ships and upgrades at 60% of cost, property at 70%, plus gold and route capital.
 
 | Strategy | Day | Gold (min–median–max) | Net worth | Gold/day | Net worth/voyage | Net worth/real min | Voyages | Real min | Rep. | Ports |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

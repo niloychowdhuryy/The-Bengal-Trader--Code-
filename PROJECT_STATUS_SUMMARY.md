@@ -11,7 +11,7 @@
 **Read this first:**
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
-- Saves are now version 25, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end (Economy Plan Step 4) are committed. Offline rankings (Economy Plan Step 5) are committed too, with only focused tests so far.
+- Saves are now version 25, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end (Economy Plan Step 4) are committed. Offline rankings (Economy Plan Step 5) are committed too. Both passed the full checkpoint in section 3.
 - The economy has a simulation harness and a recorded baseline (Economy Plan Step 1). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
 - Most of the planned commercial game is **not built**. In particular, there are no ads or online leaderboards, and farms, contracts and warehouses are out of balance.
 
@@ -109,7 +109,7 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| Vercel staging site | Implemented | Older version without login. See section 6 |
+| Vercel staging site | Implemented | Runs without login. See section 6 |
 | Google sign-in, merchant names, 13+ check | Partially implemented | Works on the local copy only. Not yet on staging |
 | Named commands and replay | Implemented | Every player action is recorded and can be re-checked |
 | Server replay logic and database rules | Partially implemented | Tested locally. The server function isn't deployed |
@@ -132,7 +132,9 @@
 
 | File or folder | Purpose |
 |---|---|
-| `src/game/model.ts` | Game rules and state (about 3,100 lines) |
+| `src/game/model.ts` | Game rules and state (about 3,000 lines) |
+| `src/game/npc.ts`, `npc-roster.ts` | The 26 merchants: their behaviour and their roster |
+| `src/game/leaderboard.ts` | The net worth valuation and the offline rankings |
 | `src/game/commands.ts` | Named player commands, validated and applied |
 | `src/game/replay.ts` | Rebuilds and checks a game from its commands |
 | `src/game/navigation.ts` | Route planner and journey state |
@@ -140,7 +142,7 @@
 | `src/game/travel-time.ts` | Journey timing |
 | `src/game/save-format.ts` | Save validation and all migrations |
 | `src/game/storage.ts` | IndexedDB saves and command log |
-| `src/App.tsx` | Screens and panels (about 3,100 lines) |
+| `src/App.tsx` | Screens and panels (about 3,400 lines) |
 | `src/components/BengalMap.tsx`, `CityScene.tsx` | Map and towns |
 | `src/online/`, `src/components/AccountPanel.tsx` | Google sign-in |
 | `src/server/`, `supabase/` | Server logic, database schema, Edge Function |
@@ -148,7 +150,7 @@
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
 
-**Tests:** 577 passing across 27 test files, plus a passing type-check and production build, at the Economy Plan Step 4 dead-end checkpoint. Later work has had focused tests only, until the next full checkpoint.
+**Tests:** 618 passing across 29 test files, plus a passing type-check and production build, at the integration checkpoint after Economy Plan Step 5.
 
 ## 4. Saves
 
@@ -221,12 +223,13 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `cbe2404` | Economy Plan Step 2: Coins and save backup, save version 21 | Yes |
 | `5628866` | Economy Plan Step 3: pricing fix, deeper stock and world clock, save version 22 | Yes |
 | `4689530` | Economy Plan Step 4: 26 merchants and dead-end recovery, save version 24 | Yes |
-| The commit after `4689530` | Economy Plan Step 5: offline rankings, save version 25. Focused tests only | Not when this was written |
+| `15ce0a3` | Economy Plan Step 5: offline rankings, save version 25 | Yes |
+| The commit after `15ce0a3` | Integration fixes: More menu scrolling and the pinned ranking card | Not when this was written |
 
 | Service | Status |
 |---|---|
 | GitHub | Public repository, by the owner's choice, so that Vercel's free plan would build it. A history scan found no secrets. Commit names and an email are visible |
-| Vercel staging | Live at https://bengal-trader-staging.vercel.app. The version it runs is shown in the game under More. The two Supabase settings aren't added, by the owner's choice. The free Hobby plan is non-commercial, so the game must move to a paid plan or another host before revenue |
+| Vercel staging | Live at https://bengal-trader-staging.vercel.app. It was running `15ce0a3` when checked at the integration checkpoint, and the version it runs is shown in the game under More. The two Supabase settings aren't added, by the owner's choice. The free Hobby plan is non-commercial, so the game must move to a paid plan or another host before revenue |
 | Supabase | Project created in Mumbai. Both database migrations are applied. The Edge Function isn't deployed. Free projects may pause after a quiet week |
 | Google login | Tested by the owner once on a local copy, successfully. Only listed test users can log in until the Google app is published |
 | Cloud saves | **Blocked by choice:** postponed until the main game is built. Tables exist but nothing uses them |
@@ -264,7 +267,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 - **Coins:** old saves convert at exactly 50×, and new games start with 5,000.
 - **Markets (planned):** each player has a private market with shared world events, not one market shared by everyone.
 - **Ads:** optional, never during critical moments, verified on the server, at most 5 a day, every 12 minutes. Alternative rewards. No interstitial ads at launch. Web version has no ad rewards.
-- **Leaderboards:** server-calculated only, using fixed reference prices. Old imported saves stay unranked.
+- **Online leaderboards:** server-calculated only, using fixed reference prices. The offline rankings are calculated on the device. Old imported saves stay unranked.
 
 **Technical and process:**
 - Offline play must keep working. Existing saves must keep working.
@@ -296,7 +299,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 2. **Scale:** most of the planned game is still unbuilt.
 3. **Delaying cloud saves:** each new system adds saved data, and real-time farms can't be fully trusted without a server clock. Everything must stay in the command system so this can be added later.
 4. **Performance with 26 traders:** about 1.3 ms per world day on the development computer, with routes cached, measured partway through the Step 4 refinement. Not yet measured on a phone.
-5. **Large source files:** `model.ts` and `App.tsx` are each about 3,100 lines.
+5. **Large source files:** `model.ts` is about 3,000 lines and `App.tsx` about 3,400.
 6. **Ad income:** five ads a day caps revenue. At an assumed $10 per 1,000 views, that's at most $0.05 per active player per day.
 7. **Hosting terms:** Vercel's free plan excludes commercial use.
 8. **Age and content:** ads, accounts, opium as a good, and religious buildings all need care and legal review. Privacy policy and terms don't exist yet.
@@ -308,9 +311,9 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Full tests, type-check, build and browser checks** at the next agreed checkpoint. These cover Economy Plan Step 5 and the repayment confirmation. Which commit staging runs is still unconfirmed.
+1. **Rebalance farms, automated ships, contracts and warehouses:** investigation first (see `ROADMAP.md`).
 2. **Economy Plan Step 6:** review of time-away progression, which is not approved.
-3. **Rebalance farms, automated ships, contracts and warehouses,** once the NPC economy is measured (see `ROADMAP.md`).
+3. **Full tests, type-check, build and browser checks** at each meaningful checkpoint.
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.
 5. **City unlocks and reputation** (Stage 8).
 6. **Buildings, missions and town identities** (Stage 9).
