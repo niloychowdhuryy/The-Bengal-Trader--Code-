@@ -15,6 +15,7 @@ import {
   cancelAutomatedTradeRoute,
   checkpointVoyageProgress,
   configureAutomatedTradeRoute,
+  planRouteJourney,
   createNewGame,
   formatCoins,
   getCargoCapacity,
@@ -120,7 +121,7 @@ describe("vessel classes", () => {
 
   it("starts new games with an unchanged River boat", () => {
     const game = createNewGame("Maya");
-    expect(game.version).toBe(27);
+    expect(game.version).toBe(28);
     expect(game.fleet[0].vesselClass).toBe("river-boat");
     expect(getCargoCapacity(game)).toBe(12);
     expect(getShipMaximumHull(game)).toBe(8);
@@ -322,15 +323,21 @@ describe("automated routes by class", () => {
   }
 
   function assign(vesselClass: VesselClassId, capital: number): GameState {
-    return withoutNpcTrade(
-      configureAutomatedTradeRoute(
-        withShip(vesselClass),
-        shipId,
-        "sonargaon",
-        riceRule,
-        capital,
-      ).state,
-    );
+    const configured = configureAutomatedTradeRoute(
+      withShip(vesselClass),
+      shipId,
+      "sonargaon",
+      riceRule,
+      capital,
+    ).state;
+    // Scarce rice at the far end, so the route has a reason to sail.
+    return withoutNpcTrade({
+      ...configured,
+      marketStock: {
+        ...configured.marketStock,
+        sonargaon: { ...configured.marketStock.sonargaon, rice: 5 },
+      },
+    });
   }
 
   it("refuses a route the ship is too large for", () => {
@@ -348,35 +355,35 @@ describe("automated routes by class", () => {
     ).toBeUndefined();
   });
 
-  it("keeps River boats and Boras at one unit per good", () => {
+  it("keeps River boats and Boras at three units per good", () => {
     for (const vesselClass of ["river-boat", "bora"] as const) {
       const assigned = assign(vesselClass, 25_000);
       const next = advanceWorld(assigned, 1);
-      expect(next.fleet[1].cargo.rice).toBe(1);
-      expect(next.marketStock.dhaka.rice).toBe(assigned.marketStock.dhaka.rice - 1);
+      expect(next.fleet[1].cargo.rice).toBe(3);
+      expect(next.marketStock.dhaka.rice).toBe(assigned.marketStock.dhaka.rice - 3);
     }
   });
 
-  it("lets a Patello trade up to four units per good, repricing each one", () => {
+  it("lets a Patello trade up to twelve units per good, repricing each one", () => {
     const assigned = assign("patello", 50_000);
     let stock = assigned.marketStock.dhaka.rice;
     let expectedCost = 0;
-    for (let unit = 0; unit < 4; unit += 1) {
+    for (let unit = 0; unit < 12; unit += 1) {
       expectedCost += getGoodPrice("dhaka", "rice", "buy", true, stock);
       stock -= 1;
     }
     const bought = advanceWorld(assigned, 1);
     const ship = bought.fleet[1];
-    expect(ship.cargo.rice).toBe(4);
+    expect(ship.cargo.rice).toBe(12);
     expect(bought.marketStock.dhaka.rice).toBe(stock);
-    expect(ship.automatedRoute!.capital).toBe(50_000 - expectedCost);
-    expect(ship.averagePurchasePrice.rice).toBeCloseTo(expectedCost / 4);
+    expect(ship.automatedRoute!.capital).toBe(50_000 - expectedCost - ship.automatedRoute!.runningCostPaid);
+    expect(ship.averagePurchasePrice.rice).toBeCloseTo(expectedCost / 12);
     expect(ship.automationLog.at(-2)!.message).toBe(
-      `Bought 4 Rice for ${formatCoins(expectedCost)} Coins.`,
+      `Bought 12 Rice for ${formatCoins(expectedCost)} Coins.`,
     );
 
     let current = bought;
-    for (let day = 2; day <= 8 && current.fleet[1].cargo.rice === 4; day += 1) {
+    for (let day = 2; day <= 8 && current.fleet[1].cargo.rice === 12; day += 1) {
       current = advanceWorld(current, day);
     }
     expect(current.fleet[1].cargo.rice).toBe(0);
@@ -385,13 +392,19 @@ describe("automated routes by class", () => {
   it("stops Patello trading at capital, stock, hold and market limits", () => {
     const assigned = assign("patello", 50_000);
 
-    const priceOne = getGoodPrice("dhaka", "rice", "buy", true, assigned.marketStock.dhaka.rice);
+    // Enough for five units once the round trip's running cost is set aside. One alone wouldn't
+    // cover a Patello's crew, so it wouldn't be worth sailing for.
+    const priceFive = [0, 1, 2, 3, 4].reduce(
+      (total, unit) => total + getGoodPrice("dhaka", "rice", "buy", true, assigned.marketStock.dhaka.rice - unit),
+      0,
+    );
+    const roundTrip = planRouteJourney(assigned, assigned.fleet[1])!.runningCost;
     const lowCapital = updateShip(assigned, shipId, {
-      automatedRoute: { ...assigned.fleet[1].automatedRoute!, capital: priceOne },
+      automatedRoute: { ...assigned.fleet[1].automatedRoute!, capital: priceFive + roundTrip },
     });
     const capitalLimited = advanceWorld(lowCapital, 1).fleet[1];
-    expect(capitalLimited.cargo.rice).toBe(1);
-    expect(capitalLimited.automatedRoute!.capital).toBe(0);
+    expect(capitalLimited.cargo.rice).toBe(5);
+    expect(capitalLimited.automatedRoute!.capital).toBe(roundTrip - capitalLimited.automatedRoute!.runningCostPaid);
 
     const lowStock = {
       ...assigned,
@@ -400,17 +413,17 @@ describe("automated routes by class", () => {
         dhaka: { ...assigned.marketStock.dhaka, rice: 2 },
       },
     };
-    // Two left, plus the day's recovery of five, so four can be bought and three remain.
+    // Two left, plus the day's recovery of five. Scarce rice costs too much to all be worth buying.
     const stockLimited = advanceWorld(lowStock, 1);
-    expect(stockLimited.fleet[1].cargo.rice).toBe(4);
-    expect(stockLimited.marketStock.dhaka.rice).toBe(3);
+    expect(stockLimited.fleet[1].cargo.rice + stockLimited.marketStock.dhaka.rice).toBe(7);
+    expect(stockLimited.marketStock.dhaka.rice).toBeGreaterThanOrEqual(0);
 
     const nearlyFull = updateShip(assigned, shipId, {
-      cargo: { ...assigned.fleet[1].cargo, salt: 29 },
+      cargo: { ...assigned.fleet[1].cargo, salt: 25 },
       averagePurchasePrice: { ...assigned.fleet[1].averagePurchasePrice, salt: 10 },
     });
     const holdLimited = advanceWorld(nearlyFull, 1).fleet[1];
-    expect(holdLimited.cargo.rice).toBe(1);
+    expect(holdLimited.cargo.rice).toBe(5);
 
     const atDestination = {
       ...updateShip(assigned, shipId, {
@@ -440,9 +453,9 @@ describe("automated routes by class", () => {
         sonargaon: { ...fullStall.marketStock.sonargaon, rice: MARKET_MAX_STOCK - 2 },
       },
     };
-    // The stall uses up some of its surplus first, so the ship can sell its usual four.
+    // The stall uses up some of its surplus first, leaving room for three of the ship's ten.
     const sold = advanceWorld(nearlyFullStall, 1);
-    expect(sold.fleet[1].cargo.rice).toBe(6);
+    expect(sold.fleet[1].cargo.rice).toBe(7);
     expect(sold.marketStock.sonargaon.rice).toBeLessThanOrEqual(MARKET_MAX_STOCK);
   });
 
@@ -481,7 +494,11 @@ describe("automated routes by class", () => {
       "sylhet",
       riceRule, 5_000,
     ).state;
-    expect(advanceWorld(assigned, 1).fleet[1].automatedRoute!.travelDaysTotal).toBe(
+    const scarce = {
+      ...assigned,
+      marketStock: { ...assigned.marketStock, sylhet: { ...assigned.marketStock.sylhet, rice: 5 } },
+    };
+    expect(advanceWorld(scarce, 1).fleet[1].automatedRoute!.travelDaysTotal).toBe(
       Math.ceil(getRouteTravelTime(route, false, 0.8).durationDays),
     );
   });
@@ -661,7 +678,12 @@ describe("version 19 saves", () => {
         { good: "rice", buyAtOrigin: false, sellAtDestination: true }],
       15_000,
     ).state;
-    const midRoute = advanceWorld({ ...routed, sailingDay: 1 }, 1);
+    // Scarce lac at the far end, so the route has a reason to sail.
+    const worthSailing = {
+      ...routed,
+      marketStock: { ...routed.marketStock, sonargaon: { ...routed.marketStock.sonargaon, lac: 5 } },
+    };
+    const midRoute = advanceWorld({ ...worthSailing, sailingDay: 1 }, 1);
     const voyage = checkpointVoyageProgress(
       startVoyage({ ...midRoute, selectedTown: "sylhet" }, 1_000),
       31_000,
@@ -671,7 +693,7 @@ describe("version 19 saves", () => {
 
     vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(27);
+    expect(restored.version).toBe(28);
     expect(restored.coins).toBe(voyage.coins);
     expect(restored.highestCoins).toBe(voyage.highestCoins);
     restored.fleet.forEach((ship, index) => {
@@ -810,7 +832,7 @@ describe("version 19 saves", () => {
       }),
     );
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(27);
+    expect(restored.version).toBe(28);
     expect(restored.highestCoins).toBe(14_000);
     expect(restored.completedMilestones).toContain("prosperous_merchant");
   });

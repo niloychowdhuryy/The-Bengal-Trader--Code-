@@ -24,8 +24,8 @@ import {
   playRecordedGame,
 } from "./recorded-game";
 import { STRATEGIES, replayMatches, runStrategy } from "./runner";
-import currentBaseline from "./__fixtures__/economy-baseline-v27.json";
-import benchmarkRecord from "./__fixtures__/economy-benchmark-v27.json";
+import currentBaseline from "./__fixtures__/economy-baseline-v28.json";
+import benchmarkRecord from "./__fixtures__/economy-benchmark-v28.json";
 import frozenBaseline from "./__fixtures__/economy-baseline-v20.json";
 import recorded from "./__fixtures__/recorded-game-v20.json";
 
@@ -258,13 +258,17 @@ describe("recorded game", () => {
     }
   });
 
-  it("still plays through under the current rules, every command accepted", () => {
+  it("still plays through under the current rules, with the one refusal route rules explain", () => {
+    // The recording's Bora route carries only sugar, which no longer pays enough to make it
+    // sail to Balasore. So it stays where a Patello can reach it, and needs no return order.
+    const refused: string[] = [];
     let state = base;
     for (const entry of commands) {
       const result = applyCommand(state, entry.command, entry.at);
-      expect(result.status, `command ${entry.seq}: ${result.error}`).toBe("applied");
+      if (result.status !== "applied") refused.push(`${entry.seq}:${entry.command.type}:${result.error}`);
       state = result.state;
     }
+    expect(refused).toEqual(["67:orderShipReturn:not-needed"]);
     expect(isValidGameState(state)).toBe(true);
   });
 

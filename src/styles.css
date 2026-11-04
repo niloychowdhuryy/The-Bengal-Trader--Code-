@@ -795,6 +795,7 @@ button.rank-line { cursor: pointer; }
 .repair-callout strong { color: var(--ink); font: 800 17px var(--body); font-variant-numeric: lining-nums; }
 .repair-callout p { color: var(--ink-soft); font-size: 14px; }
 .repair-button { flex: 0 0 auto; }
+.route-waiting-note { padding: 7px 9px; color: var(--warn-ink); background: var(--warn-bg); border-left: 3px solid var(--madder); border-radius: 2px; }
 .rescue-callout { border-color: var(--madder); background: var(--warn-bg); }
 .rescue-callout p + p { margin-top: 4px; }
 .rescue-callout:has(.repayment-warning) { flex-direction: column; align-items: stretch; }

@@ -5,6 +5,7 @@ import { Leaderboards } from "./components/Leaderboards";
 import { CartPortrait } from "./components/map-art/LandCart";
 import { VesselPortrait } from "./components/map-art/VesselArt";
 import { getRouteStateAt, type RiverRoute } from "./game/navigation";
+import { DAILY_RUNNING_COST } from "./game/npc";
 import CityScene, {
   CITY_BUILDINGS,
   type CityBuildingId,
@@ -12,6 +13,8 @@ import CityScene, {
 import {
   CONTRACT_REPEAT_DAYS,
   CURRENT_MARKET_GOODS,
+  ROUTE_MINIMUM_MARGIN,
+  planRouteJourney,
   MARKET_MAX_STOCK,
   UPGRADES,
   VESSEL_CLASSES,
@@ -1325,6 +1328,7 @@ function AutomatedRoutePanel({
 }) {
   const existingRoute = ship.automatedRoute;
   const vessel = VESSEL_CLASSES[ship.vesselClass];
+  const routeOutlook = existingRoute?.phase === "docked" ? planRouteJourney(state, ship) : null;
   const visitedDestinations = state.visitedTowns.filter(
     (port) => port !== ship.currentPort,
   );
@@ -1447,7 +1451,9 @@ function AutomatedRoutePanel({
                 ? "Paused"
                 : existingRoute.phase === "traveling"
                   ? `Sailing · ${existingRoute.travelDaysRemaining}/${existingRoute.travelDaysTotal} days left`
-                  : "Running · docked"}
+                  : existingRoute.waiting
+                    ? "Waiting in port"
+                    : "Running · docked"}
             </span>
           </div>
           <p>
@@ -1457,6 +1463,19 @@ function AutomatedRoutePanel({
               : ` · at ${getTown(ship.currentPort).name}`}
           </p>
           <p>Route capital: {formatCoins(existingRoute.capital)} Coins</p>
+          <p>Running costs paid: {formatCoins(existingRoute.runningCostPaid)} Coins</p>
+          {existingRoute.status === "running" && existingRoute.phase === "docked" && routeOutlook?.margin != null && (
+            <p>Next round trip: about {Math.round(routeOutlook.margin * 100)}% expected, after {formatCoins(routeOutlook.runningCost)} Coins running cost.</p>
+          )}
+          {existingRoute.waiting && (
+            <p className="route-waiting-note" role="status">
+              {existingRoute.waiting.reason === "coins"
+                ? `Waiting at ${getTown(ship.currentPort).name}: this route doesn't have the Coins for its next voyage. Cancel the route and start it again with more capital.`
+                : existingRoute.waiting.expectedMargin === null
+                  ? `Waiting at ${getTown(ship.currentPort).name}: no selected good would make ${Math.round(ROUTE_MINIMUM_MARGIN * 100)}% on this route right now. It sails when prices improve.`
+                  : `Waiting at ${getTown(ship.currentPort).name}: the next round trip would make about ${Math.round(existingRoute.waiting.expectedMargin * 100)}% after running costs, below the ${Math.round(ROUTE_MINIMUM_MARGIN * 100)}% it needs. It sails when prices improve.`}
+            </p>
+          )}
           <p>
             Rules: {existingRoute.rules.map((rule) => {
               const good = CURRENT_MARKET_GOODS.find((entry) => entry.id === rule.good);
@@ -1507,6 +1526,12 @@ function AutomatedRoutePanel({
             per selected good at each port call, within its hold, stall stock
             and route capital, and follows connected river routes. Route
             progress advances only while your voyage is active.
+          </p>
+          <p>
+            A good with both boxes ticked trades in both directions. The ship only sails when the
+            next round trip should make at least {Math.round(ROUTE_MINIMUM_MARGIN * 100)}% after
+            running costs of {formatCoins(DAILY_RUNNING_COST[ship.vesselClass])} Coins per day at sea,
+            and it waits in port otherwise.
           </p>
           <label className="route-destination-field">
             <span>Other visited port</span>

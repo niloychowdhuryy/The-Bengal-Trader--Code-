@@ -224,14 +224,20 @@ export const manual: Strategy = (sim, context) => {
 const ROUTE_CAPITAL = 15_000;
 const ROUTE_SHIP_RESERVE = 5_000;
 
+function legMargin(state: GameState, from: TownId, to: TownId, good: GoodId): number {
+  return (
+    getGoodPrice(to, good, "sell", false, state.marketStock[to][good]) -
+    getGoodPrice(from, good, "buy", false, state.marketStock[from][good])
+  );
+}
+
 export function routeRules(state: GameState, origin: TownId, destination: TownId): AutomatedTradeRule[] {
-  return GOODS.flatMap((good) => {
-    const buy = getGoodPrice(origin, good.id, "buy", false, state.marketStock[origin][good.id]);
-    const sell = getGoodPrice(destination, good.id, "sell", false, state.marketStock[destination][good.id]);
-    return sell > buy
+  // Routes trade both ways, so a good only has to pay in one direction to be worth listing.
+  return GOODS.flatMap((good) =>
+    legMargin(state, origin, destination, good.id) > 0 || legMargin(state, destination, origin, good.id) > 0
       ? [{ good: good.id, buyAtOrigin: true, sellAtDestination: true }]
-      : [];
-  });
+      : [],
+  );
 }
 
 /** Buys a bulk ship at a shipyard and sets it on the best route among ports already seen. */
@@ -250,8 +256,8 @@ function buyRouteShip(sim: Sim, vesselClass: VesselClassId = "patello"): boolean
     const margin = rules.reduce(
       (total, rule) =>
         total +
-        getGoodPrice(port, rule.good, "sell", false, state.marketStock[port][rule.good]) -
-        getGoodPrice(state.currentTown, rule.good, "buy", false, state.marketStock[state.currentTown][rule.good]),
+        Math.max(0, legMargin(state, state.currentTown, port, rule.good)) +
+        Math.max(0, legMargin(state, port, state.currentTown, rule.good)),
       0,
     );
     if (margin > bestMargin) {

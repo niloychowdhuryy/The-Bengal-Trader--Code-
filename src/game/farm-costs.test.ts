@@ -166,7 +166,7 @@ describe("older saves", () => {
     const owned = buyFarm({ ...createNewGame("Maya", 8), coins: FARM_PRICE + 5_000, highestCoins: FARM_PRICE + 5_000 }).state;
     const old = { ...owned, farmOutput: { ...owned.farmOutput, dhaka: 7 }, version: 25 };
     const migrated = validateSave(migrateLegacySave(old));
-    expect(migrated.version).toBe(27);
+    expect(migrated.version).toBe(28);
     expect(migrated.ownedFarms).toEqual(["dhaka"]);
     expect(migrated.farmOutput.dhaka).toBe(7);
     expect(migrated.coins).toBe(5_000);

@@ -62,7 +62,7 @@ function scaled(amounts: Record<string, number>): Record<string, number> {
 }
 
 function expectExactCoins(old: Loose, game: GameState): void {
-  expect(game.version).toBe(27);
+  expect(game.version).toBe(28);
   expect(game.coins).toBe(old.gold * 50);
   expect(game.highestCoins).toBe(old.highestGold * 50);
   expect("gold" in game).toBe(false);
@@ -110,7 +110,7 @@ function withoutMoney(save: Loose): Loose {
     voyage: voyageRest,
     fleet: save.fleet.map((ship: Loose) => {
       const { averagePurchasePrice: _cost, automationLog, automatedRoute, ...other } = ship;
-      const { capital, ...route } = automatedRoute ?? {};
+      const { capital, runningCostPaid, waiting, ...route } = automatedRoute ?? {};
       return { ...other, route, logDays: automationLog.map((entry: Loose) => entry.sailingDay) };
     }),
     // Merchants have their own migration tests.
@@ -248,7 +248,7 @@ describe("save backups", () => {
 
     const session = await openGameSession(T0);
 
-    expect(session.game?.version).toBe(27);
+    expect(session.game?.version).toBe(28);
     expect(session.log?.provenance).toBe("imported");
     expect((await readCommandLog())?.commands).toEqual([]);
     const backup = await readSaveBackup(MIGRATION_BACKUP);
@@ -353,7 +353,7 @@ describe("save backups", () => {
 });
 
 describe("a save from a newer version of the game", () => {
-  const newer = { ...createNewGame("Maya"), version: 28, somethingNew: true };
+  const newer = { ...createNewGame("Maya"), version: 29, somethingNew: true };
 
   beforeEach(resetDatabase);
 

@@ -92,6 +92,7 @@ export interface DaySnapshot {
   influenceRank: number;
   /** Coins held by routes, plus their goods at the value net worth gives them. */
   routeValue: number;
+  routeRunningCost: number;
   commands: number;
   farms: number;
   ledger: Ledger;
@@ -145,6 +146,7 @@ function snapshot(sim: Sim, day: number): DaySnapshot {
           : total,
       0,
     ),
+    routeRunningCost: state.fleet.reduce((total, ship) => total + (ship.automatedRoute?.runningCostPaid ?? 0), 0),
     commands: sim.log.length,
     farms: state.ownedFarms.length,
     ledger: { ...sim.ledger },

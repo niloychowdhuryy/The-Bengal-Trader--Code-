@@ -527,7 +527,7 @@ describe("first game screen", () => {
     expect(ports).not.toHaveTextContent("Sylhet");
     expect(screen.getByText(/Not offered, because this Patello cannot reach them/))
       .toHaveTextContent("Sylhet");
-    expect(screen.getByText(/trades up to 4 units per selected good/)).toBeVisible();
+    expect(screen.getByText(/trades up to 12 units per selected good/)).toBeVisible();
   });
 
   it("offers a return order for a ship the selected ship cannot reach", async () => {

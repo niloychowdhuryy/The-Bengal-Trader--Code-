@@ -295,7 +295,7 @@ describe("saves", () => {
   it("gives an older save a first count from its real state, with no movement", () => {
     const { leaderboards: _boards, ...old } = playedUntil(12);
     const migrated = validateSave(migrateLegacySave({ ...old, version: 24, debtOwed: 1_000, rescuesTaken: 1 }));
-    expect(migrated.version).toBe(27);
+    expect(migrated.version).toBe(28);
     expect(migrated.leaderboards.day).toBe(12);
     expect(migrated.leaderboards.wealth.every((entry) => entry.previousRank === null)).toBe(true);
     expect(migrated.leaderboards.wealth.find((entry) => entry.id === PLAYER_ENTRY_ID)?.value)

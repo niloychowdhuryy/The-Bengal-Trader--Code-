@@ -52,7 +52,7 @@ export const TEMPERAMENTS: Record<MerchantTemperament, TemperamentRules> = {
 };
 
 // Crew and port dues for each day at sea, paid when leaving.
-const DAILY_RUNNING_COST: Record<VesselClassId, number> = {
+export const DAILY_RUNNING_COST: Record<VesselClassId, number> = {
   bora: 30,
   "river-boat": 45,
   patello: 90,

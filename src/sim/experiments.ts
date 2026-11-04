@@ -33,6 +33,7 @@ import { planRiverRoute } from "../game/navigation";
 import { getRouteTravelTime } from "../game/travel-time";
 import { arrive, createSim, depart, sail, send } from "./driver";
 import { fromTop, giniOf, measureMarket, median, npcWorth, round, type MarketSnapshot } from "./metrics";
+import { goodsAtReference } from "../game/npc";
 import { SIM_SEEDS, STRATEGIES, runStrategy } from "./runner";
 import { manual, routeRules, twoPort } from "./strategies";
 
@@ -345,7 +346,8 @@ export function measureRouteShip(
     if (sim.state.shipHull <= 2) send(sim, { type: "repairShip" });
     sail(sim, sim.state.currentTown === "hooghly" ? "satgaon" : "hooghly");
   }
-  const capitalEnd = sim.state.fleet.find((ship) => ship.id === shipId)!.automatedRoute!.capital;
+  const routeShip = sim.state.fleet.find((ship) => ship.id === shipId)!;
+  const capitalEnd = routeShip.automatedRoute!.capital + Math.round(goodsAtReference(routeShip.cargo));
   const perDay = (capitalEnd - capitalStart) / (sim.state.sailingDay - startDay);
   return {
     vessel,

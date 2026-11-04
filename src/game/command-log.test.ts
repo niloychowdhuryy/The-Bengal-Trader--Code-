@@ -148,7 +148,7 @@ describe("version 19 saves", () => {
     await writeRaw("captain", fixture);
     const session = await openGameSession(T0);
     const game = session.game!;
-    expect(game.version).toBe(27);
+    expect(game.version).toBe(28);
     expect(isValidGameState(game)).toBe(true);
     const saved = fixture as unknown as GameState;
     expect(game.coins).toBe(fixture.gold * 50);
@@ -161,7 +161,7 @@ describe("version 19 saves", () => {
     expect(game.household).toEqual(saved.household);
     expect(game.ownedWarehouses).toEqual(saved.ownedWarehouses);
     // The journey moved onto the rebuilt network, keeping how far along it was.
-    expect(game.version).toBe(27);
+    expect(game.version).toBe(28);
     expect(game.voyage?.destination).toBe(saved.voyage?.destination);
     expect(game.voyage!.elapsedMs / game.voyage!.durationMs).toBeCloseTo(
       saved.voyage!.elapsedMs / saved.voyage!.durationMs,
@@ -184,12 +184,12 @@ describe("version 19 saves", () => {
     await commitGame(state, entries);
     await writeRaw("captain", asGoldSave(state, 19));
     const session = await openGameSession(T0 + 60_000);
-    expect(session.game?.version).toBe(27);
+    expect(session.game?.version).toBe(28);
     expect(session.log).toMatchObject({ provenance: "imported", baseSeq: 1, nextSeq: 2 });
     const log = await readCommandLog();
     expect(log?.commands).toEqual([]);
     expect(log?.base.coins).toBe(Math.round(state.coins / 50) * 50);
-    expect((await loadGame())?.version).toBe(27);
+    expect((await loadGame())?.version).toBe(28);
   });
 
   it("can be played on and verified after loading", async () => {

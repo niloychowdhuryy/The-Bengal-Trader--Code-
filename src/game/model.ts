@@ -16,7 +16,7 @@ import {
   refreshLeaderboards,
   type LeaderboardSnapshot,
 } from "./leaderboard";
-import { createNpcMerchants, getNpcMerchant, hashText, runMerchantDay } from "./npc";
+import { DAILY_RUNNING_COST as VESSEL_RUNNING_COST, createNpcMerchants, getNpcMerchant, hashText, runMerchantDay } from "./npc";
 
 export {
   createNpcMerchants,
@@ -176,6 +176,16 @@ export interface AutomatedTradeRoute {
   travelDaysRemaining: number;
   travelDaysTotal: number;
   capital: number;
+  /** Everything paid to crew this route's voyages. */
+  runningCostPaid: number;
+  /** Why the ship is staying in port, or null if it isn't held up. */
+  waiting: RouteWait | null;
+}
+
+export interface RouteWait {
+  reason: "margin" | "coins";
+  /** The next round trip's expected margin, when there's anything worth carrying. */
+  expectedMargin: number | null;
 }
 
 export interface NpcMerchant {
@@ -358,6 +368,8 @@ export function configureAutomatedTradeRoute(
     travelDaysRemaining: 0,
     travelDaysTotal: 0,
     capital: (previousRoute?.capital ?? 0) + capitalDeposit,
+    runningCostPaid: previousRoute?.runningCostPaid ?? 0,
+    waiting: null,
   };
   return {
     state: {
@@ -477,7 +489,7 @@ export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
     repairCostPerHull: 100,
     travelFactor: 1,
     draft: 1.4,
-    routeUnitsPerGood: 1,
+    routeUnitsPerGood: 3,
     barredPorts: [],
   },
   bora: {
@@ -492,7 +504,7 @@ export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
     repairCostPerHull: 100,
     travelFactor: 0.8,
     draft: 1.2,
-    routeUnitsPerGood: 1,
+    routeUnitsPerGood: 3,
     barredPorts: [],
   },
   patello: {
@@ -507,7 +519,7 @@ export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
     repairCostPerHull: 150,
     travelFactor: 1.25,
     draft: 1.5,
-    routeUnitsPerGood: 4,
+    routeUnitsPerGood: 12,
     barredPorts: ["sylhet", "balasore"],
   },
 };
@@ -966,7 +978,7 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
 ];
 
-export const SAVE_VERSION = 27;
+export const SAVE_VERSION = 28;
 export const STARTING_COINS = 5_000;
 export const PROSPEROUS_MERCHANT_COINS = 12_500;
 const CHITTAGONG_ALERT_SALT_SURCHARGE = 300;
@@ -1312,6 +1324,158 @@ function addAutomatedTradeActivity(
   };
 }
 
+export const ROUTE_MINIMUM_MARGIN = 0.1;
+
+export interface RouteLoad {
+  units: Partial<Record<GoodId, number>>;
+  cost: number;
+  sales: number;
+}
+
+export interface RouteOutlook {
+  outbound: RouteLoad;
+  homebound: RouteLoad;
+  runningCost: number;
+  /** Profit after running costs, as a share of the goods' cost. Null if nothing would pay. */
+  margin: number | null;
+}
+
+/** The best load for one leg: each unit has to clear the margin on its own, best first. */
+function planRouteLoad(
+  market: GameState["marketStock"],
+  from: TownId,
+  to: TownId,
+  goods: readonly GoodId[],
+  room: number,
+  money: number,
+  unitLimit: number,
+  alertActive: boolean,
+): RouteLoad {
+  const units: Partial<Record<GoodId, number>> = {};
+  let cost = 0;
+  let sales = 0;
+  for (let slot = 0; slot < room; slot += 1) {
+    let best: { good: GoodId; buy: number; sell: number } | null = null;
+    for (const good of goods) {
+      const taken = units[good] ?? 0;
+      const stock = market[from][good] - taken;
+      const atDestination = market[to][good] + taken;
+      if (taken >= unitLimit || stock <= 0 || atDestination >= MARKET_MAX_STOCK) continue;
+      const buy = getGoodPrice(from, good, "buy", alertActive, stock);
+      const sell = getGoodPrice(to, good, "sell", alertActive, atDestination);
+      if (buy > money - cost || sell < buy * (1 + ROUTE_MINIMUM_MARGIN)) continue;
+      if (!best || sell - buy > best.sell - best.buy) best = { good, buy, sell };
+    }
+    if (!best) break;
+    units[best.good] = (units[best.good] ?? 0) + 1;
+    cost += best.buy;
+    sales += best.sell;
+  }
+  return { units, cost, sales };
+}
+
+/** What the whole round trip from where a route ship is docked should earn. */
+export function planRouteJourney(state: GameState, ship: PlayerShip): RouteOutlook | null {
+  const route = ship.automatedRoute;
+  if (!route) return null;
+  const conditions = getShipRouteConditions(state.navigationConditions, ship.vesselClass);
+  const atOrigin = ship.currentPort === route.origin;
+  const here = ship.currentPort;
+  const there = atOrigin ? route.destination : route.origin;
+  const outwardRoute = planRiverRoute(here, there, conditions);
+  const homewardRoute = planRiverRoute(there, here, conditions);
+  if (!outwardRoute || !homewardRoute) return null;
+
+  const rate = VESSEL_RUNNING_COST[ship.vesselClass];
+  const outwardCost = rate * getShipRouteDays(outwardRoute, ship.vesselClass);
+  const runningCost = outwardCost + rate * getShipRouteDays(homewardRoute, ship.vesselClass);
+  const twoWay = route.rules.filter((rule) => rule.buyAtOrigin && rule.sellAtDestination).map((rule) => rule.good);
+  const startingOut = route.rules.filter((rule) => rule.buyAtOrigin).map((rule) => rule.good);
+  const alertActive = isHistoricalRouteAlertActive(state);
+  const unitLimit = VESSEL_CLASSES[ship.vesselClass].routeUnitsPerGood;
+  const held = GOODS.reduce((total, good) => total + ship.cargo[good.id], 0);
+
+  const outbound = planRouteLoad(
+    state.marketStock,
+    here,
+    there,
+    atOrigin ? startingOut : twoWay,
+    ship.cargoCapacity - held,
+    route.capital - runningCost,
+    unitLimit,
+    alertActive,
+  );
+  const homebound = planRouteLoad(
+    state.marketStock,
+    there,
+    here,
+    atOrigin ? twoWay : startingOut,
+    ship.cargoCapacity,
+    route.capital - runningCost - outbound.cost + outbound.sales,
+    unitLimit,
+    alertActive,
+  );
+  const cost = outbound.cost + homebound.cost;
+  const profit = outbound.sales + homebound.sales - cost - runningCost;
+  return { outbound, homebound, runningCost, margin: cost > 0 ? profit / cost : null };
+}
+
+/**
+ * Sells goods allowed here. A loss is only held off while the other end pays better, so goods
+ * can't be carried back and forth for ever, and it's taken anyway if Coins have to be raised.
+ */
+function sellRouteCargo(
+  ship: PlayerShip,
+  market: GameState["marketStock"],
+  port: TownId,
+  otherPort: TownId,
+  allowed: (good: GoodId) => boolean,
+  unitLimit: number,
+  alertActive: boolean,
+  raiseCoins?: number,
+): { ship: PlayerShip; market: GameState["marketStock"]; lines: string[] } {
+  let nextShip = ship;
+  let nextMarket = market;
+  const lines: string[] = [];
+  for (const { id: good, name } of GOODS) {
+    if (!allowed(good)) continue;
+    let units = 0;
+    let total = 0;
+    while (units < unitLimit) {
+      if (raiseCoins !== undefined && nextShip.automatedRoute!.capital >= raiseCoins) break;
+      const quantity = nextShip.cargo[good];
+      const stock = nextMarket[port][good];
+      if (quantity <= 0 || stock >= MARKET_MAX_STOCK) break;
+      const price = getGoodPrice(port, good, "sell", alertActive, stock);
+      if (
+        raiseCoins === undefined &&
+        price < nextShip.averagePurchasePrice[good] &&
+        price < getGoodPrice(otherPort, good, "sell", alertActive, nextMarket[otherPort][good])
+      ) {
+        break;
+      }
+      if (nextShip.automatedRoute!.capital + price > MAX_AUTOMATED_ROUTE_CAPITAL) break;
+      nextShip = {
+        ...nextShip,
+        cargo: { ...nextShip.cargo, [good]: quantity - 1 },
+        averagePurchasePrice: {
+          ...nextShip.averagePurchasePrice,
+          [good]: quantity > 1 ? nextShip.averagePurchasePrice[good] : 0,
+        },
+        automatedRoute: {
+          ...nextShip.automatedRoute!,
+          capital: nextShip.automatedRoute!.capital + price,
+        },
+      };
+      nextMarket = { ...nextMarket, [port]: { ...nextMarket[port], [good]: stock + 1 } };
+      units += 1;
+      total += price;
+    }
+    if (units > 0) lines.push(`Sold ${units} ${name} for ${formatCoins(total)} Coins.`);
+  }
+  return { ship: nextShip, market: nextMarket, lines };
+}
+
 function advanceAutomatedShipDay(
   state: GameState,
   shipId: string,
@@ -1402,40 +1566,96 @@ function advanceAutomatedShipDay(
     };
   }
 
-  let nextShip = ship;
-  let nextMarket = state.marketStock;
-  const quoteState = { ...state, sailingDay };
+  const alertActive = isHistoricalRouteAlertActive({ ...state, sailingDay });
   const unitLimit = VESSEL_CLASSES[ship.vesselClass].routeUnitsPerGood;
 
-  for (const rule of rules) {
-    const goodName = GOODS.find((good) => good.id === rule.good)!.name;
-    let units = 0;
-    let total = 0;
-    if (atOrigin && rule.buyAtOrigin) {
-      while (units < unitLimit) {
-        const used = GOODS.reduce(
-          (sum, good) => sum + nextShip.cargo[good.id],
-          0,
-        );
-        const stock = nextMarket[nextShip.currentPort][rule.good];
-        if (used >= nextShip.cargoCapacity || stock <= 0) break;
-        const price = getGoodPrice(
-          nextShip.currentPort,
-          rule.good,
-          "buy",
-          isHistoricalRouteAlertActive(quoteState),
-          stock,
-        );
-        if (nextShip.automatedRoute!.capital < price) break;
-        const quantity = nextShip.cargo[rule.good];
+  // Sell first, so the Coins and hold space are there for the decision about what comes next.
+  const sold = sellRouteCargo(
+    ship,
+    state.marketStock,
+    ship.currentPort,
+    destinationPort,
+    (good) => {
+      const rule = rules.find((entry) => entry.good === good);
+      return Boolean(rule && (atOrigin ? rule.buyAtOrigin && rule.sellAtDestination : rule.sellAtDestination));
+    },
+    unitLimit,
+    alertActive,
+  );
+  let nextShip = sold.ship;
+  let nextMarket = sold.market;
+  for (const line of sold.lines) {
+    nextShip = addAutomatedTradeActivity(nextShip, sailingDay, line);
+  }
+
+  const durationDays = getShipRouteDays(riverRoute, ship.vesselClass);
+  const legCost = VESSEL_RUNNING_COST[ship.vesselClass] * durationDays;
+
+  // Goods nobody here will pay cost for, and too little for the voyage: cut the loss, as merchants do.
+  if (nextShip.automatedRoute!.capital < legCost) {
+    const forced = sellRouteCargo(
+      nextShip,
+      nextMarket,
+      ship.currentPort,
+      destinationPort,
+      () => true,
+      Number.MAX_SAFE_INTEGER,
+      alertActive,
+      legCost,
+    );
+    nextShip = forced.ship;
+    nextMarket = forced.market;
+    for (const line of forced.lines) {
+      nextShip = addAutomatedTradeActivity(nextShip, sailingDay, line);
+    }
+  }
+
+  const outlook = planRouteJourney({ ...state, marketStock: nextMarket }, nextShip);
+  // Goods still on board are waiting for the other end, or more than one call can sell.
+  const carryingForSale = GOODS.some((good) => {
+    const rule = rules.find((entry) => entry.good === good.id);
+    const allowed = rule && (atOrigin ? rule.sellAtDestination : rule.buyAtOrigin && rule.sellAtDestination);
+    return allowed && nextShip.cargo[good.id] > 0;
+  });
+  const worthSailing = outlook !== null && outlook.margin !== null && outlook.margin >= ROUTE_MINIMUM_MARGIN;
+  const wait: RouteWait | null =
+    nextShip.automatedRoute!.capital < legCost
+      ? { reason: "coins", expectedMargin: null }
+      : worthSailing || carryingForSale
+        ? null
+        : { reason: "margin", expectedMargin: outlook?.margin ?? null };
+
+  if (wait) {
+    const message =
+      wait.reason === "coins"
+        ? `Waiting: not enough route Coins for the ${formatCoins(legCost)} Coin voyage to ${getTown(destinationPort).name}.`
+        : `Waiting: no round trip would make ${Math.round(ROUTE_MINIMUM_MARGIN * 100)}%.`;
+    const logged = nextShip.automationLog.at(-1)?.message === message
+      ? nextShip
+      : addAutomatedTradeActivity(nextShip, sailingDay, message);
+    const waiting = { ...logged, automatedRoute: { ...logged.automatedRoute!, waiting: wait } };
+    return {
+      ...state,
+      marketStock: nextMarket,
+      fleet: state.fleet.map((entry) => (entry.id === shipId ? waiting : entry)),
+    };
+  }
+
+  if (worthSailing) {
+    for (const { id: good } of GOODS) {
+      const wanted = outlook!.outbound.units[good] ?? 0;
+      if (wanted === 0) continue;
+      let total = 0;
+      for (let unit = 0; unit < wanted; unit += 1) {
+        const stock = nextMarket[ship.currentPort][good];
+        const price = getGoodPrice(ship.currentPort, good, "buy", alertActive, stock);
+        const quantity = nextShip.cargo[good];
         nextShip = {
           ...nextShip,
-          cargo: { ...nextShip.cargo, [rule.good]: quantity + 1 },
+          cargo: { ...nextShip.cargo, [good]: quantity + 1 },
           averagePurchasePrice: {
             ...nextShip.averagePurchasePrice,
-            [rule.good]:
-              (nextShip.averagePurchasePrice[rule.good] * quantity + price) /
-              (quantity + 1),
+            [good]: (nextShip.averagePurchasePrice[good] * quantity + price) / (quantity + 1),
           },
           automatedRoute: {
             ...nextShip.automatedRoute!,
@@ -1444,76 +1664,26 @@ function advanceAutomatedShipDay(
         };
         nextMarket = {
           ...nextMarket,
-          [nextShip.currentPort]: {
-            ...nextMarket[nextShip.currentPort],
-            [rule.good]: stock - 1,
-          },
+          [ship.currentPort]: { ...nextMarket[ship.currentPort], [good]: stock - 1 },
         };
-        units += 1;
         total += price;
       }
-      if (units > 0) {
-        nextShip = addAutomatedTradeActivity(
-          nextShip,
-          sailingDay,
-          `Bought ${units} ${goodName} for ${formatCoins(total)} Coins.`,
-        );
-      }
-    } else if (!atOrigin && rule.sellAtDestination) {
-      while (units < unitLimit) {
-        const quantity = nextShip.cargo[rule.good];
-        const stock = nextMarket[nextShip.currentPort][rule.good];
-        if (quantity <= 0 || stock >= MARKET_MAX_STOCK) break;
-        const price = getGoodPrice(
-          nextShip.currentPort,
-          rule.good,
-          "sell",
-          isHistoricalRouteAlertActive(quoteState),
-          stock,
-        );
-        if (
-          nextShip.automatedRoute!.capital + price >
-          MAX_AUTOMATED_ROUTE_CAPITAL
-        ) {
-          break;
-        }
-        nextShip = {
-          ...nextShip,
-          cargo: { ...nextShip.cargo, [rule.good]: quantity - 1 },
-          averagePurchasePrice: {
-            ...nextShip.averagePurchasePrice,
-            [rule.good]: quantity > 1 ? nextShip.averagePurchasePrice[rule.good] : 0,
-          },
-          automatedRoute: {
-            ...nextShip.automatedRoute!,
-            capital: nextShip.automatedRoute!.capital + price,
-          },
-        };
-        nextMarket = {
-          ...nextMarket,
-          [nextShip.currentPort]: {
-            ...nextMarket[nextShip.currentPort],
-            [rule.good]: stock + 1,
-          },
-        };
-        units += 1;
-        total += price;
-      }
-      if (units > 0) {
-        nextShip = addAutomatedTradeActivity(
-          nextShip,
-          sailingDay,
-          `Sold ${units} ${goodName} for ${formatCoins(total)} Coins.`,
-        );
-      }
+      const goodName = GOODS.find((item) => item.id === good)!.name;
+      nextShip = addAutomatedTradeActivity(
+        nextShip,
+        sailingDay,
+        `Bought ${wanted} ${goodName} for ${formatCoins(total)} Coins.`,
+      );
     }
   }
 
-  const durationDays = getShipRouteDays(riverRoute, ship.vesselClass);
   nextShip = {
     ...nextShip,
     automatedRoute: {
       ...nextShip.automatedRoute!,
+      capital: nextShip.automatedRoute!.capital - legCost,
+      runningCostPaid: nextShip.automatedRoute!.runningCostPaid + legCost,
+      waiting: null,
       phase: "traveling",
       direction: atOrigin ? "outbound" : "return",
       destinationPort,

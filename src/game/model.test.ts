@@ -72,6 +72,14 @@ import {
   MAX_NORMAL_VOYAGE_DURATION_MS,
 } from "./travel-time";
 
+/** Scarce lac at the far end of the route, so it has a reason to sail. */
+function lacPaysAtSonargaon(state: GameState): GameState {
+  return {
+    ...state,
+    marketStock: { ...state.marketStock, sonargaon: { ...state.marketStock.sonargaon, lac: 5 } },
+  };
+}
+
 describe("first playable journey", () => {
   it("starts a clear new game in the first town", () => {
     const game = createNewGame("Maya");
@@ -1661,13 +1669,13 @@ describe("first playable journey", () => {
       coins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
-    const configured = configureAutomatedTradeRoute(
+    const configured = lacPaysAtSonargaon(configureAutomatedTradeRoute(
       purchased,
       purchased.fleet[1].id,
       "sonargaon",
       [{ good: "lac", buyAtOrigin: true, sellAtDestination: true }],
       25_000,
-    ).state;
+    ).state);
     const withoutAutomation = {
       ...configured,
       fleet: configured.fleet.map((ship) =>
@@ -1680,17 +1688,17 @@ describe("first playable journey", () => {
     const firstTick = advanceWorld(configured, 1);
     const baselineTick = advanceWorld(withoutAutomation, 1);
     const tradingShip = firstTick.fleet[1];
-    expect(tradingShip.cargo.lac).toBe(1);
-    const purchasePrice = getGoodPrice(
-      "dhaka",
-      "lac",
-      "buy",
-      false,
-      configured.marketStock.dhaka.lac,
+    expect(tradingShip.cargo.lac).toBe(3);
+    const purchasePrice = [0, 1, 2].reduce(
+      // Merchants trade first each day, so the ship buys from the stall as they left it.
+      (total, unit) => total + getGoodPrice("dhaka", "lac", "buy", false, baselineTick.marketStock.dhaka.lac - unit),
+      0,
     );
-    expect(tradingShip.automatedRoute?.capital).toBe(25_000 - purchasePrice);
+    expect(tradingShip.automatedRoute?.capital).toBe(
+      25_000 - purchasePrice - tradingShip.automatedRoute!.runningCostPaid,
+    );
     expect(firstTick.marketStock.dhaka.lac).toBe(
-      baselineTick.marketStock.dhaka.lac - 1,
+      baselineTick.marketStock.dhaka.lac - 3,
     );
     expect(tradingShip.automatedRoute?.phase).toBe("traveling");
     expect(tradingShip.currentPort).toBe("dhaka");
@@ -1704,7 +1712,7 @@ describe("first playable journey", () => {
     const destinationBeforeSale = arrived.marketStock.sonargaon.lac;
     const sold = advanceWorld(arrived, arrivalDay + 1);
     expect(sold.fleet[1].cargo.lac).toBe(0);
-    expect(sold.marketStock.sonargaon.lac).toBe(destinationBeforeSale + 1);
+    expect(sold.marketStock.sonargaon.lac).toBeGreaterThanOrEqual(destinationBeforeSale + 2);
     expect(sold.fleet[1].automatedRoute?.capital).toBeGreaterThan(
       arrived.fleet[1].automatedRoute!.capital,
     );
@@ -1723,20 +1731,20 @@ describe("first playable journey", () => {
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;
     const shipId = purchased.fleet[1].id;
-    const configured = configureAutomatedTradeRoute(
+    const configured = lacPaysAtSonargaon(configureAutomatedTradeRoute(
       purchased,
       shipId,
       "sonargaon",
       [{ good: "lac", buyAtOrigin: true, sellAtDestination: true }],
-      400,
-    ).state;
+      5_000,
+    ).state);
     const paused = setAutomatedTradeRouteStatus(configured, shipId, "paused").state;
     const held = advanceWorld(paused, 3);
     expect(held.fleet[1].currentPort).toBe("dhaka");
     expect(held.fleet[1].cargo.lac).toBe(0);
     expect(held.fleet[1].automatedRoute?.status).toBe("paused");
 
-    const resumed = setAutomatedTradeRouteStatus(held, shipId, "running").state;
+    const resumed = lacPaysAtSonargaon(setAutomatedTradeRouteStatus(held, shipId, "running").state);
     const traveling = advanceWorld(resumed, 4);
     expect(traveling.fleet[1].automatedRoute?.phase).toBe("traveling");
     expect(setAutomatedTradeRouteStatus(traveling, shipId, "paused").error).toBe("not-docked");
@@ -1760,7 +1768,7 @@ describe("first playable journey", () => {
     );
     expect(edited.error).toBeUndefined();
     expect(edited.state.fleet[1].automatedRoute?.rules[0].good).toBe("rice");
-    expect(edited.state.fleet[1].automatedRoute?.capital).toBe(400);
+    expect(edited.state.fleet[1].automatedRoute?.capital).toBe(5_000);
 
     const cancelled = cancelAutomatedTradeRoute(paused, shipId);
     expect(cancelled.error).toBeUndefined();
@@ -1894,13 +1902,13 @@ describe("first playable journey", () => {
     }).state;
     const shipId = purchased.fleet[1].id;
     const rules = [{ good: "lac" as const, buyAtOrigin: true, sellAtDestination: true }];
-    const assigned = configureAutomatedTradeRoute(
+    const assigned = lacPaysAtSonargaon(configureAutomatedTradeRoute(
       purchased,
       shipId,
       "sonargaon",
       rules,
       20_000,
-    ).state;
+    ).state);
 
     const inEncounter = { ...assigned, encounterPending: true };
     expect(configureAutomatedTradeRoute(inEncounter, shipId, "sonargaon", rules, 0).error)
@@ -1998,7 +2006,8 @@ describe("first playable journey", () => {
     expect(noSale.marketStock.sonargaon.lac).toBe(
       advanceMarketStock(atDestination.marketStock, 1).sonargaon.lac,
     );
-    expect(noSale.fleet[1].automatedRoute?.capital).toBe(
+    // It can't take the sale, so it carries the goods on, paying for the voyage as it goes.
+    expect(noSale.fleet[1].automatedRoute!.capital + noSale.fleet[1].automatedRoute!.runningCostPaid).toBe(
       MAX_AUTOMATED_ROUTE_CAPITAL,
     );
 

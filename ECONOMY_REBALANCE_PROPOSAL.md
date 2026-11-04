@@ -1,6 +1,6 @@
 # Economy rebalance: investigation and proposal
 
-**Status:** direction approved by the owner on 3 November 2026 (see section 8). Stages 1 to 3, the benchmarks, farm costs and repeating contracts, are approved and committed. Results are in [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md). Investigated on 3 November 2026, from commit `213dc62`, save version 25.
+**Status:** direction approved by the owner on 3 November 2026 (see section 8). Stages 1 to 4, the benchmarks, farm costs, repeating contracts and route rules, are approved and committed. Results are in [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md). Investigated on 3 November 2026, from commit `213dc62`, save version 25.
 
 ## Summary
 
@@ -265,6 +265,8 @@ The tested package in section 5 had no bot that combined skilled trading with fa
 - **Farm payback** is 103 days at a typical stall, or about 110 in play, not 93.
 
 **After Stage 3:** contracts' share of mixed income is 37.4% at day 200 (target 15–30%), though a skilled trader who plans around contracts earns less than one who ignores them. The owner approved 130% and first-success-only reputation and standing, and the reward stays at 130% through Stage 4.
+
+**After Stage 4:** routes didn't lower contracts' share as expected. It rose to 40.8% at day 200, because mixed play's Patello route earns less under running costs. Routes on a good pair now repay faster than the 80–130 day target (River boat 61 days, Bora 46), and a Patello no longer earns more than they do on the best route.
 
 ## 8. The owner's decisions
 

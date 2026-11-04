@@ -11,7 +11,7 @@ import { renderBaseline } from "./report";
 import oldRecord from "./__fixtures__/economy-baseline-v20.json";
 import stepThreeRecord from "./__fixtures__/economy-baseline-v22.json";
 
-const BASELINE_VERSION = 27;
+const BASELINE_VERSION = 28;
 const RESULTS_START = "<!-- results:start -->";
 const RESULTS_END = "<!-- results:end -->";
 

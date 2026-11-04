@@ -136,11 +136,18 @@ describe("other ships under the new network", () => {
 
   it("runs an automated route to a port with a cart road, keeping cargo bounded", () => {
     const routed = configureAutomatedTradeRoute(
-      withBoat(),
+      // Scarce silk at the far end, so the route has a reason to sail.
+      {
+        ...withBoat(),
+        marketStock: {
+          ...withBoat().marketStock,
+          "bakla-chandradwip": { ...withBoat().marketStock["bakla-chandradwip"], silk: 5 },
+        },
+      },
       "player-ship-2",
       "bakla-chandradwip",
-      [{ good: "rice", buyAtOrigin: true, sellAtDestination: true }],
-      500,
+      [{ good: "silk", buyAtOrigin: true, sellAtDestination: true }],
+      20_000,
     );
     expect(routed.error).toBeUndefined();
     let state = routed.state;
@@ -149,7 +156,7 @@ describe("other ships under the new network", () => {
       state = advanceWorld({ ...state, sailingDay: day }, day);
       const ship = state.fleet[1];
       reached.add(ship.currentPort);
-      expect(ship.cargo.rice).toBeLessThanOrEqual(ship.cargoCapacity);
+      expect(ship.cargo.silk).toBeLessThanOrEqual(ship.cargoCapacity);
       expect(ship.automatedRoute!.capital).toBeGreaterThanOrEqual(0);
       expect(isValidGameState(syncSelectedShip(state)), `day ${day}`).toBe(true);
     }
@@ -189,7 +196,7 @@ describe("existing saves", () => {
   it("moves a version 19 voyage onto the new network, keeping its progress and cargo", () => {
     const saved = fixture as unknown as GameState;
     const game = validateSave(fixture, T0);
-    expect(game.version).toBe(27);
+    expect(game.version).toBe(28);
     expect(isValidGameState(game)).toBe(true);
     expect(game.cargo).toEqual(saved.cargo);
     expect(game.coins).toBe(fixture.gold * 50);
@@ -224,7 +231,7 @@ describe("existing saves", () => {
       ),
     };
     const migrated = validateSave(asOld, T0);
-    expect(migrated.version).toBe(27);
+    expect(migrated.version).toBe(28);
     for (const merchant of migrated.npcMerchants) {
       if (merchant.phase === "traveling") {
         expect(merchant.travelDaysRemaining).toBeLessThanOrEqual(merchant.travelDaysTotal);

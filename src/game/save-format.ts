@@ -269,6 +269,13 @@ function isValidAutomatedTradeRoute(
     !isNonnegativeInteger(value.travelDaysTotal) ||
     !isNonnegativeInteger(value.capital) ||
     value.capital > MAX_AUTOMATED_ROUTE_CAPITAL ||
+    !isNonnegativeInteger(value.runningCostPaid) ||
+    !(
+      value.waiting === null ||
+      (isRecord(value.waiting) &&
+        (value.waiting.reason === "margin" || value.waiting.reason === "coins") &&
+        (value.waiting.expectedMargin === null || Number.isFinite(value.waiting.expectedMargin)))
+    ) ||
     !isTownId(ship.currentPort) ||
     (ship.currentPort !== value.origin && ship.currentPort !== value.destination)
   ) {
@@ -1157,6 +1164,21 @@ function migrateToWorldClock(save: Record<string, unknown>): Record<string, unkn
   return { ...rest, version: 22, worldDay: npcSimulationDay, marketStock };
 }
 
+// Routes start paying running costs from here, with nothing owed for voyages already made.
+function migrateToRouteRunningCosts(save: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...save,
+    version: 28,
+    fleet: Array.isArray(save.fleet)
+      ? save.fleet.map((ship) =>
+          isRecord(ship) && isRecord(ship.automatedRoute)
+            ? { ...ship, automatedRoute: { ...ship.automatedRoute, runningCostPaid: 0, waiting: null } }
+            : ship,
+        )
+      : save.fleet,
+  };
+}
+
 // Contracts pay the new rewards from now on, including any already accepted. One already
 // finished has earned its reputation, and is offered again after the usual wait.
 function migrateToRepeatingContracts(save: Record<string, unknown>): Record<string, unknown> {
@@ -1869,6 +1891,10 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
 
   if (save.version === 26) {
     save = migrateToRepeatingContracts(save);
+  }
+
+  if (save.version === 27) {
+    save = migrateToRouteRunningCosts(save);
   }
 
   return save.version === SAVE_VERSION

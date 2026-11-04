@@ -4,6 +4,7 @@
 import type { CommandType, RecordedCommand } from "../game/commands";
 import { createNewGame, type GameState, type GoodId, type TownId } from "../game/model";
 import { arrive, createSim, depart, sail, send, type Sim } from "./driver";
+import { routeRules } from "./strategies";
 
 export const RECORDED_GAME_COINS = 200_000;
 
@@ -162,7 +163,8 @@ export function playRecordedGame(): Sim {
     type: "configureRoute",
     shipId: bora,
     destination: "balasore",
-    rules: [{ good: "sugar", buyAtOrigin: true, sellAtDestination: true }],
+    // Any good that pays, because a route only sails when the journey is worth making.
+    rules: routeRules(sim.state, "hooghly", "balasore"),
     initialCapital: 7_500,
   });
 

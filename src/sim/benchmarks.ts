@@ -1,6 +1,7 @@
 // The benchmarks for the economy rebalance: more kinds of player, watched for longer, with
 // their income accounted for. They sit beside the baseline, which stays as the before-picture.
 import { MARKET_PORTS, SHIPYARD_PORTS, VESSEL_CLASS_IDS, createNewGame, type GameState, type TownId } from "../game/model";
+import { goodsAtReference } from "../game/npc";
 import type { Baseline } from "./baseline";
 import { createSim, sail, send } from "./driver";
 import {
@@ -86,6 +87,7 @@ export interface BenchmarkDay {
   contractRewards: number;
   contractProfit: number;
   routeGain: number;
+  routeRunningCost: number;
   invested: number;
   repairs: number;
   fleet: number;
@@ -135,6 +137,7 @@ function summarise(definition: StrategyDefinition, seeds: readonly number[], bas
         contractRewards: middle((snapshot) => snapshot.ledger.contractRewards),
         contractProfit: middle((snapshot) => contractProfit(snapshot.ledger)),
         routeGain: middle(routeGain),
+        routeRunningCost: middle((snapshot) => snapshot.routeRunningCost),
         invested: middle((snapshot) => invested(snapshot.ledger)),
         repairs: middle((snapshot) => snapshot.ledger.repairs),
         fleet: middle((snapshot) => snapshot.fleet),
@@ -186,7 +189,7 @@ export function measureRouteSpread(): RouteTest[] {
       return {
         origin,
         destination,
-        coinsPerDay: round((ship.automatedRoute!.capital - ROUTE_TEST_CAPITAL) / days),
+        coinsPerDay: round((ship.automatedRoute!.capital + goodsAtReference(ship.cargo) - ROUTE_TEST_CAPITAL) / days),
       };
     }),
   );
@@ -493,7 +496,7 @@ ${table(
 Commands stand in for attention. Trading counts goods at what they cost. Contracts are shown after the cost of goods handed over, and routes count Coins and goods gained.
 
 ${table(
-    ["Strategy", "Trading", "Farm sales", "Crop costs", "Contract rewards", "Contracts after goods", "Routes", "Invested", "Repairs", "Voyages", "Commands", "Merchants' effect on net worth"],
+    ["Strategy", "Trading", "Farm sales", "Crop costs", "Contract rewards", "Contracts after goods", "Routes", "Route running costs, already taken from routes", "Invested", "Repairs", "Voyages", "Commands", "Merchants' effect on net worth"],
     record.strategies.map((entry) => {
       const day = entry.days[2];
       return [
@@ -504,6 +507,7 @@ ${table(
         whole(day.contractRewards),
         whole(day.contractProfit),
         whole(day.routeGain),
+        whole(day.routeRunningCost),
         whole(day.invested),
         whole(day.repairs),
         day.voyages,
@@ -542,7 +546,7 @@ ${table(
 
 - **Farm:** ${record.farmPayback.paybackDays} days to repay its price, at ${whole(record.farmPayback.coinsPerDay)} Coins a day after crop costs, selling at a typical stall.
 - **Route ships on Hooghly–Tanda:** ${record.routeShips.map((ship) => `${ship.vessel} ${whole(ship.coinsPerDay)} Coins a day, ${ship.paybackDays ?? "never"} days`).join("; ")}.
-- **A Bora on every route from a shipyard:** ${routes.length} routes. ${routes.length - earning.length} had nothing profitable to trade when set up. Of the rest, ${earning.filter((perDay) => perDay < 0).length} lost money, and the median earned ${whole(median(earning))} Coins a day, from ${whole(Math.min(...earning))} to ${whole(Math.max(...earning))}. Measured on one seed, counting Coins only.
+- **A Bora on every route from a shipyard:** ${routes.length} routes. ${routes.length - earning.length} had nothing profitable to trade when set up. Of the rest, ${earning.filter((perDay) => perDay < 0).length} lost money, and the median earned ${whole(median(earning))} Coins a day, from ${whole(Math.min(...earning))} to ${whole(Math.max(...earning))}. Measured on one seed, counting route Coins and goods.
 - **Contracts at a new game's prices, buying goods at the issuing port:** ${record.contracts
     .map((entry) => `${entry.type.replace("_", " ")}: ${entry.count} offers, average reward ${whole(entry.averageReward)}, goods ${whole(entry.averageGoodsCost)}, ${entry.worthDoing} pay more than the goods cost${entry.averageGoodsCost > 0 ? `, ${entry.beatsSelling} beat selling the goods at the destination` : ""}`)
     .join("; ")}.
