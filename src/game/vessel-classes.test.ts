@@ -623,6 +623,8 @@ describe("return orders", () => {
         travelDaysRemaining: 0,
         travelDaysTotal: 0,
         capital: 2_500,
+        runningCostPaid: 0,
+        waiting: null,
       },
     });
     expect(isShipOutOfReach(stranded, "player-ship-1")).toBe(false);
@@ -815,6 +817,8 @@ describe("version 19 saves", () => {
           travelDaysRemaining: 0,
           travelDaysTotal: 0,
           capital: 0,
+          runningCostPaid: 0,
+          waiting: null,
         },
       })],
   ])("rejects %s", async (_label, corrupt) => {

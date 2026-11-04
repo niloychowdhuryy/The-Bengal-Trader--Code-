@@ -65,6 +65,7 @@ import {
   FARM_OUTPUT_CAPACITY,
   FARM_PRICE,
   MARRIAGE_HOUSEHOLD_COST,
+  type GameState,
   type TownId,
 } from "./model";
 import {

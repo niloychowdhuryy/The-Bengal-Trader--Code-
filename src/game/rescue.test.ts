@@ -209,6 +209,8 @@ describe("who counts as stranded", () => {
       travelDaysRemaining: 0,
       travelDaysTotal: 0,
       capital: 500,
+      runningCostPaid: 0,
+      waiting: null,
     };
     const docked = withSecondShip(ruined(0, 0), { automatedRoute: route, currentPort: "hooghly" });
     expect(getRecoveryOptions(docked)).toEqual(["route-capital"]);

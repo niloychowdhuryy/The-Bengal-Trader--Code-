@@ -1,6 +1,6 @@
 # The Bengal Trader: Project Status Summary
 
-**As of:** 3 November 2026. Written from the repository, its Git history and its documents. It is for someone with no prior knowledge of the project, to help decide what to build next.
+**As of:** 4 November 2026. Written from the repository, its Git history and its documents. It is for someone with no prior knowledge of the project, to help decide what to build next.
 
 **Labels:**
 - **Implemented:** works in the game and has automated tests.
@@ -11,7 +11,7 @@
 **Read this first:**
 - The navigation rebuild, map fix and collapsible port panel are finished, tested and committed with the owner's approval. They have not yet been tested on a real phone.
 - The staging site shows no Google login, because its two Supabase settings aren't added, by the owner's choice. The game there saves on the device only.
-- Saves are now version 28, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end (Economy Plan Step 4) are committed. Offline rankings (Economy Plan Step 5) are committed too. Both passed the full checkpoint in section 3. Economy rebalance Stages 1 to 4 (benchmarks, farm costs, repeating contracts and route rules, in save version 28) are committed.
+- Saves are now version 28, counting in Coins. Older saves upgrade on load, keeping the original as a backup. The 26 merchants and the recovery from a dead end (Economy Plan Step 4) are committed. Offline rankings (Economy Plan Step 5) are committed too. Economy rebalance Stages 1 to 4 (benchmarks, farm costs, repeating contracts and route rules, in save version 28) are committed, and passed the full checkpoint in section 3. Delivery contracts stay at 130%.
 - The economy has a simulation harness and a recorded baseline (Economy Plan Step 1). See [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md).
 - Most of the planned commercial game is **not built**. In particular, there are no ads or online leaderboards, and farms, contracts and warehouses are out of balance.
 
@@ -151,7 +151,7 @@
 
 **Key rule:** new player actions must be added as commands, so that server checks keep working.
 
-**Tests:** 618 passing across 29 test files, plus a passing type-check and production build, at the integration checkpoint after Economy Plan Step 5.
+**Tests:** 710 passing across 32 test files, plus a passing type-check and production build, at the checkpoint after economy rebalance Stage 4.
 
 ## 4. Saves
 
@@ -232,7 +232,8 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 | `5a67933` | Economy rebalance Stage 1: benchmarks, income ledger and proposal. No economy rule changed | Not when this was written |
 | `9835a2c` | Economy rebalance Stage 2: farm costs, save version 26 | Not when this was written |
 | `11c56b7` | Economy rebalance Stage 3: repeating contracts, save version 27 | Not when this was written |
-| The commit after `11c56b7` | Economy rebalance Stage 4: route rules, save version 28 | Not when this was written |
+| `66a307d` | Economy rebalance Stage 4: route rules, save version 28 | Not when this was written |
+| The commit after `66a307d` | Test-file type fixes needed for the production build, and this status update | Not when this was written |
 
 | Service | Status |
 |---|---|
@@ -319,7 +320,7 @@ A repair on load also fixes saves affected by an earlier gold-peak bug. After a 
 
 **Recommended order now,** since cloud saves are postponed:
 
-1. **Economy rebalance,** in stages: benchmarks (done), farms (done), contracts (done), routes (done), then a full checkpoint. See `ECONOMY_REBALANCE_PROPOSAL.md`.
+1. **Economy rebalance,** in stages: benchmarks, farms, contracts and routes are done, and the full checkpoint has passed. See `ECONOMY_REBALANCE_PROPOSAL.md`.
 2. **Economy Plan Step 6:** review of time-away progression, which is not approved.
 3. **Full tests, type-check, build and browser checks** at each meaningful checkpoint.
 4. **Farms, then warehouses** (Stages 6–7), using the device clock for now, with that weakness recorded.

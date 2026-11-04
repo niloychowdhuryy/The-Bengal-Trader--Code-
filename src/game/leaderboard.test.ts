@@ -101,6 +101,8 @@ describe("net worth", () => {
       travelDaysRemaining: 0,
       travelDaysTotal: 0,
       capital: 2_000,
+      runningCostPaid: 0,
+      waiting: null,
     };
     const second = {
       ...game.fleet[0],
