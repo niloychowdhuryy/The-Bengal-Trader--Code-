@@ -10,14 +10,17 @@ import {
   WAREHOUSE_PRICE,
   type GameState,
 } from "./model";
+import {
+  LEADERBOARD_INTERVAL_DAYS,
+  WORTH_GOODS_SHARE,
+  WORTH_PROPERTY_SHARE,
+  WORTH_SHIP_SHARE,
+} from "./config/economy";
 import { getMerchantWorth, goodsAtReference } from "./npc";
 
-export const LEADERBOARD_INTERVAL_DAYS = 5;
+export { LEADERBOARD_INTERVAL_DAYS };
 export const PLAYER_ENTRY_ID = "player";
 
-const GOODS_SHARE = 0.8;
-const SHIP_SHARE = 0.6;
-const PROPERTY_SHARE = 0.7;
 const TOP_ROWS = 5;
 const ROWS_AROUND_PLAYER = 2;
 
@@ -47,21 +50,21 @@ export function getPlayerNetWorth(state: GameState): number {
     const selected = ship.id === state.selectedShipId;
     const upgrades = selected ? state.upgrades : ship.upgrades;
     worth += goodsAtReference(selected ? state.cargo : ship.cargo);
-    worth += VESSEL_CLASSES[ship.vesselClass].price * SHIP_SHARE;
+    worth += VESSEL_CLASSES[ship.vesselClass].price * WORTH_SHIP_SHARE;
     worth += ship.automatedRoute?.capital ?? 0;
     for (const upgrade of UPGRADES) {
       const level = upgrades[upgrade.id];
       // Each level costs baseCost × its own number.
-      worth += upgrade.baseCost * ((level * (level + 1)) / 2) * SHIP_SHARE;
+      worth += upgrade.baseCost * ((level * (level + 1)) / 2) * WORTH_SHIP_SHARE;
     }
   }
   for (const port of MARKET_PORTS) {
     worth += goodsAtReference(state.warehouseStock[port.id]);
-    worth += state.farmOutput[port.id] * MARKET_BASE_PRICES.rice * GOODS_SHARE;
+    worth += state.farmOutput[port.id] * MARKET_BASE_PRICES.rice * WORTH_GOODS_SHARE;
   }
-  worth += state.ownedWarehouses.length * WAREHOUSE_PRICE * PROPERTY_SHARE;
-  worth += state.ownedFarms.length * FARM_PRICE * PROPERTY_SHARE;
-  if (state.residenceTown) worth += RESIDENCE_PRICE * PROPERTY_SHARE;
+  worth += state.ownedWarehouses.length * WAREHOUSE_PRICE * WORTH_PROPERTY_SHARE;
+  worth += state.ownedFarms.length * FARM_PRICE * WORTH_PROPERTY_SHARE;
+  if (state.residenceTown) worth += RESIDENCE_PRICE * WORTH_PROPERTY_SHARE;
   return Math.round(worth);
 }
 

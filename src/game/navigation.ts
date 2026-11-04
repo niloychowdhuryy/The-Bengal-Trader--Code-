@@ -1,3 +1,4 @@
+import { LAND_TIME_FACTOR, TRANSFER_TIME_UNITS } from "./config/travel";
 import type { TownId } from "./model";
 import {
   PORT_QUAYS,
@@ -68,10 +69,7 @@ export interface RiverRoute {
   legs: RouteLeg[];
 }
 
-/** Carts cover the same distance in this many times a River boat's time. */
-export const LAND_TIME_FACTOR = 2.5;
-/** Moving cargo between boat and cart takes as long as this much distance by boat. */
-export const TRANSFER_TIME_UNITS = 15;
+export { LAND_TIME_FACTOR, TRANSFER_TIME_UNITS };
 
 export const PORT_LOCATIONS: Record<TownId, RiverPoint> = {
   dhaka: { x: 718, y: 320 },

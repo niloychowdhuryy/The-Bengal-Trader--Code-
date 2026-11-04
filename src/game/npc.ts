@@ -22,62 +22,39 @@ import {
   type TownId,
   type VesselClassId,
 } from "./model";
-import { planRiverRoute, type RiverRoute, type RouteConditions } from "./navigation";
 import {
-  MERCHANT_ROSTER,
-  type MerchantProfile,
-  type MerchantTemperament,
-} from "./npc-roster";
+  ACTIVITY_PER_PORT,
+  ANY_PRICE_AFTER_DAYS,
+  CAUTIOUS_PURSE_MULTIPLE,
+  CREW_DAYS_KEPT,
+  EMPTY_TRIP_CHANCE,
+  FRESH_CARGO_MARGIN_SHARE,
+  INVESTMENT_PAYBACK_DAYS,
+  LOAD_MARGIN_BY_SHIP,
+  LONG_IDLE_DAYS,
+  LONG_IDLE_MARGIN,
+  MARGIN_LOST_PER_UNIT,
+  MAX_REPUTATION,
+  NEAR_COST_AFTER_DAYS,
+  NEAR_COST_SHARE,
+  POOR_WORTH_SHARE,
+  PREFERRED_PORT_BONUS,
+  SHIPYARD_WANTED_BONUS,
+  SHORT_IDLE_DAYS,
+  SHORT_IDLE_MARGIN,
+  STALL_CEILING_SHARE,
+  STALL_FLOOR_SHARE,
+  STANDING_NAMES,
+  STANDING_WORTH,
+  TEMPERAMENTS,
+  WORKING_CAPITAL_PER_HOLD_UNIT,
+} from "./config/merchants";
+import { WORTH_GOODS_SHARE, WORTH_SHIP_SHARE } from "./config/economy";
+import { DAILY_RUNNING_COST } from "./config/ships";
+import { planRiverRoute, type RiverRoute, type RouteConditions } from "./navigation";
+import { MERCHANT_ROSTER, type MerchantProfile } from "./npc-roster";
 
-interface TemperamentRules {
-  /** The first unit must clear this margin, as a share of its price, or the route isn't worth it. */
-  minMargin: number;
-  /** Once a route is worth it, keep loading while the next unit still earns this much. */
-  loadMargin: number;
-  /** Share of the purse kept back from any one cargo. */
-  reserve: number;
-  /** Share of expected profit discounted for each day at sea. */
-  riskPerDay: number;
-  /** How far a merchant's idea of a distant price can be wrong. */
-  priceError: number;
-  /** Days spent in port after arriving. */
-  dockDays: number;
-  maxTripDays: number;
-}
-
-export const TEMPERAMENTS: Record<MerchantTemperament, TemperamentRules> = {
-  cautious: { minMargin: 0.24, loadMargin: 0.16, reserve: 0.3, riskPerDay: 0.06, priceError: 0.04, dockDays: 2, maxTripDays: 3 },
-  steady: { minMargin: 0.2, loadMargin: 0.14, reserve: 0.15, riskPerDay: 0.03, priceError: 0.07, dockDays: 1, maxTripDays: 4 },
-  bold: { minMargin: 0.16, loadMargin: 0.11, reserve: 0.05, riskPerDay: 0.01, priceError: 0.12, dockDays: 1, maxTripDays: 6 },
-};
-
-// Crew and port dues for each day at sea, paid when leaving.
-export const DAILY_RUNNING_COST: Record<VesselClassId, number> = {
-  bora: 30,
-  "river-boat": 45,
-  patello: 90,
-};
-
-// A voyage's costs spread over more units in a big hold, so bulk carriers can profitably take
-// thinner margins on each one. It's the commercial case for a larger ship.
-const LOAD_MARGIN_BY_SHIP: Record<VesselClassId, number> = { bora: 1.1, "river-boat": 1, patello: 0.5 };
-
-// Merchants leave a town at least this share of a stall's usual stock, and won't flood it
-// beyond this share. So no rival can empty a stall, however large the ship.
-const STALL_FLOOR_SHARE = 0.4;
-const STALL_CEILING_SHARE = 1.6;
-// Each unit moves a typical price about 1.1% at the stall it leaves and 1% where it lands.
-const MARGIN_LOST_PER_UNIT = 0.021;
-// Working capital a merchant wants to keep after buying a ship: enough to fill a good part of
-// the new hold, and ten days of crew.
-const WORKING_CAPITAL_PER_HOLD_UNIT = 350;
-const CREW_DAYS_KEPT = 10;
-const INVESTMENT_PAYBACK_DAYS = 250;
-const CAUTIOUS_PURSE_MULTIPLE = 3;
-const EMPTY_TRIP_CHANCE = 0.15;
-const ACTIVITY_PER_PORT = 4;
-const MAX_REPUTATION = 200;
-const STANDING_NAMES = ["Struggling", "Small trader", "Modest merchant", "Established merchant", "Great house"];
+export { DAILY_RUNNING_COST, TEMPERAMENTS };
 
 // Fifteen ports. Spelled out because this file and the model load each other.
 export const MAX_NPC_ACTIVITY = 15 * ACTIVITY_PER_PORT;
@@ -173,7 +150,7 @@ export function getNpcTradingIntent(merchant: NpcMerchant): string {
 }
 
 export function goodsAtReference(goods: Record<GoodId, number>): number {
-  return GOODS.reduce((total, good) => total + goods[good.id] * MARKET_BASE_PRICES[good.id] * 0.8, 0);
+  return GOODS.reduce((total, good) => total + goods[good.id] * MARKET_BASE_PRICES[good.id] * WORTH_GOODS_SHARE, 0);
 }
 
 /** Purse, cargo and ship, valued the way the harness values the player's. */
@@ -183,14 +160,14 @@ export function getMerchantWorth(merchant: NpcMerchant): number {
   return Math.round(
     merchant.budget +
       goodsAtReference(merchant.cargo) +
-      VESSEL_CLASSES[merchant.vesselClass].price * 0.6 +
-      hold.baseCost * ((level * (level + 1)) / 2) * 0.6,
+      VESSEL_CLASSES[merchant.vesselClass].price * WORTH_SHIP_SHARE +
+      hold.baseCost * ((level * (level + 1)) / 2) * WORTH_SHIP_SHARE,
   );
 }
 
 export function getMerchantStanding(merchant: NpcMerchant): string {
   const worth = getMerchantWorth(merchant);
-  const tier = worth >= 150_000 ? 4 : worth >= 60_000 ? 3 : worth >= 25_000 ? 2 : worth >= 12_000 ? 1 : 0;
+  const tier = STANDING_WORTH.filter((needed) => worth >= needed).length;
   return isLaidUp(merchant) ? "Laid up" : STANDING_NAMES[tier];
 }
 
@@ -290,24 +267,24 @@ function expectedSale(world: MerchantDay, merchant: NpcMerchant, port: TownId, g
 /** A merchant who hasn't made a deal in a while grows less choosy, and takes thinner margins. */
 function marginWanted(world: MerchantDay, merchant: NpcMerchant, profile: MerchantProfile): number {
   const idle = world.day - merchant.lastTradeDay;
-  const relaxed = idle > 25 ? 0.4 : idle > 12 ? 0.7 : 1;
+  const relaxed = idle > LONG_IDLE_DAYS ? LONG_IDLE_MARGIN : idle > SHORT_IDLE_DAYS ? SHORT_IDLE_MARGIN : 1;
   return TEMPERAMENTS[profile.temperament].minMargin * relaxed;
 }
 
 function isPoor(merchant: NpcMerchant, profile: MerchantProfile): boolean {
-  return getMerchantWorth(merchant) < (profile.startingCoins + VESSEL_CLASSES[profile.vesselClass].price * 0.6) * 0.5;
+  return getMerchantWorth(merchant) < (profile.startingCoins + VESSEL_CLASSES[profile.vesselClass].price * WORTH_SHIP_SHARE) * POOR_WORTH_SHARE;
 }
 
 /** How far a merchant will go today. The rich reach further, and the struggling pull back. */
 function tripLimit(merchant: NpcMerchant, profile: MerchantProfile): number {
   const rules = TEMPERAMENTS[profile.temperament];
   if (isPoor(merchant, profile)) return Math.min(2, rules.maxTripDays);
-  const growth = getMerchantWorth(merchant) / (profile.startingCoins + VESSEL_CLASSES[profile.vesselClass].price * 0.6);
+  const growth = getMerchantWorth(merchant) / (profile.startingCoins + VESSEL_CLASSES[profile.vesselClass].price * WORTH_SHIP_SHARE);
   return rules.maxTripDays + (growth >= 2 ? 1 : 0) + (growth >= 4 ? 1 : 0);
 }
 
 function allowedPorts(merchant: NpcMerchant, profile: MerchantProfile, wantsShipyard = false): readonly TownId[] {
-  const growth = getMerchantWorth(merchant) / (profile.startingCoins + VESSEL_CLASSES[profile.vesselClass].price * 0.6);
+  const growth = getMerchantWorth(merchant) / (profile.startingCoins + VESSEL_CLASSES[profile.vesselClass].price * WORTH_SHIP_SHARE);
   // A regional merchant who has done well starts looking beyond the home waters.
   if (profile.strategy !== "regional" || growth >= 3) return TOWNS.map((town) => town.id);
   return [...new Set([...profile.preferredPorts, profile.homePort, ...(wantsShipyard ? SHIPYARD_PORTS : [])])];
@@ -320,9 +297,9 @@ function tradedGoods(profile: MerchantProfile): readonly GoodId[] {
 function sellFloor(merchant: NpcMerchant, profile: MerchantProfile, good: GoodId, day: number): number {
   const cost = merchant.cargoCost[good];
   const held = day - merchant.purchaseDay;
-  if (isPoor(merchant, profile) || held > 10) return 0;
-  if (held > 5) return cost * 0.95;
-  return cost * (1 + TEMPERAMENTS[profile.temperament].minMargin / 3);
+  if (isPoor(merchant, profile) || held > ANY_PRICE_AFTER_DAYS) return 0;
+  if (held > NEAR_COST_AFTER_DAYS) return cost * NEAR_COST_SHARE;
+  return cost * (1 + TEMPERAMENTS[profile.temperament].minMargin * FRESH_CARGO_MARGIN_SHARE);
 }
 
 function sellHere(world: MerchantDay, start: NpcMerchant, profile: MerchantProfile, floorOverride?: number): NpcMerchant {
@@ -380,7 +357,7 @@ function shipWorthBuying(merchant: NpcMerchant, profile: MerchantProfile, day: n
 
   const current = VESSEL_CLASSES[merchant.vesselClass];
   const bigger = VESSEL_CLASSES[next];
-  const net = bigger.price - current.price * 0.6;
+  const net = bigger.price - current.price * WORTH_SHIP_SHARE;
   const hold = getVesselCargoCapacity(next, { cannon: 0, hull: 0, hold: merchant.holdUpgrades });
   const reserve = hold * WORKING_CAPITAL_PER_HOLD_UNIT + DAILY_RUNNING_COST[next] * CREW_DAYS_KEPT;
   if (merchant.budget - net < reserve * (profile.ambitious ? 1 : CAUTIOUS_PURSE_MULTIPLE)) return null;
@@ -416,7 +393,7 @@ function invest(world: MerchantDay, start: NpcMerchant, profile: MerchantProfile
   }
   const next = SHIPYARD_PORTS.includes(merchant.currentPort) ? shipWorthBuying(merchant, profile, world.day) : null;
   if (next) {
-    const net = VESSEL_CLASSES[next].price - VESSEL_CLASSES[merchant.vesselClass].price * 0.6;
+    const net = VESSEL_CLASSES[next].price - VESSEL_CLASSES[merchant.vesselClass].price * WORTH_SHIP_SHARE;
     merchant = {
       ...merchant,
       vesselClass: next,
@@ -498,9 +475,9 @@ function chooseTrip(world: MerchantDay, merchant: NpcMerchant, profile: Merchant
 
     const score =
       ((value * (1 - rules.riskPerDay * days) - running) / (days + rules.dockDays)) *
-      (preferred.has(port) ? 1.2 : 1) *
+      (preferred.has(port) ? PREFERRED_PORT_BONUS : 1) *
       // Saved up for a bigger ship: worth a detour to a yard, but not an empty one.
-      (shipWanted && SHIPYARD_PORTS.includes(port) ? 1.5 : 1) *
+      (shipWanted && SHIPYARD_PORTS.includes(port) ? SHIPYARD_WANTED_BONUS : 1) *
       (0.9 + chance(world.seed, world.day, merchant.id, port) * 0.2);
     if (score > 0 && (!best || score > best.score)) best = { port, days, score };
   }

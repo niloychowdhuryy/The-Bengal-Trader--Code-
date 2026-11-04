@@ -1,4 +1,74 @@
 import {
+  CHITTAGONG_ALERT_SALT_SURCHARGE,
+  MARKET_DAILY_FLOW_BY_TIER,
+  MARKET_MAX_PRICE_SHARE,
+  MARKET_MAX_STOCK,
+  MARKET_MIN_PRICE_SHARE,
+  MARKET_PRICE_STEP,
+  MARKET_PRICE_WEIGHT,
+  MARKET_RECOVERY_BY_TIER,
+  MARKET_SELL_SPREAD,
+  MARKET_STOCK_CUSHION,
+  MARKET_SUPPLY_TIER_STOCK,
+  MARKET_TARGET_STOCK,
+} from "./config/market";
+import { MARKET_BASE_PRICES, PORT_ECONOMIES } from "./config/towns";
+import {
+  ADDITIONAL_SHIP_PRICE,
+  DAILY_RUNNING_COST as VESSEL_RUNNING_COST,
+  ENCOUNTER_ENEMY_ATTACK,
+  ENCOUNTER_ENEMY_HULL,
+  MAX_PLAYER_SHIPS,
+  SHIPYARD_PORTS,
+  SHIP_BASE_ATTACK,
+  SHIP_BASE_DEFENCE,
+  UPGRADES,
+  VESSEL_CLASSES,
+  VESSEL_CLASS_IDS,
+} from "./config/ships";
+import {
+  EVENT_LAST_DAY,
+  RIVER_PILOT_STANDING,
+  ROUGH_WATER_HULL_DAMAGE,
+  TRAVEL_EVENT_INTERVAL,
+} from "./config/travel";
+import {
+  CONTRACT_LOCAL_STANDING,
+  CONTRACT_REPEAT_DAYS,
+  CONTRACT_REPUTATION,
+  DELIVERY_DEADLINE_DAYS,
+  DELIVERY_QUANTITY,
+  DELIVERY_REWARD_SHARE,
+  FARM_CROP_COST,
+  FARM_DAILY_OUTPUT,
+  FARM_GOOD_ID,
+  FARM_OUTPUT_CAPACITY,
+  FARM_PRICE,
+  MARRIAGE_HOUSEHOLD_COST,
+  MAX_ACTIVE_CONTRACTS,
+  MAX_AUTOMATED_ROUTE_CAPITAL,
+  MILESTONE_PORTS_VISITED,
+  MILESTONE_PROFITABLE_MARKETS,
+  NEW_PORT_REPUTATION,
+  PROFITABLE_TRADE_REPUTATION,
+  PROFIT_CONTRACT_DEADLINE_DAYS,
+  PROFIT_CONTRACT_REWARD,
+  PROFIT_CONTRACT_TARGET,
+  PROSPEROUS_MERCHANT_COINS,
+  RESCUE_FEE_SHARE,
+  RESCUE_HULL,
+  RESCUE_PURSE,
+  RESCUE_REPUTATION_COST,
+  RESIDENCE_PRICE,
+  ROUTE_MINIMUM_MARGIN,
+  STARTING_CARGO,
+  STARTING_COINS,
+  VISIT_DEADLINE_DAYS,
+  VISIT_REWARD,
+  WAREHOUSE_CAPACITY,
+  WAREHOUSE_PRICE,
+} from "./config/economy";
+import {
   PORT_LOCATIONS,
   planRiverRoute,
   type RiverRoute,
@@ -16,7 +86,45 @@ import {
   refreshLeaderboards,
   type LeaderboardSnapshot,
 } from "./leaderboard";
-import { DAILY_RUNNING_COST as VESSEL_RUNNING_COST, createNpcMerchants, getNpcMerchant, hashText, runMerchantDay } from "./npc";
+import { createNpcMerchants, getNpcMerchant, hashText, runMerchantDay } from "./npc";
+
+// Rules and screens import these through this file. The values live in config/.
+export {
+  ADDITIONAL_SHIP_PRICE,
+  CONTRACT_REPEAT_DAYS,
+  EVENT_LAST_DAY,
+  FARM_CROP_COST,
+  FARM_DAILY_OUTPUT,
+  FARM_GOOD_ID,
+  FARM_OUTPUT_CAPACITY,
+  FARM_PRICE,
+  MARKET_BASE_PRICES,
+  MARKET_MAX_PRICE_SHARE,
+  MARKET_MAX_STOCK,
+  MARKET_MIN_PRICE_SHARE,
+  MARKET_PRICE_STEP,
+  MARKET_SELL_SPREAD,
+  MARKET_SUPPLY_TIER_STOCK,
+  MARKET_TARGET_STOCK,
+  MARRIAGE_HOUSEHOLD_COST,
+  MAX_AUTOMATED_ROUTE_CAPITAL,
+  MAX_PLAYER_SHIPS,
+  PORT_ECONOMIES,
+  PROSPEROUS_MERCHANT_COINS,
+  RESCUE_FEE_SHARE,
+  RESCUE_HULL,
+  RESCUE_PURSE,
+  RESCUE_REPUTATION_COST,
+  RESIDENCE_PRICE,
+  ROUTE_MINIMUM_MARGIN,
+  SHIPYARD_PORTS,
+  STARTING_COINS,
+  UPGRADES,
+  VESSEL_CLASSES,
+  VESSEL_CLASS_IDS,
+  WAREHOUSE_CAPACITY,
+  WAREHOUSE_PRICE,
+};
 
 export {
   createNpcMerchants,
@@ -476,59 +584,7 @@ export interface GameState {
   lastMessage: string;
 }
 
-export const VESSEL_CLASSES: Record<VesselClassId, VesselClass> = {
-  "river-boat": {
-    id: "river-boat",
-    name: "River boat",
-    summary: "A steady all-rounder that can reach every port.",
-    price: 25_000,
-    baseHold: 12,
-    holdPerUpgrade: 6,
-    baseHull: 8,
-    hullPerUpgrade: 3,
-    repairCostPerHull: 100,
-    travelFactor: 1,
-    draft: 1.4,
-    routeUnitsPerGood: 3,
-    barredPorts: [],
-  },
-  bora: {
-    id: "bora",
-    name: "Bora",
-    summary: "A light, quick boat with a small hold. Cheap to buy and repair.",
-    price: 17_500,
-    baseHold: 8,
-    holdPerUpgrade: 3,
-    baseHull: 6,
-    hullPerUpgrade: 3,
-    repairCostPerHull: 100,
-    travelFactor: 0.8,
-    draft: 1.2,
-    routeUnitsPerGood: 3,
-    barredPorts: [],
-  },
-  patello: {
-    id: "patello",
-    name: "Patello",
-    summary: "A strong, slow bulk carrier. Too large for the narrowest channels.",
-    price: 45_000,
-    baseHold: 30,
-    holdPerUpgrade: 6,
-    baseHull: 14,
-    hullPerUpgrade: 3,
-    repairCostPerHull: 150,
-    travelFactor: 1.25,
-    draft: 1.5,
-    routeUnitsPerGood: 12,
-    barredPorts: ["sylhet", "balasore"],
-  },
-};
-export const VESSEL_CLASS_IDS: VesselClassId[] = ["river-boat", "bora", "patello"];
-export const ADDITIONAL_SHIP_PRICE = VESSEL_CLASSES["river-boat"].price;
-export const MAX_PLAYER_SHIPS = 3;
-export const SHIPYARD_PORTS: TownId[] = ["dhaka", "chittagong", "hooghly"];
 export const STARTER_SHIP_ID = "player-ship-1";
-export const MAX_AUTOMATED_ROUTE_CAPITAL = 250_000;
 
 export function getVesselCargoCapacity(
   vesselClass: VesselClassId,
@@ -951,89 +1007,32 @@ export interface UpgradeDefinition {
   maxLevel: number;
 }
 
-export const UPGRADES: UpgradeDefinition[] = [
-  {
-    id: "cannon",
-    name: "Stronger bow cannon",
-    detail: "Fire first and protect your cargo.",
-    effect: "+1 attack",
-    baseCost: 1_750,
-    maxLevel: 3,
-  },
-  {
-    id: "hull",
-    name: "Reinforced hull",
-    detail: "Take less damage in a close fight.",
-    effect: "+1 defence",
-    baseCost: 1_750,
-    maxLevel: 2,
-  },
-  {
-    id: "hold",
-    name: "Roomier cargo hold",
-    detail: "Bring more goods home.",
-    effect: "+6 cargo space",
-    baseCost: 1_250,
-    maxLevel: 3,
-  },
-];
 
 export const SAVE_VERSION = 28;
-export const STARTING_COINS = 5_000;
-export const PROSPEROUS_MERCHANT_COINS = 12_500;
-const CHITTAGONG_ALERT_SALT_SURCHARGE = 300;
 
 /** Whole Coins with thousands separators, the same on every device. */
 export function formatCoins(amount: number): string {
   return Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-export const EVENT_LAST_DAY = 36;
-export const MARKET_TARGET_STOCK = 60;
-export const MARKET_SUPPLY_TIER_STOCK = 12;
-export const MARKET_MAX_STOCK = 120;
-// Softens the stock curve, so a stall's price at its usual stock doesn't swing on one sale.
-const MARKET_STOCK_CUSHION = 30;
-// Prices stay between these shares of a good's base price, before any event.
-export const MARKET_MIN_PRICE_SHARE = 0.4;
-export const MARKET_MAX_PRICE_SHARE = 2.5;
-// Quotes move in whole steps of this many Coins.
-export const MARKET_PRICE_STEP = 5;
-export const MARKET_SELL_SPREAD = 0.12;
-// The share of the gap to its usual stock that a stall closes each day, at least one unit.
-// Producers restock faster and big buyers use up a surplus faster, which is what makes one
-// town's shortage last longer than another's.
-const MARKET_RECOVERY_BY_TIER: Record<MarketTier, number> = { 1: 0.06, 2: 0.08, 3: 0.12 };
-// Units a town makes or uses in an ordinary day. Everyday trade is absorbed by this flow, so
-// small gaps close in days, while the shares above decide how long a real shortage lasts.
-const MARKET_DAILY_FLOW_BY_TIER: Record<MarketTier, number> = { 1: 1, 2: 2, 3: 3 };
-export const WAREHOUSE_PRICE = 7_500;
-export const WAREHOUSE_CAPACITY = 20;
-export const RESIDENCE_PRICE = 12_500;
-export const FARM_PRICE = 20_000;
-export const FARM_CROP_COST = 150;
-export const FARM_OUTPUT_CAPACITY = 20;
-export const FARM_DAILY_OUTPUT = 1;
-export const FARM_GOOD_ID: GoodId = "rice";
-export const MARRIAGE_HOUSEHOLD_COST = 5_000;
 export const MILESTONES = [
   {
     id: "river_explorer",
     title: "River explorer",
     description: "Visit five different ports.",
-    target: 5,
+    target: MILESTONE_PORTS_VISITED,
   },
   {
     id: "trusted_trader",
     title: "Trusted trader",
     description: "Make a profitable sale in five different port-and-good markets.",
-    target: 5,
+    target: MILESTONE_PROFITABLE_MARKETS,
   },
   {
     id: "prosperous_merchant",
     title: "Prosperous merchant",
-    description: "Reach 12,500 Coins. Spending them later will not undo this milestone.",
-    target: 12_500,
+    description: `Reach ${formatCoins(PROSPEROUS_MERCHANT_COINS)} Coins. Spending them later will not undo this milestone.`,
+    target: PROSPEROUS_MERCHANT_COINS,
   },
 ] as const;
 
@@ -1076,79 +1075,7 @@ export const MARKET_PORTS: MarketPort[] = [
   { id: "patna", name: "Patna" },
 ];
 
-export const PORT_ECONOMIES: Record<MarketPortId, PortEconomyProfile> = {
-  dhaka: {
-    supply: { muslin: 3, rice: 2 },
-    demand: { rice: 3, salt: 3, silk: 2, sugar: 2, saltpetre: 1, opium: 2 },
-  },
-  sonargaon: {
-    supply: { muslin: 2, rice: 2 },
-    demand: { salt: 3, rice: 2, sugar: 2, silk: 2 },
-  },
-  kasimbazar: {
-    supply: { silk: 3, rice: 2 },
-    demand: { rice: 3, salt: 3, muslin: 2, saltpetre: 2 },
-  },
-  chittagong: {
-    supply: { salt: 2, rice: 2 },
-    demand: { rice: 3, salt: 3, muslin: 2, sugar: 2, saltpetre: 2 },
-  },
-  sylhet: {
-    supply: { rice: 2, lac: 2 },
-    demand: { salt: 3, muslin: 3, sugar: 2 },
-  },
-  hooghly: {
-    supply: { rice: 3, salt: 2, muslin: 3, silk: 3, sugar: 3, saltpetre: 3, opium: 3 },
-    demand: { rice: 3, salt: 3, muslin: 3, silk: 3, sugar: 2, saltpetre: 3, opium: 2, lac: 2 },
-  },
-  satgaon: {
-    supply: { rice: 1, sugar: 1, lac: 1 },
-    demand: { salt: 3, muslin: 2, rice: 2, sugar: 2 },
-  },
-  rajmahal: {
-    supply: { rice: 2, silk: 1, saltpetre: 1 },
-    demand: { rice: 3, salt: 3, muslin: 2, sugar: 2 },
-  },
-  tanda: {
-    supply: { rice: 1, sugar: 1, muslin: 1, silk: 1 },
-    demand: { salt: 3, rice: 2, muslin: 2, silk: 2 },
-  },
-  malda: {
-    supply: { rice: 2, sugar: 2, silk: 1, lac: 1 },
-    demand: { salt: 3, muslin: 2, silk: 2, saltpetre: 2 },
-  },
-  balasore: {
-    supply: { rice: 2, salt: 1 },
-    demand: { rice: 2, muslin: 2, silk: 2, sugar: 2, saltpetre: 2 },
-  },
-  jessore: {
-    supply: { rice: 3, sugar: 2 },
-    demand: { salt: 3, muslin: 2, silk: 2 },
-  },
-  sandwip: {
-    supply: { salt: 1, rice: 1 },
-    demand: { rice: 3, salt: 3, muslin: 3, sugar: 2, silk: 2 },
-  },
-  "bakla-chandradwip": {
-    supply: { rice: 3, salt: 1, lac: 1 },
-    demand: { salt: 3, muslin: 3, sugar: 2, silk: 1, saltpetre: 1 },
-  },
-  patna: {
-    supply: { rice: 2, saltpetre: 3, opium: 3 },
-    demand: { saltpetre: 3, opium: 2, muslin: 3, silk: 3, salt: 3, sugar: 2 },
-  },
-};
 
-export const MARKET_BASE_PRICES: Record<GoodId, number> = {
-  rice: 400,
-  salt: 600,
-  muslin: 1_200,
-  silk: 1_600,
-  sugar: 700,
-  saltpetre: 900,
-  opium: 2_000,
-  lac: 1_100,
-};
 
 export function getMarketSupply(port: MarketPortId, good: GoodId): MarketTier {
   return PORT_ECONOMIES[port].supply[good] ?? 2;
@@ -1199,9 +1126,6 @@ export function createEmptyHousehold(): HouseholdState {
   };
 }
 
-export const CONTRACT_REPEAT_DAYS = 40;
-const DELIVERY_REWARD_SHARE = 1.3;
-const VISIT_REWARD = 500;
 
 /** Pays a share of what the goods are worth at their reference price. */
 function deliveryReward(good: GoodId, quantity: number): number {
@@ -1224,10 +1148,10 @@ export function createMissionBoard(): Mission[] {
         origin: port.id,
         destination: destination(2),
         good: good(1),
-        quantity: 2,
+        quantity: DELIVERY_QUANTITY,
         targetProfit: 0,
-        rewardCoins: deliveryReward(good(1), 2),
-        deadlineDays: 24,
+        rewardCoins: deliveryReward(good(1), DELIVERY_QUANTITY),
+        deadlineDays: DELIVERY_DEADLINE_DAYS,
         status: "available" as const,
         acceptedAtSailingDay: null,
         deadlineSailingDay: null,
@@ -1242,10 +1166,10 @@ export function createMissionBoard(): Mission[] {
         origin: port.id,
         destination: destination(4),
         good: good(3),
-        quantity: 2,
+        quantity: DELIVERY_QUANTITY,
         targetProfit: 0,
-        rewardCoins: deliveryReward(good(3), 2),
-        deadlineDays: 24,
+        rewardCoins: deliveryReward(good(3), DELIVERY_QUANTITY),
+        deadlineDays: DELIVERY_DEADLINE_DAYS,
         status: "available" as const,
         acceptedAtSailingDay: null,
         deadlineSailingDay: null,
@@ -1263,7 +1187,7 @@ export function createMissionBoard(): Mission[] {
         quantity: 1,
         targetProfit: 0,
         rewardCoins: VISIT_REWARD,
-        deadlineDays: 30,
+        deadlineDays: VISIT_DEADLINE_DAYS,
         status: "available" as const,
         acceptedAtSailingDay: null,
         deadlineSailingDay: null,
@@ -1279,9 +1203,9 @@ export function createMissionBoard(): Mission[] {
         destination: port.id,
         good: good(5),
         quantity: 0,
-        targetProfit: 1_250,
-        rewardCoins: 1_100,
-        deadlineDays: 20,
+        targetProfit: PROFIT_CONTRACT_TARGET,
+        rewardCoins: PROFIT_CONTRACT_REWARD,
+        deadlineDays: PROFIT_CONTRACT_DEADLINE_DAYS,
         status: "available" as const,
         acceptedAtSailingDay: null,
         deadlineSailingDay: null,
@@ -1324,7 +1248,6 @@ function addAutomatedTradeActivity(
   };
 }
 
-export const ROUTE_MINIMUM_MARGIN = 0.1;
 
 export interface RouteLoad {
   units: Partial<Record<GoodId, number>>;
@@ -1847,9 +1770,9 @@ export function createNewGame(
   const cleanName = captainName.trim().slice(0, 18);
   const marketStock = createInitialMarketStock();
   const cargo: GameState["cargo"] = {
-    rice: 2,
-    salt: 0,
-    muslin: 1,
+    rice: STARTING_CARGO.rice ?? 0,
+    salt: STARTING_CARGO.salt ?? 0,
+    muslin: STARTING_CARGO.muslin ?? 0,
     silk: 0,
     sugar: 0,
     saltpetre: 0,
@@ -1869,9 +1792,9 @@ export function createNewGame(
     id: STARTER_SHIP_ID,
     name: `${cleanName || "Captain"}'s Boat`,
     currentPort: "dhaka",
-    shipHull: 8,
+    shipHull: VESSEL_CLASSES["river-boat"].baseHull,
     upgrades,
-    cargoCapacity: 12,
+    cargoCapacity: VESSEL_CLASSES["river-boat"].baseHold,
     cargo,
     averagePurchasePrice,
     sailingSpeed: 1,
@@ -1916,7 +1839,7 @@ export function createNewGame(
     averagePurchasePrice,
     marketStock,
     navigationConditions: {},
-    shipHull: 8,
+    shipHull: VESSEL_CLASSES["river-boat"].baseHull,
     upgrades,
     sailingDay: 0,
     sailingSpeed: 1,
@@ -1951,8 +1874,8 @@ export function getMilestoneProgress(
 function updateProgress(state: GameState): GameState {
   const highestCoins = Math.max(state.highestCoins, state.coins);
   const completed = new Set(state.completedMilestones);
-  if (state.visitedTowns.length >= 5) completed.add("river_explorer");
-  if (state.profitableTradeMarks.length >= 5) completed.add("trusted_trader");
+  if (state.visitedTowns.length >= MILESTONE_PORTS_VISITED) completed.add("river_explorer");
+  if (state.profitableTradeMarks.length >= MILESTONE_PROFITABLE_MARKETS) completed.add("trusted_trader");
   if (highestCoins >= PROSPEROUS_MERCHANT_COINS) completed.add("prosperous_merchant");
   return {
     ...state,
@@ -1967,7 +1890,7 @@ function recordTownVisit(state: GameState, town: TownId): GameState {
   if (state.visitedTowns.includes(town)) return updateProgress(state);
   return updateProgress({
     ...state,
-    reputation: state.reputation + 1,
+    reputation: state.reputation + NEW_PORT_REPUTATION,
     visitedTowns: [...state.visitedTowns, town],
   });
 }
@@ -1984,7 +1907,7 @@ function recordProfitableTrade(
   }
   return updateProgress({
     ...state,
-    reputation: state.reputation + 1,
+    reputation: state.reputation + PROFITABLE_TRADE_REPUTATION,
     profitableTradeMarks: [...state.profitableTradeMarks, mark],
   });
 }
@@ -2009,9 +1932,9 @@ function completeMission(
   const completed = {
     ...state,
     coins: state.coins + mission.rewardCoins,
-    reputation: state.reputation + (firstSuccess ? 2 : 0),
+    reputation: state.reputation + (firstSuccess ? CONTRACT_REPUTATION : 0),
     localStanding: firstSuccess
-      ? addLocalStanding(state.localStanding, mission.origin, 5)
+      ? addLocalStanding(state.localStanding, mission.origin, CONTRACT_LOCAL_STANDING)
       : state.localStanding,
     missions: state.missions.map((entry) =>
       entry.id === mission.id
@@ -2025,7 +1948,7 @@ function completeMission(
         : entry,
     ),
     lastMessage: firstSuccess
-      ? `Contract complete: ${formatCoins(mission.rewardCoins)} Coins, +2 reputation, and +5 local standing in ${getTown(mission.origin).name}.`
+      ? `Contract complete: ${formatCoins(mission.rewardCoins)} Coins, +${CONTRACT_REPUTATION} reputation, and +${CONTRACT_LOCAL_STANDING} local standing in ${getTown(mission.origin).name}.`
       : `Contract complete: ${formatCoins(mission.rewardCoins)} Coins.`,
   };
   return updateProgress(completed);
@@ -2069,7 +1992,7 @@ export function acceptMission(
   ) {
     return { state, error: "not-available" };
   }
-  if (state.missions.filter((entry) => entry.status === "active").length >= 2) {
+  if (state.missions.filter((entry) => entry.status === "active").length >= MAX_ACTIVE_CONTRACTS) {
     return { state, error: "active-limit" };
   }
 
@@ -2512,11 +2435,11 @@ export function retrieveGoodFromWarehouse(
 }
 
 export function getShipAttack(state: GameState): number {
-  return 2 + state.upgrades.cannon;
+  return SHIP_BASE_ATTACK + state.upgrades.cannon;
 }
 
 export function getShipDefence(state: GameState): number {
-  return 1 + state.upgrades.hull;
+  return SHIP_BASE_DEFENCE + state.upgrades.hull;
 }
 
 export function getShipMaximumHull(state: GameState): number {
@@ -2582,8 +2505,8 @@ export function startVoyage(
   const arrivalAt = now + travelTime.durationMs / state.sailingSpeed;
   const voyagesStarted = state.voyagesStarted + 1;
   const travelEvent =
-    voyagesStarted % 5 === 0
-      ? Math.floor(voyagesStarted / 5) % 2 === 1
+    voyagesStarted % TRAVEL_EVENT_INTERVAL === 0
+      ? Math.floor(voyagesStarted / TRAVEL_EVENT_INTERVAL) % 2 === 1
         ? "river-pilot"
         : "rough-water"
       : null;
@@ -2694,13 +2617,13 @@ export function arriveAtDestination(state: GameState): GameState {
     !state.chittagongIntroductionSeen;
   const travelEventMessage =
     voyage.travelEvent === "river-pilot"
-      ? " A local river pilot guided your crew: +2 standing here."
+      ? ` A local river pilot guided your crew: +${RIVER_PILOT_STANDING} standing here.`
       : voyage.travelEvent === "rough-water"
-        ? " Rough water damaged the ship by 1 hull."
+        ? ` Rough water damaged the ship by ${ROUGH_WATER_HULL_DAMAGE} hull.`
         : "";
   const eventStanding =
     voyage.travelEvent === "river-pilot"
-      ? addLocalStanding(state.localStanding, voyage.destination, 2)
+      ? addLocalStanding(state.localStanding, voyage.destination, RIVER_PILOT_STANDING)
       : state.localStanding;
   const arrived = advanceFarmProduction({
     ...state,
@@ -2709,7 +2632,7 @@ export function arriveAtDestination(state: GameState): GameState {
     localStanding: eventStanding,
     shipHull:
       voyage.travelEvent === "rough-water"
-        ? Math.max(0, state.shipHull - 1)
+        ? Math.max(0, state.shipHull - ROUGH_WATER_HULL_DAMAGE)
         : state.shipHull,
     sailingDay,
     sailingSpeed:
@@ -2726,7 +2649,7 @@ export function arriveAtDestination(state: GameState): GameState {
   const recordedVisit = firstVisit
     ? {
         ...recordTownVisit(arrived, voyage.destination),
-        lastMessage: `${arrived.lastMessage} +1 reputation for discovering a new port.`,
+        lastMessage: `${arrived.lastMessage} +${NEW_PORT_REPUTATION} reputation for discovering a new port.`,
       }
     : updateProgress(arrived);
   return syncSelectedShip(
@@ -2750,8 +2673,8 @@ export function resolveRiverEncounter(
     throw new Error("There is no ship encounter to resolve.");
   }
 
-  const enemyHull = 3;
-  const enemyAttack = 3;
+  const enemyHull = ENCOUNTER_ENEMY_HULL;
+  const enemyAttack = ENCOUNTER_ENEMY_ATTACK;
   const enemyDefeated = getShipAttack(state) >= enemyHull;
   const hullDamage = enemyDefeated
     ? 0
@@ -2784,7 +2707,7 @@ function getMarketPrice(
 ): number {
   const supply = getMarketSupply(town, good);
   const demand = getMarketDemand(town, good);
-  const supplyDemandFactor = 1 + (demand - supply) * 0.15;
+  const supplyDemandFactor = 1 + (demand - supply) * MARKET_PRICE_WEIGHT;
   const stockFactor =
     (MARKET_TARGET_STOCK + MARKET_STOCK_CUSHION) /
     (Math.max(0, Math.min(MARKET_MAX_STOCK, stock)) + MARKET_STOCK_CUSHION);
@@ -2973,7 +2896,7 @@ export function sellGoodAtPort(
     marked.reputation > state.reputation
       ? {
           ...marked,
-          lastMessage: `${sold.lastMessage} +1 reputation for a profitable trade.`,
+          lastMessage: `${sold.lastMessage} +${PROFITABLE_TRADE_REPUTATION} reputation for a profitable trade.`,
         }
       : marked;
   return {
@@ -3043,12 +2966,6 @@ export function repairShip(
   };
 }
 
-// A last resort for a merchant with no way to carry on. It lends what's needed to move
-// again, at a price, so a rescue always leaves the player worse off than before it.
-export const RESCUE_PURSE = 1_000;
-export const RESCUE_HULL = 2;
-export const RESCUE_FEE_SHARE = 0.25;
-export const RESCUE_REPUTATION_COST = 2;
 
 export type RecoveryOption =
   | "sell-cargo"

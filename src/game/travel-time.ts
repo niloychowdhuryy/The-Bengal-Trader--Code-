@@ -1,14 +1,22 @@
 import {
+  CHITTAGONG_ALERT_EXTRA_DAYS,
+  IN_GAME_DAY_DURATION_MS,
+  MAX_NORMAL_VOYAGE_DURATION_MS,
+  SAILING_SPEEDS,
+} from "./config/travel";
+import {
   RIVER_NODES,
   getRouteTimeUnits,
   planRiverRoute,
   type RiverRoute,
 } from "./navigation";
 
-export const MAX_NORMAL_VOYAGE_DURATION_MS = 5 * 60 * 1000;
-export const IN_GAME_DAY_DURATION_MS = 60 * 1000;
-export const CHITTAGONG_ALERT_EXTRA_DAYS = 1;
-export const SAILING_SPEEDS = [1, 2, 4] as const;
+export {
+  CHITTAGONG_ALERT_EXTRA_DAYS,
+  IN_GAME_DAY_DURATION_MS,
+  MAX_NORMAL_VOYAGE_DURATION_MS,
+  SAILING_SPEEDS,
+};
 export type SailingSpeed = (typeof SAILING_SPEEDS)[number];
 
 export interface VoyageProgress {

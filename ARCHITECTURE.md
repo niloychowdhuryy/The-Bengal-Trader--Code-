@@ -114,3 +114,32 @@ A save from a later version raises `NewerSaveError`: the game asks for a reload 
 - `npm run dev` (LAN binding is configured in Vite on port 5173)
 
 The `dist/` folder contains the production build and generated service worker.
+
+## Changing game values
+
+Values that get adjusted live in `src/game/config/`, and only there. Game rules and screens read them, and config files import nothing at run time, so they can't create a circular import. `model.ts` and the other rule files re-export them, so existing imports still work.
+
+| File | Holds |
+|---|---|
+| `market.ts` | Price weight, stock levels and limits, recovery, sell spread |
+| `towns.ts` | Town supply and demand profiles, and base prices |
+| `economy.ts` | Starting money, property, farms, contracts, reputation, routes, rescue, net worth |
+| `ships.ts` | Ship classes, running costs, upgrades, combat |
+| `travel.ts` | Day length, voyage limit, speeds, cart times, travel events |
+| `merchants.ts` | How rival merchants judge a trade |
+| `specialties.ts` | Town specialty rules and wording. Nothing reads this yet |
+| `features.ts` | Display switches. Only screens may read these |
+
+`src/game/config/validate.ts` lists anything out of range, and `config.test.ts` fails if it finds a problem.
+
+To change a value:
+
+1. Edit it in `config/` and run `config.test.ts`.
+2. Run `npm run sim` and compare with the benchmarks.
+3. Anything other than a display switch is a rule change, so saved games can't replay old commands under it. Bump `SAVE_VERSION` with a one-line step in `save-format.ts`, which backs up the save and restarts its command log.
+4. Freeze a new benchmark record beside the old ones.
+
+**Some values also describe saves already in progress:** an accepted contract's deadline, a voyage under way and a ship's hull are checked against them on load. Changing `DELIVERY_DEADLINE_DAYS`, `VISIT_DEADLINE_DAYS`, `PROFIT_CONTRACT_DEADLINE_DAYS`, the travel values or ship stats needs its version step to update those saves too, or they'll fail validation.
+
+Town names and map positions, goods' names and the merchant roster are in `model.ts`, `navigation.ts` and `npc-roster.ts`, and evidence for town identities is in `city-economic-identities.ts`.
+
