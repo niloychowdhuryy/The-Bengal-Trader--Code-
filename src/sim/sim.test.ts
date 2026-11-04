@@ -5,6 +5,7 @@ import { isValidGameState, validateSave } from "../game/save-format";
 import savedGame from "../game/__fixtures__/save-v20.json";
 import { measureStrategies } from "./baseline";
 import { BENCHMARK_DAYS, BENCHMARKS } from "./benchmarks";
+import { SKILL_CHECK } from "./market-check";
 import { createSim, sail } from "./driver";
 import {
   demonstrateSamePortLoop,
@@ -170,6 +171,22 @@ describe("problems the Coins economy has fixed", () => {
 });
 
 // Step 4 and later balancing change these. A test that fails here should become a fix.
+describe("market check players", () => {
+  for (const definition of SKILL_CHECK.filter((entry) => ["expert", "expert-farms", "uninformed"].includes(entry.id))) {
+    it(`${definition.id}: asks for nothing refused, and replays exactly`, () => {
+      const { result, sim } = runStrategy(definition, { days: [30] });
+      expect(result.refused).toEqual([]);
+      expect(isValidGameState(sim.state)).toBe(true);
+      expect(replayMatches(sim)).toBe(true);
+    }, 30_000);
+  }
+
+  it("leaves the benchmark list and its existing players alone", () => {
+    expect(BENCHMARKS.map((entry) => entry.id)).not.toContain("expert");
+    expect(BENCHMARKS.map((entry) => entry.id)).not.toContain("uninformed");
+  });
+});
+
 describe("rebalanced systems, in play", () => {
   it("records every crop cost in the ledger, and no crop goes unpaid", () => {
     const { sim } = runStrategy(BENCHMARKS.find((entry) => entry.id === "farm-circuit")!, { days: [120] });

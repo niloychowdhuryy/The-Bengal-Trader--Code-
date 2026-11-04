@@ -1,6 +1,6 @@
 # Feature A: distinct and responsive city prices
 
-**Status:** investigation and design only, awaiting the owner's approval. No game rule, price, save or screen has changed. Investigated on 4 November 2026 from commit `d3881d3`, save version 28. All candidates ran in temporary copies, since removed, and the committed records are untouched.
+**Status:** investigation and design only, awaiting the owner's approval. E1 below is a candidate, not an approved design, and the harness check at the end recommends revising it. No game rule, price, save or screen has changed. Investigated on 4 November 2026 from commit `d3881d3`, save version 28. All candidates ran in temporary copies, since removed, and the committed records are untouched.
 
 ## Summary
 
@@ -194,6 +194,33 @@ Rerouting or cancelling a voyage stays separate and on the roadmap. Nothing here
 2. **Feature A.** Apply the profiles, weight and recovery, in a new save version. Stock isn't rewritten: stalls drift to their new usual levels by the normal rule, and the command log restarts. Update `city-economic-identities.ts`, and add the stock labels to the market.
 3. **Re-measure,** then a full checkpoint.
 4. **Feature B,** as a small follow-up.
+
+## Harness re-measure of E1
+
+Run with `src/sim/market-check.ts`, on 5 seeds. Existing bots and benchmark records are unchanged, and the control run matched the committed record exactly. Three additions:
+
+- **Expert bot:** plans a three-leg tour rather than one round trip.
+- **Uninformed bot:** trades sensibly but picks its next port at random, to show what choice is worth.
+- **Pair selection:** routes are chosen two ways, from day-one prices and by a 60-day trial, and warehouses are tested on the top three repeated routes as well as the old Hooghly–Satgaon pair.
+
+| Net worth multiple | Current, day 200 / 400 | Profile only | Slower recovery only | E1 |
+|---|---:|---:|---:|---:|
+| Skilled against basic | 2.96 / 3.15 | 1.18 / 1.12 | 2.90 / 3.24 | 1.20 / 1.16 |
+| Expert against basic | 2.89 / 3.04 | 1.35 / 1.33 | 2.86 / 3.14 | 1.45 / 1.37 |
+| Expert against skilled | 0.97 / 0.96 | 1.14 / 1.19 | 0.99 / 0.97 | 1.21 / 1.18 |
+| Skilled against mixed | 1.88 / 1.34 | 0.98 / 0.89 | 1.78 / 1.32 | 1.01 / 0.90 |
+| Expert against uninformed | 4.59 / 5.42 | 3.55 / 4.07 | 3.98 / 4.77 | 2.96 / 3.31 |
+| Farm circuit against skilled | 0.50 / 1.40 | 1.33 / 1.75 | 0.47 / 1.35 | 1.54 / 2.26 |
+
+**The skill gap is mainly a real market-design effect, caused by the town profile.** Slower recovery alone leaves it at 2.90×. The skilled bot understates skill under E1, because the expert bot earns 21% more, but the expert's lead over the basic bot still halves. From each port, the best round trip beats a typical one by 3.06× under E1, against 4.9× today. Part of today's gap is also a quirk of a sparse map that punishes the basic bot's one-way habit.
+
+**Findings on recovery, routes and warehouses:**
+
+- **Recovery:** with the profile alone, stalls recover halfway in 6–12 days, inside the 5–12 target. Slower recovery is what pushes E1 to 10–20 days. Slower recovery isn't needed for visible price movement either: 27 stalls moved with the profile alone, against 30 in E1. What it does is offset the extra income.
+- **Routes:** choosing on day-one prices misleads badly under E1, predicting 920 Coins a day for a Bora that earns 48, a 362-day payback. A 60-day trial finds pairs that pay back in 129 days (River boat) and 87 days (Bora), both inside the 80–130 target. A Patello takes 218 days.
+- **Warehouses:** they don't pay on any selected pair under either market. The bot's rule is limited, and prices that don't change over time give storage little purpose.
+
+**Recommendation: revise E1 rather than implement it.** Test a candidate that narrows demand, so choosing well matters more, and offsets income with a lower price weight rather than slower recovery.
 
 ## Sources
 

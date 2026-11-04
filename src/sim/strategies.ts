@@ -17,6 +17,7 @@ import {
   getGoodPrice,
   getSelectedVesselClass,
   getShipMaximumHull,
+  getShipRouteConditions,
   getShipRoutePreview,
   getTradeQuote,
   getWarehouseUsed,
@@ -27,6 +28,8 @@ import {
   type TownId,
   type VesselClassId,
 } from "../game/model";
+import { planRiverRoute } from "../game/navigation";
+import { getRouteTravelTime } from "../game/travel-time";
 import { sail, send, type Sim } from "./driver";
 
 export interface BotContext {
@@ -654,3 +657,79 @@ export function skilledWithFarms(limit: number): Strategy {
     trade(sim, context);
   };
 }
+
+// ---- Skill checks ----
+
+/**
+ * The strongest rule here: it plans a three-leg tour rather than one round trip, so it can chain
+ * different goods across different ports. It's still only a rule, and it knows every price.
+ */
+function chooseTourStart(sim: Sim): { port: TownId; plan: CargoPlan } | null {
+  const state = sim.state;
+  const vessel = getSelectedVesselClass(state);
+  const ports = TOWNS.map((town) => town.id).filter((port) => !vessel.barredPorts.includes(port));
+  const conditions = getShipRouteConditions(state.navigationConditions, vessel.id);
+  const legs = new Map<string, { profit: number; days: number } | null>();
+  const leg = (from: TownId, to: TownId) => {
+    const key = `${from}>${to}`;
+    if (!legs.has(key)) {
+      const route = planRiverRoute(from, to, conditions);
+      legs.set(
+        key,
+        route && {
+          profit: planCargo(state, from, to, getCargoCapacity(state), state.coins).profit,
+          days: Math.max(MIN_DAYS_FOR_VALUE, getRouteTravelTime(route, false, vessel.travelFactor).durationDays),
+        },
+      );
+    }
+    return legs.get(key)!;
+  };
+  const here = state.currentTown;
+  let best: { port: TownId; value: number } | null = null;
+  for (const first of ports) {
+    if (first === here) continue;
+    const one = leg(here, first);
+    if (!one) continue;
+    for (const second of ports) {
+      if (second === first) continue;
+      const two = leg(first, second);
+      if (!two) continue;
+      for (const third of ports) {
+        if (third === second) continue;
+        const three = leg(second, third);
+        if (!three) continue;
+        const value = (one.profit + two.profit + three.profit) / (one.days + two.days + three.days);
+        if (!best || value > best.value) best = { port: first, value };
+      }
+    }
+  }
+  return best && { port: best.port, plan: planCargo(state, here, best.port, room(state), state.coins) };
+}
+
+export function expertTrader(farmLimit = 0): Strategy {
+  return (sim, context) => {
+    sellCargo(sim, context);
+    repairIfNeeded(sim);
+    if (farmLimit > 0) {
+      workFarm(sim, FARM_RESERVE, farmLimit);
+      sellCargo(sim, context);
+    }
+    const next = chooseTourStart(sim);
+    if (!next) throw new Error("The ship has nowhere to sail.");
+    buyPlan(sim, next.plan);
+    goTo(sim, next.port);
+  };
+}
+
+/** Trades sensibly at each stop but picks its next port blindly, to show what choice is worth. */
+export const uninformedTrader: Strategy = (sim, context) => {
+  sellCargo(sim, context);
+  repairIfNeeded(sim);
+  const state = sim.state;
+  const options = TOWNS.filter(
+    (town) => town.id !== state.currentTown && getShipRoutePreview(state, town.id).travelTime,
+  );
+  const port = options[Math.floor(context.random() * options.length)].id;
+  buyPlan(sim, planCargo(state, state.currentTown, port, room(state), state.coins));
+  goTo(sim, port);
+};
