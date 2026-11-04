@@ -256,7 +256,7 @@ Make city prices meaningfully distinct, and responsive to local supply, demand a
 
 When a city is selected, show its main produced or specialty goods as a hint about what may be cheaper there, without promising a low price. The hint reads the same data that drives prices, so it can't disagree with the market.
 
-- **Today:** in that data, 8 of the 15 towns have no main produced good at all, and Hooghly has 6. Hints built on it now would be empty for over half the map.
+- **Today:** in that data, 9 of the 15 towns have no main produced good at all, and Hooghly has 6. Hints built on it now would be empty for over half the map.
 - **Depends on Feature A,** which should give every town something to show. It should be a small change after that, and any later profile change carries through automatically.
 - **Wording matters:** stock, merchants and the player can all make a "cheap" good dear on the day, so it says "known for", not "cheap here".
 
