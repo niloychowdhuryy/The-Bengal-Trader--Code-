@@ -290,7 +290,7 @@ describe("contracts in saves", () => {
       }),
     };
     const migrated = validateSave(migrateLegacySave(old));
-    expect(migrated.version).toBe(28);
+    expect(migrated.version).toBe(29);
     expect(mission(migrated, "dhaka:visit")).toMatchObject({
       status: "completed",
       rewardCoins: 500,

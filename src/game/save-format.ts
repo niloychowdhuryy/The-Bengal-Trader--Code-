@@ -1897,6 +1897,12 @@ export function migrateLegacySave(value: unknown, now = Date.now()): unknown {
     save = migrateToRouteRunningCosts(save);
   }
 
+  // Towns' prices and usual stock changed, and nothing in a save did. Stalls keep their stock and
+  // drift to their new usual levels by the normal rule.
+  if (save.version === 28) {
+    save = { ...save, version: 29 };
+  }
+
   return save.version === SAVE_VERSION
     ? reanchorPausedVoyage(
         repairPeak(save, "coins", "highestCoins", PROSPEROUS_MERCHANT_COINS),

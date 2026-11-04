@@ -63,21 +63,21 @@ describe("first game screen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open Dhaka market" }));
     expect(screen.getByRole("heading", { name: "Market at Dhaka" })).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 690 Coins" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 600 Coins" }));
     expect(screen.getByRole("group", { name: "Salt buy confirmation" })).toHaveTextContent(
-      "Buy 1 Salt for 690c?",
+      "Buy 1 Salt for 600c?",
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Confirm buy · 690c" }),
+      screen.getByRole("button", { name: "Confirm buy · 600c" }),
     );
-    expect(screen.getByLabelText("Coins 4,310; cargo 4 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coins 4,400; cargo 4 of 12")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Sell Salt for 605 Coins" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sell Salt for 525 Coins" }));
     fireEvent.click(
-      screen.getByRole("button", { name: "Confirm sell · 605c" }),
+      screen.getByRole("button", { name: "Confirm sell · 525c" }),
     );
     await waitFor(() => {
-      expect(screen.getByLabelText("Coins 4,915; cargo 3 of 12")).toBeInTheDocument();
+      expect(screen.getByLabelText("Coins 4,925; cargo 3 of 12")).toBeInTheDocument();
     });
   });
 

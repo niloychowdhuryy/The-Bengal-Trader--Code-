@@ -1,5 +1,5 @@
-// Settings for town specialties, ready for when that feature joins the main game. Nothing reads
-// them yet. Which goods and what evidence stay in towns.ts and city-economic-identities.ts.
+// How town specialties are chosen and worded. Which goods and what evidence are in towns.ts and
+// city-economic-identities.ts.
 import type {
   EconomicIdentityBasis,
   EconomicIdentityConfidence,

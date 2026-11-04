@@ -496,12 +496,12 @@ describe("first playable journey", () => {
   it("buys and sells goods with the displayed local prices", () => {
     const game = createNewGame("Maya");
     const bought = buyGood(game, "salt");
-    expect(bought.state.coins).toBe(4_310);
+    expect(bought.state.coins).toBe(4_400);
     expect(bought.state.cargo.salt).toBe(1);
     const sold = sellGood(bought.state, "salt");
-    expect(sold.state.coins).toBe(4_915);
+    expect(sold.state.coins).toBe(4_925);
     expect(sold.state.cargo.salt).toBe(0);
-    expect(getGoodPrice("dhaka", "salt", "sell", false, 59)).toBe(605);
+    expect(getGoodPrice("dhaka", "salt", "sell", false, 59)).toBe(525);
     expect(sellGood(game, "salt").error).toBe("empty");
   });
 
@@ -1108,14 +1108,14 @@ describe("first playable journey", () => {
       dhaka: {
         ...starting.marketStock.dhaka,
         rice: 10,
-        salt: 90,
+        lac: 90,
       },
     };
     const recovered = advanceMarketStock(alteredStock, 1.9);
 
-    // One whole day. Rice closes 8% of its gap, and Dhaka, a big salt buyer, 12% of its surplus.
+    // One whole day. Rice closes 8% of its gap, and Dhaka, a big lac buyer, 12% of its surplus.
     expect(recovered.dhaka.rice).toBe(14);
-    expect(recovered.dhaka.salt).toBe(86);
+    expect(recovered.dhaka.lac).toBe(86);
     expect(recovered.dhaka.muslin).toBe(
       starting.marketStock.dhaka.muslin,
     );
@@ -1270,7 +1270,7 @@ describe("first playable journey", () => {
     }
 
     expect(market.marketStock.dhaka.rice).toBe(55);
-    expect(getGoodPrice("dhaka", "rice", "buy", false, 55)).toBe(485);
+    expect(getGoodPrice("dhaka", "rice", "buy", false, 55)).toBe(455);
 
     const seller = {
       ...createNewGame("Maya"),
@@ -1291,7 +1291,7 @@ describe("first playable journey", () => {
     }
 
     expect(afterSales.marketStock.dhaka.salt).toBe(65);
-    expect(getGoodPrice("dhaka", "salt", "sell", false, 65)).toBe(565);
+    expect(getGoodPrice("dhaka", "salt", "sell", false, 65)).toBe(495);
     expect(buyGood({ ...market, marketStock: { ...market.marketStock, dhaka: { ...market.marketStock.dhaka, rice: 0 } } }, "rice").error).toBe("out-of-stock");
   });
 
@@ -1532,8 +1532,8 @@ describe("first playable journey", () => {
     expect(travel.voyage?.durationDays).toBe(
       (travel.voyage!.arrivalAt - travel.voyage!.startedAt) / 60_000,
     );
-    expect(getGoodPrice("chittagong", "salt", "buy", true)).toBe(990);
-    expect(getGoodPrice("chittagong", "salt", "sell", true)).toBe(860);
+    expect(getGoodPrice("chittagong", "salt", "buy", true)).toBe(805);
+    expect(getGoodPrice("chittagong", "salt", "sell", true)).toBe(700);
 
     const alertOver = { ...game, sailingDay: 36 };
     expect(isHistoricalRouteAlertActive(alertOver)).toBe(false);
@@ -1728,6 +1728,8 @@ describe("first playable journey", () => {
   it("pauses, resumes, edits, and cancels docked routes without bypassing travel", () => {
     const purchased = buyPlayerShip({
       ...createNewGame("Maya"),
+      npcMerchants: [],
+      npcActivity: [],
       coins: 150_000,
       visitedTowns: ["dhaka", "sonargaon"],
     }).state;

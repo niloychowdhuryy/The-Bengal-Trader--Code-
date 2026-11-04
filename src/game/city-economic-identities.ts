@@ -266,7 +266,7 @@ export const CITY_ECONOMIC_IDENTITIES: Record<
       ),
       silk: assumed(
         "aggregation-through-trade",
-        "Raw silk is part of Bengal's export trade; abundant Hooghly stock is an aggregation assumption.",
+        "Raw silk is part of Bengal's export trade; strong Hooghly demand is a market-design assumption.",
         ["S1", "S4", "S14"],
         "medium",
       ),
@@ -477,7 +477,7 @@ export const CITY_ECONOMIC_IDENTITIES: Record<
       ),
       salt: assumed(
         "import-dependency",
-        "The profile's salt scarcity is not evidence that Sandwip produced salt; local source status remains unverified.",
+        "The profile's plentiful salt is not evidence that Sandwip produced salt; local source status remains unverified.",
         ["S7"],
       ),
       muslin: assumed(

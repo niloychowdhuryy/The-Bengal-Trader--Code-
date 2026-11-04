@@ -1224,3 +1224,13 @@ button.rank-line { cursor: pointer; }
   .cloud-shadow, .cloud-wisp, .map-birds { animation: none !important; }
   .map-birds { display: none; }
 }
+
+/* Town specialties */
+.town-specialties { margin-top: 7px; padding: 5px 9px; border-left: 3px solid var(--paper-line); color: var(--ink-soft); font-size: 14px; line-height: 1.35; }
+.town-specialties strong { color: var(--ink); }
+.town-specialty { display: inline-block; max-width: 100%; margin-right: 4px; }
+.town-specialties em { font-size: 12.5px; opacity: 0.85; }
+.town-specialties-unknown { font-style: italic; }
+.port-context-panel > .town-specialties { margin-top: 6px; padding: 2px 8px; font-size: 13.5px; }
+.city-scene-note { position: absolute; top: calc(10px + 62px); left: 10px; z-index: 2; pointer-events: none; max-width: min(300px, 72%); }
+.city-scene-note .town-specialties { margin: 0; padding: 5px 9px; border: 1px solid var(--paper-line); border-left-width: 3px; border-radius: 3px; background: var(--paper, #f4ead4); font-size: 13px; }

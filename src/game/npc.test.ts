@@ -350,9 +350,12 @@ describe("a merchant's day", () => {
       ),
     };
     const later = runDays(costly, 3).npcMerchants.find((merchant) => merchant.id === "tara-devi")!;
-    expect(later.cargo.silk).toBe(0);
+    expect(later.cargo.silk).toBeLessThan(3);
     expect(later.budget).toBeGreaterThan(5);
     expect(later.realizedProfit).toBeLessThan(0);
+    // Whatever's left goes too, once it's been held too long to wait for a better price.
+    const sold = runDays(costly, 12).npcMerchants.find((merchant) => merchant.id === "tara-devi")!;
+    expect(sold.cargoCost.silk).toBeLessThan(100_000);
   });
 
   it("has no purse limit: a sale to the player is kept in full", () => {
@@ -437,7 +440,7 @@ describe("moving a version 22 save to the living merchants", () => {
   it("adds 22 merchants, and leaves the player's game alone", () => {
     const old = version22();
     const game = validateSave(old, T0);
-    expect(game.version).toBe(28);
+    expect(game.version).toBe(29);
     expect(game.npcMerchants).toHaveLength(26);
     expect(isValidGameState(game)).toBe(true);
     expect(game.coins).toBe(73_450);
@@ -494,7 +497,7 @@ describe("moving a version 22 save to the living merchants", () => {
       };
     });
     const session = await openGameSession(T0);
-    expect(session.game?.version).toBe(28);
+    expect(session.game?.version).toBe(29);
     expect((await readSaveBackup("save-backup:migration:v22"))?.save).toEqual(old);
     expect((await listSaveBackups()).map((backup) => backup.saveVersion)).toEqual([22]);
   });

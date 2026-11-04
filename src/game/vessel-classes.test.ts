@@ -121,7 +121,7 @@ describe("vessel classes", () => {
 
   it("starts new games with an unchanged River boat", () => {
     const game = createNewGame("Maya");
-    expect(game.version).toBe(28);
+    expect(game.version).toBe(29);
     expect(game.fleet[0].vesselClass).toBe("river-boat");
     expect(getCargoCapacity(game)).toBe(12);
     expect(getShipMaximumHull(game)).toBe(8);
@@ -695,7 +695,7 @@ describe("version 19 saves", () => {
 
     vi.spyOn(Date, "now").mockReturnValue(9_000_000_000);
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(28);
+    expect(restored.version).toBe(29);
     expect(restored.coins).toBe(voyage.coins);
     expect(restored.highestCoins).toBe(voyage.highestCoins);
     restored.fleet.forEach((ship, index) => {
@@ -836,7 +836,7 @@ describe("version 19 saves", () => {
       }),
     );
     const restored = (await loadGame())!;
-    expect(restored.version).toBe(28);
+    expect(restored.version).toBe(29);
     expect(restored.highestCoins).toBe(14_000);
     expect(restored.completedMilestones).toContain("prosperous_merchant");
   });

@@ -3,7 +3,7 @@
 import type { MarketTier } from "../model";
 
 /** How far each step between a town's demand and supply tiers moves its price. */
-export const MARKET_PRICE_WEIGHT = 0.15;
+export const MARKET_PRICE_WEIGHT = 0.08;
 
 export const MARKET_TARGET_STOCK = 60;
 export const MARKET_SUPPLY_TIER_STOCK = 12;

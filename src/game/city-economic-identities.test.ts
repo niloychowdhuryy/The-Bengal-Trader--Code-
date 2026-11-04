@@ -117,7 +117,7 @@ describe("city economic identity data", () => {
     const initialStock = createInitialMarketStock();
     expect(initialStock.dhaka.muslin).toBe(72);
     expect(initialStock.patna.saltpetre).toBe(72);
-    expect(initialStock.sandwip.salt).toBe(48);
+    expect(initialStock.sandwip.salt).toBe(72);
 
     expect(getMarketSupply("dhaka", "muslin")).toBe(3);
     expect(getMarketDemand("dhaka", "rice")).toBe(3);
@@ -129,7 +129,7 @@ describe("city economic identity data", () => {
         false,
         initialStock.dhaka.muslin,
       ),
-    ).toBe(900);
+    ).toBe(975);
     expect(
       getGoodPrice(
         "kasimbazar",
@@ -138,7 +138,7 @@ describe("city economic identity data", () => {
         false,
         initialStock.kasimbazar.silk,
       ),
-    ).toBe(1200);
+    ).toBe(1185);
     expect(
       getGoodPrice(
         "patna",
@@ -147,7 +147,7 @@ describe("city economic identity data", () => {
         false,
         initialStock.patna.saltpetre,
       ),
-    ).toBe(795);
+    ).toBe(665);
     expect(
       getGoodPrice(
         "hooghly",
@@ -156,9 +156,9 @@ describe("city economic identity data", () => {
         false,
         initialStock.hooghly.saltpetre,
       ),
-    ).toBe(795);
+    ).toBe(730);
     expect(
       getGoodPrice("chittagong", "salt", "buy", true),
-    ).toBe(990);
+    ).toBe(805);
   });
 });

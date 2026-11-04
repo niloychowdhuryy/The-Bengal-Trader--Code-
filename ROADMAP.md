@@ -245,6 +245,8 @@ These are separate features, not part of the completed economy rebalance. None i
 
 ### Feature A: distinct and responsive city prices
 
+**Status: in the main game from save version 29,** as the tested N1 market. See [MARKET_IDENTITY_PROPOSAL.md](./MARKET_IDENTITY_PROPOSAL.md).
+
 Make city prices meaningfully distinct, and responsive to local supply, demand and trading activity.
 
 - **Today:** at a new game, opium and lac each have only 2 different prices across the 15 ports, and salt and sugar have 3. The dearest port charges 1.3–1.8× the cheapest for any good. Prices already respond to stock, but in the benchmark runs only about 13–15 of 120 stalls sit 5% or more from their starting price.
@@ -254,6 +256,8 @@ Make city prices meaningfully distinct, and responsive to local supply, demand a
 
 ### Feature B: specialty hints when a city is selected
 
+**Status: in the main game.** The City, Map and Market screens show "Known for" once a town has been visited, with assumptions labelled. The notes below are the original plan.
+
 When a city is selected, show its main produced or specialty goods as a hint about what may be cheaper there, without promising a low price. The hint reads the same data that drives prices, so it can't disagree with the market.
 
 - **Today:** in that data, 9 of the 15 towns have no main produced good at all, and Hooghly has 6. Hints built on it now would be empty for over half the map.
@@ -262,7 +266,7 @@ When a city is selected, show its main produced or specialty goods as a hint abo
 
 ### Feature C: reroute or cancel a voyage under way
 
-Let the player reroute or cancel a voyage while it's under way, with clear consequences and no duplicated travel, cargo or costs.
+**Status: not started.** The player must be able to reroute or cancel a voyage at any point, keeping the ship's actual position and the journey time already spent, with clear consequences and no duplicated travel, cargo or costs.
 
 - **Independent of the other two,** and it doesn't change prices.
 - **Main difficulty:** the route planner only works from port to port, and a ship can be mid-river or on a cart road. Planning from there is new work, unless the first version only turns back along the path already travelled.

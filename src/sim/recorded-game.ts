@@ -150,19 +150,19 @@ export function playRecordedGame(): Sim {
   send(sim, { type: "changeVoyageSpeed", speed: 1 });
   arrive(sim);
 
-  // Hooghly: the fleet. The Bora takes a route to Balasore, where a Patello can't follow.
+  // Hooghly: the fleet. The Bora takes a route to Sylhet, where a Patello can't follow.
   send(sim, { type: "sellGood", good: "muslin", quantity: sim.state.cargo.muslin });
   send(sim, { type: "buyShip", vesselClass: "bora" });
   send(sim, { type: "buyShip", vesselClass: "patello" });
   const bora = sim.state.fleet[1].id;
   const patello = sim.state.fleet[2].id;
   // Routes can only name ports the captain has already seen.
-  sailChecked(sim, "balasore");
+  sailChecked(sim, "sylhet");
   sailChecked(sim, "hooghly");
   send(sim, {
     type: "configureRoute",
     shipId: bora,
-    destination: "balasore",
+    destination: "sylhet",
     // Any good that pays, because a route only sails when the journey is worth making.
     rules: routeRules(sim.state, "hooghly", "balasore"),
     initialCapital: 7_500,
@@ -173,13 +173,13 @@ export function playRecordedGame(): Sim {
   send(sim, { type: "repairShip" });
   sailChecked(sim, "hooghly");
 
-  // Short hops until the Bora is docked at Balasore, then call it back with an order.
+  // Short hops until the Bora is docked at Sylhet, then call it back with an order.
   let guard = 0;
-  const boraAtBalasore = () => {
+  const boraAtFarEnd = () => {
     const ship = sim.state.fleet.find((entry) => entry.id === bora)!;
-    return ship.currentPort === "balasore" && ship.automatedRoute?.phase === "docked";
+    return ship.currentPort === "sylhet" && ship.automatedRoute?.phase === "docked";
   };
-  while (!boraAtBalasore()) {
+  while (!boraAtFarEnd()) {
     checked("waiting for the Bora", guard < 200);
     guard += 1;
     sailChecked(sim, sim.state.currentTown === "hooghly" ? "satgaon" : "hooghly");

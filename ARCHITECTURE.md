@@ -127,7 +127,7 @@ Values that get adjusted live in `src/game/config/`, and only there. Game rules 
 | `ships.ts` | Ship classes, running costs, upgrades, combat |
 | `travel.ts` | Day length, voyage limit, speeds, cart times, travel events |
 | `merchants.ts` | How rival merchants judge a trade |
-| `specialties.ts` | Town specialty rules and wording. Nothing reads this yet |
+| `specialties.ts` | Town specialty rules and wording |
 | `features.ts` | Display switches. Only screens may read these |
 
 `src/game/config/validate.ts` lists anything out of range, and `config.test.ts` fails if it finds a problem.

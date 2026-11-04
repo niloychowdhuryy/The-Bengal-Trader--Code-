@@ -1008,7 +1008,7 @@ export interface UpgradeDefinition {
 }
 
 
-export const SAVE_VERSION = 28;
+export const SAVE_VERSION = 29;
 
 /** Whole Coins with thousands separators, the same on every device. */
 export function formatCoins(amount: number): string {

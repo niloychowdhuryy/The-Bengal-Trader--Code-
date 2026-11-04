@@ -34,8 +34,11 @@ interface Setup {
   stock?: Partial<Record<TownId, Partial<Record<GoodId, number>>>>;
 }
 
+// Hooghly and Tanda have nothing that pays by itself, so a shortage at Tanda makes this route worth sailing.
+const TANDA_SHORT_OF_OPIUM = { tanda: { opium: 40 } };
+
 /** A second ship in Hooghly, on a route to Tanda, with no merchants to move prices around. */
-function routeGame({ vessel = "bora", rules = twoWay("silk"), capital = 15_000, stock = {} }: Setup = {}): GameState {
+function routeGame({ vessel = "bora", rules = twoWay("opium"), capital = 15_000, stock = TANDA_SHORT_OF_OPIUM }: Setup = {}): GameState {
   const rich: GameState = {
     ...createNewGame("Maya", 8),
     npcMerchants: [],
@@ -83,7 +86,7 @@ describe("when a route sails", () => {
     expect(outlook.margin).toBeGreaterThanOrEqual(ROUTE_MINIMUM_MARGIN);
     const ship = shipOf(daysPass(start, 1));
     expect(ship.automatedRoute).toMatchObject({ phase: "traveling", destinationPort: "tanda", waiting: null });
-    expect(ship.cargo.silk).toBeGreaterThan(0);
+    expect(ship.cargo.opium).toBeGreaterThan(0);
   });
 
   it("waits, buying nothing, when no selected good would make the margin", () => {
@@ -179,7 +182,7 @@ describe("running costs", () => {
       const before = shipOf(start).automatedRoute!.capital;
       const next = shipOf(daysPass(start, 1));
       const route = next.automatedRoute!;
-      const goodsPaid = next.averagePurchasePrice.silk * next.cargo.silk;
+      const goodsPaid = next.averagePurchasePrice.opium * next.cargo.opium;
       expect(route.runningCostPaid).toBe(DAILY_RUNNING_COST[vessel] * route.travelDaysTotal);
       expect(route.capital).toBeCloseTo(before - goodsPaid - route.runningCostPaid, 5);
     }
@@ -220,10 +223,10 @@ describe("a route short of Coins", () => {
   });
 
   it("only buys what its Coins can cover after the round trip's running cost", () => {
-    const silkPrice = getGoodPrice("hooghly", "silk", "buy", true, createNewGame("x").marketStock.hooghly.silk);
-    const start = routeGame({ capital: silkPrice + 400 });
+    const opiumPrice = getGoodPrice("hooghly", "opium", "buy", true, createNewGame("x").marketStock.hooghly.opium);
+    const start = routeGame({ capital: opiumPrice + 400 });
     const ship = shipOf(daysPass(start, 1));
-    expect(ship.cargo.silk).toBe(1);
+    expect(ship.cargo.opium).toBe(1);
     expect(ship.automatedRoute!.capital).toBeGreaterThanOrEqual(0);
   });
 
@@ -257,29 +260,38 @@ describe("what a route carries", () => {
     expect(VESSEL_CLASSES.bora.routeUnitsPerGood).toBe(3);
     expect(VESSEL_CLASSES.patello.routeUnitsPerGood).toBe(12);
     const ship = shipOf(daysPass(routeGame({ vessel: "river-boat" }), 1));
-    expect(ship.cargo.silk).toBe(3);
+    expect(ship.cargo.opium).toBe(3);
   });
 
   it("stops at the ship's hold", () => {
-    const start = routeGame({ rules: twoWay("silk", "muslin", "sugar", "rice", "opium") });
+    const start = routeGame({
+      rules: twoWay("silk", "muslin", "sugar", "rice", "opium"),
+      stock: { tanda: { silk: 20, muslin: 20, sugar: 20, rice: 20, opium: 40 } },
+    });
     const ship = shipOf(daysPass(start, 1));
     expect(held(ship)).toBeLessThanOrEqual(ship.cargoCapacity);
     expect(held(ship)).toBe(VESSEL_CLASSES.bora.baseHold);
   });
 
   it("buys the best-paying goods first, not the order they were ticked", () => {
-    const start = routeGame({ rules: twoWay("sugar", "silk") });
-    expect(planRouteJourney(start, shipOf(start))!.outbound.units.silk).toBe(3);
+    const start = routeGame({
+      rules: twoWay("saltpetre", "opium"),
+      capital: 5_500,
+      stock: { tanda: { opium: 40, saltpetre: 40 } },
+    });
+    expect(planRouteJourney(start, shipOf(start))!.outbound.units.opium).toBe(3);
   });
 
   it("stops buying a good once the price it has pushed up would lose the margin", () => {
-    const start = routeGame({ vessel: "patello", rules: twoWay("rice") });
+    const start = routeGame({ vessel: "patello", rules: twoWay("opium"), capital: 100_000, stock: { tanda: { opium: 50 } } });
     const outlook = planRouteJourney(start, shipOf(start))!;
-    let stock = start.marketStock.hooghly.rice;
-    let sold = start.marketStock.tanda.rice;
-    for (let unit = 0; unit < (outlook.outbound.units.rice ?? 0); unit += 1) {
-      const buy = getGoodPrice("hooghly", "rice", "buy", true, stock);
-      const sell = getGoodPrice("tanda", "rice", "sell", true, sold);
+    expect(outlook.outbound.units.opium).toBeGreaterThan(0);
+    expect(outlook.outbound.units.opium).toBeLessThan(VESSEL_CLASSES.patello.routeUnitsPerGood);
+    let stock = start.marketStock.hooghly.opium;
+    let sold = start.marketStock.tanda.opium;
+    for (let unit = 0; unit < (outlook.outbound.units.opium ?? 0); unit += 1) {
+      const buy = getGoodPrice("hooghly", "opium", "buy", true, stock);
+      const sell = getGoodPrice("tanda", "opium", "sell", true, sold);
       expect(sell).toBeGreaterThanOrEqual(buy * (1 + ROUTE_MINIMUM_MARGIN));
       stock -= 1;
       sold += 1;
@@ -293,15 +305,15 @@ describe("what a route carries", () => {
       ...state,
       fleet: state.fleet.map((ship) =>
         ship.id === SHIP
-          ? { ...ship, cargo: { ...NO_GOODS, silk: 3 }, averagePurchasePrice: { ...NO_GOODS, silk: 9_000 } }
+          ? { ...ship, cargo: { ...NO_GOODS, opium: 3 }, averagePurchasePrice: { ...NO_GOODS, opium: 9_000 } }
           : ship,
       ),
     });
-    // Silk sells for more at Tanda, so that's where the loss is taken.
-    expect(shipOf(daysPass(costly(atTanda), 1)).cargo.silk).toBe(0);
+    // Opium sells for more at Tanda, so that's where the loss is taken.
+    expect(shipOf(daysPass(costly(atTanda), 1)).cargo.opium).toBe(0);
     // Hooghly pays less, so the ship carries it on rather than selling here.
     const atHooghly = daysPass(costly(start), 1);
-    expect(shipOf(atHooghly).cargo.silk).toBeGreaterThanOrEqual(3);
+    expect(shipOf(atHooghly).cargo.opium).toBeGreaterThanOrEqual(3);
     expect(shipOf(atHooghly).automatedRoute!.phase).toBe("traveling");
   });
 
@@ -324,7 +336,7 @@ describe("what a route carries", () => {
   it("takes prices from stock shared with the player", () => {
     const start = routeGame();
     const next = daysPass(start, 1);
-    expect(next.marketStock.hooghly.silk).toBeLessThan(start.marketStock.hooghly.silk);
+    expect(next.marketStock.hooghly.opium).toBeLessThan(start.marketStock.hooghly.opium);
     expect(sellGood(next, "rice", 1).state.coins).toBeGreaterThan(next.coins);
   });
 });
@@ -340,6 +352,16 @@ describe("routes in saves", () => {
     expect(shipOf(again).automatedRoute!.runningCostPaid).toBeGreaterThan(0);
   });
 
+  it("wait with their Coins intact, and say why, when the goods they were set up with stop paying", () => {
+    // Silk from Hooghly to Tanda was among the best routes before version 29.
+    const start = routeGame({ rules: twoWay("silk"), stock: {} });
+    const ship = shipOf(daysPass(start, 1));
+    expect(ship.automatedRoute).toMatchObject({ phase: "docked", capital: 15_000, runningCostPaid: 0 });
+    expect(ship.automatedRoute!.waiting?.reason).toBe("margin");
+    expect(ship.automationLog.at(-1)?.message).toContain("no round trip would make");
+    expect(cancelAutomatedTradeRoute(daysPass(start, 1), SHIP).error).toBeUndefined();
+  });
+
   it("upgrade from version 27 owing nothing, and keep trading", () => {
     const start = routeGame();
     const old = {
@@ -353,7 +375,7 @@ describe("routes in saves", () => {
       }),
     };
     const migrated = validateSave(migrateLegacySave(old));
-    expect(migrated.version).toBe(28);
+    expect(migrated.version).toBe(29);
     expect(shipOf(migrated).automatedRoute).toMatchObject({ capital: 15_000, runningCostPaid: 0, waiting: null });
     expect(shipOf(daysPass(migrated, 1)).automatedRoute!.phase).toBe("traveling");
   });

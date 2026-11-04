@@ -2,6 +2,6 @@
 // rules would stop saved games replaying, so rule changes ship with a new save version instead.
 
 export const FEATURES = {
-  /** Not built into the main game yet. */
-  townSpecialties: false,
+  /** Shows what each town is known for on the City, Map and Market screens. */
+  townSpecialties: true,
 } as const;

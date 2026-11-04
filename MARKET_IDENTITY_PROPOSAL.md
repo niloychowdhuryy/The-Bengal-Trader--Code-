@@ -1,6 +1,6 @@
 # Feature A: distinct and responsive city prices
 
-**Status:** investigation and design only, awaiting the owner's approval. E1 below is a candidate, not an approved design, and the harness check at the end recommends revising it. No game rule, price, save or screen has changed. Investigated on 4 November 2026 from commit `d3881d3`, save version 28. All candidates ran in temporary copies, since removed, and the committed records are untouched.
+**Status:** N1, described under "Revised candidates", is in the main game from save version 29. E1 and N2 were not used. The sections before it are the investigation as it happened.
 
 ## Summary
 
@@ -221,6 +221,49 @@ Run with `src/sim/market-check.ts`, on 5 seeds. Existing bots and benchmark reco
 - **Warehouses:** they don't pay on any selected pair under either market. The bot's rule is limited, and prices that don't change over time give storage little purpose.
 
 **Recommendation: revise E1 rather than implement it.** Test a candidate that narrows demand, so choosing well matters more, and offsets income with a lower price weight rather than slower recovery.
+
+## Revised candidates: narrow demand
+
+Tested from commit `1fb128b` in a temporary copy, on the same 5 seeds. The control matched the committed v28 record exactly, and E1 matched its earlier run. Neither candidate is approved.
+
+**The profile starts from E1 and only removes "wants".** Supply and "little need" stay the same, so strong demand across the map falls from 43 town-and-good pairs to 24. The goods wanted strongly in the most towns fall the furthest:
+
+| Good | Towns wanting it strongly, E1 | Narrow profile | Which towns |
+|---|---:|---:|---|
+| Rice | 7 | 4 | Dhaka, Kasimbazar, Chittagong, Tanda |
+| Salt | 11 | 5 | Kasimbazar, Sylhet, Malda, Jessore, Patna |
+| Cotton textiles | 12 | 5 | Hooghly, Satgaon, Rajmahal, Balasore, Patna |
+| Silk | 5 | 3 | Sonargaon, Hooghly, Patna |
+| Sugar | 5 | 4 | Chittagong, Sylhet, Sandwip, Bakla-Chandradwip |
+| Saltpetre | 1 | 1 | Malda |
+| Lac | 2 | 2 | Dhaka, Tanda |
+| Opium | 0 | 0 | – |
+
+The demand choices remain gameplay assumptions. Both candidates use a price weight of 0.08. **N1** keeps today's recovery, and **N2** runs at 85% of it, with today's daily minimum flow in both.
+
+| Measure | Current | E1 | N1 | N2 |
+|---|---:|---:|---:|---:|
+| Expert against basic, day 200 / 400 / 800 | 2.89 / 3.04 / 3.15 | 1.45 / 1.37 / 1.38 | 1.33 / 1.38 / 1.45 | 1.50 / 1.45 / 1.48 |
+| Skilled against basic, day 200 / 400 | 2.96 / 3.15 | 1.20 / 1.16 | 1.11 / 1.18 | 1.14 / 1.21 |
+| Expert against mixed, day 200 / 400 | 1.83 / 1.29 | 1.23 / 1.06 | 1.64 / 1.21 | 1.61 / 1.27 |
+| Expert against random port choice, day 200 / 400 | 4.59 / 5.42 | 2.96 / 3.31 | 3.61 / 4.00 | 3.60 / 4.19 |
+| Farm circuit against expert, day 200 / 400 / 800 | 0.51 / 1.45 / 2.10 | 1.27 / 1.92 / 2.28 | 0.94 / 1.63 / 1.96 | 1.02 / 1.66 / 2.04 |
+| Halfway recovery (target 5–12 days) | 6–12 | 10–20 | **6–12** | 7–14 |
+| Stalls 5%+ from start, mixed, day 200, of 120 | 13 | 30 | 17 | 16 |
+| Contracts' share of mixed income, day 200 | 40.8% | 28.6% | 35.0% | 34.2% |
+| Merchant wealth against the v25 baseline | +1% | +8.7% | +4.7% | +5.1% |
+| Median route, Coins a day | 35 | 49 | 8 | 9 |
+| Targets met, of 20 | 14 | 11 | 11 | 10 |
+
+**Findings:**
+
+- **N1 restores the recovery target and keeps merchants within 5%,** but visible price movement falls most of the way back to today's level.
+- **N2 gains nothing measurable over N1.** Its small differences sit inside the spread between seeds, and it misses the recovery target.
+- **Expert play is about level with today, and basic play has about doubled.** The narrower gap comes from the floor rising, and the provisional 1.5–2× goal for expert against basic isn't reliably met.
+- **Informed choice pays:** expert against random port choice is 3.61× at day 200 against E1's 2.96×. The basic bot gains too, because it weighs every port's live prices, while the game's market screen shows a player only the current port's.
+- **Routes concentrate:** half of the shipyard routes now earn about 8 Coins a day or less, and 3 of the top 6 repeated pairs involve Patna.
+
+**Recommendation: don't implement N1 or N2 yet.** N1 is the better starting point of the two, and N2 should be dropped. Further tuning of weights wouldn't answer the main question, which is how much of the basic bot's rise a real player would capture. The next test should be a harness-only bot that knows only the prices it has seen, run on the current game, E1 and N1 with no new market values.
 
 ## Sources
 

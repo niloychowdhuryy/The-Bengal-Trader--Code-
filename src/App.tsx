@@ -66,6 +66,7 @@ import {
   type GameState,
   type AutomatedTradeRule,
   type GoodId,
+  type MarketPortId,
   type Mission,
   type PlayerShip,
   type Screen,
@@ -75,6 +76,9 @@ import {
   type VesselClass,
   type VesselClassId,
 } from "./game/model";
+import { FEATURES } from "./game/config/features";
+import { TOWN_SPECIALTY_SETTINGS } from "./game/config/specialties";
+import { getTownSpecialties, isTownSpecialtyDiscovered } from "./game/town-specialties";
 import { createAccountService, type AccountStatus } from "./online/account";
 import { APP_VERSION, getOnlineConfig, getProblemReportUrl } from "./online/config";
 import { applyCommand, type CommandResult, type GameCommand, type RecordedCommand } from "./game/commands";
@@ -607,6 +611,22 @@ function HistoricalEventCard({ state }: { state: GameState }) {
   );
 }
 
+function TownSpecialties({ state, town }: { state: GameState; town: MarketPortId }) {
+  if (!FEATURES.townSpecialties || !isTownSpecialtyDiscovered(state, town)) return null;
+  return (
+    <p className="town-specialties">
+      <strong>{TOWN_SPECIALTY_SETTINGS.heading}</strong>{" "}
+      {getTownSpecialties(town).map((specialty, index, specialties) => (
+        <span className="town-specialty" key={specialty.good}>
+          {specialty.name}
+          {!specialty.supported && <em> {TOWN_SPECIALTY_SETTINGS.assumptionLabel}</em>}
+          {index < specialties.length - 1 && ", "}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function MarketPanel({
   state,
   onBuy,
@@ -644,6 +664,7 @@ function MarketPanel({
           stalls drift back toward their usual stock.
         </p>
       </div>
+      <TownSpecialties state={state} town={state.currentTown} />
       {eventIsActive && (
         <div className="market-alert">
           <span className="market-alert-seal">!</span>
@@ -1278,6 +1299,7 @@ function PortContextPanel({
           <span aria-hidden="true">→</span>
         </button>
       </div>
+      <TownSpecialties state={state} town={destination.id} />
       {expanded && (
         <div className="port-context-copy" id="port-panel-details">
           <span className="eyebrow">{isHere ? "YOUR CURRENT PORT" : "RIVER ROUTE"}</span>
@@ -1302,6 +1324,9 @@ function PortContextPanel({
               ? ` Latest: ${getNpcMerchant(state, recentPortActivity.merchantId)?.name ?? "A merchant"} ${recentPortActivity.message}.`
               : ""}
           </p>
+          {FEATURES.townSpecialties && !isTownSpecialtyDiscovered(state, destination.id) && (
+            <p className="town-specialties town-specialties-unknown">{TOWN_SPECIALTY_SETTINGS.undiscoveredMessage}</p>
+          )}
         </div>
       )}
     </section>
@@ -1472,8 +1497,8 @@ function AutomatedRoutePanel({
               {existingRoute.waiting.reason === "coins"
                 ? `Waiting at ${getTown(ship.currentPort).name}: this route doesn't have the Coins for its next voyage. Cancel the route and start it again with more capital.`
                 : existingRoute.waiting.expectedMargin === null
-                  ? `Waiting at ${getTown(ship.currentPort).name}: no selected good would make ${Math.round(ROUTE_MINIMUM_MARGIN * 100)}% on this route right now. It sails when prices improve.`
-                  : `Waiting at ${getTown(ship.currentPort).name}: the next round trip would make about ${Math.round(existingRoute.waiting.expectedMargin * 100)}% after running costs, below the ${Math.round(ROUTE_MINIMUM_MARGIN * 100)}% it needs. It sails when prices improve.`}
+                  ? `Waiting at ${getTown(ship.currentPort).name}: no selected good would make ${Math.round(ROUTE_MINIMUM_MARGIN * 100)}% on this route right now. It sails if prices improve. If it keeps waiting, these goods or ports may no longer pay: cancel the route to try others.`
+                  : `Waiting at ${getTown(ship.currentPort).name}: the next round trip would make about ${Math.round(existingRoute.waiting.expectedMargin * 100)}% after running costs, below the ${Math.round(ROUTE_MINIMUM_MARGIN * 100)}% it needs. It sails if prices improve. If it keeps waiting, these goods or ports may no longer pay: cancel the route to try others.`}
             </p>
           )}
           <p>
@@ -3091,6 +3116,7 @@ export default function App() {
           {cityEntered && (
             <CityScene
               townName={town.name}
+              plaqueNote={screen === "city" ? <TownSpecialties state={game} town={game.currentTown} /> : null}
               selectedBuilding={selectedBuilding}
               onSelectBuilding={(building) => {
                 if (!atDock) return;

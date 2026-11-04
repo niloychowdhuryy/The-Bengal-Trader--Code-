@@ -67,7 +67,7 @@ describe("playing through the interface", () => {
     await screen.findByRole("heading", { name: "The Bengal Trader" });
 
     fireEvent.click(screen.getByRole("button", { name: "Open Dhaka market" }));
-    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 690 Coins" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy Salt for 600 Coins" }));
     fireEvent.click(screen.getByRole("button", { name: /Confirm buy/ }));
     fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
     fireEvent.click(mapPort(/^Sylhet/));

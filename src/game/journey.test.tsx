@@ -196,7 +196,7 @@ describe("existing saves", () => {
   it("moves a version 19 voyage onto the new network, keeping its progress and cargo", () => {
     const saved = fixture as unknown as GameState;
     const game = validateSave(fixture, T0);
-    expect(game.version).toBe(28);
+    expect(game.version).toBe(29);
     expect(isValidGameState(game)).toBe(true);
     expect(game.cargo).toEqual(saved.cargo);
     expect(game.coins).toBe(fixture.gold * 50);
@@ -231,7 +231,7 @@ describe("existing saves", () => {
       ),
     };
     const migrated = validateSave(asOld, T0);
-    expect(migrated.version).toBe(28);
+    expect(migrated.version).toBe(29);
     for (const merchant of migrated.npcMerchants) {
       if (merchant.phase === "traveling") {
         expect(merchant.travelDaysRemaining).toBeLessThanOrEqual(merchant.travelDaysTotal);

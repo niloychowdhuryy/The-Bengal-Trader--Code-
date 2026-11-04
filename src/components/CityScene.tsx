@@ -33,6 +33,8 @@ const PORTRAIT_WIDTH = 800;
 
 interface CitySceneProps {
   townName: string;
+  /** Shown just beneath the town's name plaque. */
+  plaqueNote?: ReactNode;
   selectedBuilding: CityBuildingId | null;
   onSelectBuilding: (building: CityBuildingId) => void;
 }
@@ -389,6 +391,7 @@ function CityBuildingLabel({
 
 export default function CityScene({
   townName,
+  plaqueNote,
   selectedBuilding,
   onSelectBuilding,
 }: CitySceneProps) {
@@ -454,6 +457,7 @@ export default function CityScene({
         <strong>{townName}</strong>
         <span>Illustrated town</span>
       </div>
+      {plaqueNote && <div className="city-scene-note">{plaqueNote}</div>}
     </section>
   );
 }
