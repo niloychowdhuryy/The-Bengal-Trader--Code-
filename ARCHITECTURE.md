@@ -115,6 +115,10 @@ A save from a later version raises `NewerSaveError`: the game asks for a reload 
 
 The `dist/` folder contains the production build and generated service worker.
 
+## Telling players about a market change
+
+`openGameSession` sets `notice:market-v29` in the same transaction as an upgrade from before version 29, and `dismissMarketNotice` clears it. So the notice shows once, even if the game closes before it's read, and nothing is added to the game state. `countWaitingRoutes` drives the marker on every screen.
+
 ## Changing game values
 
 Values that get adjusted live in `src/game/config/`, and only there. Game rules and screens read them, and config files import nothing at run time, so they can't create a circular import. `model.ts` and the other rule files re-export them, so existing imports still work.

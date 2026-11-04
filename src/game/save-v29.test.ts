@@ -2,9 +2,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import saveV20 from "./__fixtures__/save-v20.json";
 import saveV28 from "./__fixtures__/save-v28.json";
-import { GOODS, MARKET_PORTS, SAVE_VERSION, advanceMarketStock, createInitialMarketStock, type GameState } from "./model";
+import { GOODS, MARKET_PORTS, SAVE_VERSION, advanceMarketStock, createInitialMarketStock, createNewGame, type GameState } from "./model";
 import { migrateLegacySave, validateSave } from "./save-format";
-import { listSaveBackups, openGameSession, readCommandLog, readSaveBackup } from "./storage";
+import { dismissMarketNotice, listSaveBackups, openGameSession, readCommandLog, readSaveBackup, startCommandLog } from "./storage";
 
 const T0 = saveV28.voyage ? (saveV28.voyage as { startedAt: number }).startedAt + 1_000 : 1_000;
 
@@ -74,6 +74,40 @@ describe("upgrading on disk", () => {
     expect(backup?.save).toEqual(saveV28);
     expect(backup?.log?.meta).toEqual(log);
     expect((await listSaveBackups()).map((entry) => entry.saveVersion)).toEqual([28]);
+  });
+});
+
+describe("the notice about the new markets", () => {
+  beforeEach(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.deleteDatabase("bengal-trader");
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      }),
+  );
+
+  it("is pending after an upgrade, stays pending until read, and never returns", async () => {
+    await writeRaw("captain", saveV28);
+    expect((await openGameSession(T0)).marketNoticePending).toBe(true);
+    expect((await openGameSession(T0)).marketNoticePending).toBe(true);
+    await dismissMarketNotice();
+    expect((await openGameSession(T0)).marketNoticePending).toBe(false);
+  });
+
+  it("is pending after an upgrade from an older version too", async () => {
+    await writeRaw("captain", saveV20);
+    expect((await openGameSession(T0)).marketNoticePending).toBe(true);
+  });
+
+  it("isn't shown for a save already on version 29, or after starting a new game", async () => {
+    await writeRaw("captain", createNewGame("Maya", 8));
+    expect((await openGameSession(T0)).marketNoticePending).toBe(false);
+
+    await writeRaw("captain", saveV28);
+    expect((await openGameSession(T0)).marketNoticePending).toBe(true);
+    await startCommandLog(createNewGame("Maya", 8));
+    expect((await openGameSession(T0)).marketNoticePending).toBe(false);
   });
 });
 

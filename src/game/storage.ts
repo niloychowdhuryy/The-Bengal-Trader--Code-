@@ -61,6 +61,10 @@ function runWriteTransaction(
   );
 }
 
+const MARKET_NOTICE_KEY = "notice:market-v29";
+/** Saves from before this version played under different town markets. */
+const MARKET_CHANGE_VERSION = 29;
+
 // Writes run strictly in order, so a slow save can't overtake a newer one.
 let writeQueue: Promise<unknown> = Promise.resolve();
 
@@ -301,6 +305,17 @@ export interface GameSession {
   log: CommandLogMeta | null;
   /** Set when a saved voyage resumed on load: the entry to record for that resume. */
   resumedVoyage: { pausedAt: number; at: number } | null;
+  /** The save came from before the version 29 markets, and its player hasn't been told yet. */
+  marketNoticePending: boolean;
+}
+
+/** Marks the notice about the version 29 markets as read. */
+export function dismissMarketNotice(): Promise<void> {
+  return enqueueWrite(() =>
+    writeUnlessNewer((store) => {
+      store.delete(MARKET_NOTICE_KEY);
+    }),
+  );
 }
 
 /** Loads the save, starting a log for it if it predates commands. */
@@ -310,7 +325,8 @@ export async function openGameSession(now = Date.now()): Promise<GameSession> {
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(SAVE_STORE, "readwrite");
     const store = transaction.objectStore(SAVE_STORE);
-    let session: GameSession = { game: null, log: null, resumedVoyage: null };
+    let session: GameSession = { game: null, log: null, resumedVoyage: null, marketNoticePending: false };
+    const noticeRequest = store.get(MARKET_NOTICE_KEY);
     const metaRequest = store.get(LOG_META_KEY);
     const saveRequest = store.get(SAVE_KEY);
     saveRequest.onsuccess = () => {
@@ -322,8 +338,10 @@ export async function openGameSession(now = Date.now()): Promise<GameSession> {
         // Replaying old commands under changed rules wouldn't rebuild this game, so a
         // migrated save starts a new history from where it is now.
         const migrated = saveRequest.result.version !== game.version;
+        const noticeWaiting = noticeRequest.result === true;
         if (meta && !migrated) {
           session = {
+            marketNoticePending: noticeWaiting,
             game,
             log: meta,
             resumedVoyage: game.voyage
@@ -344,7 +362,11 @@ export async function openGameSession(now = Date.now()): Promise<GameSession> {
             store.put(syncSelectedShip(game), SAVE_KEY);
             store.put(syncSelectedShip(game), LOG_BASE_KEY);
             store.put(log, LOG_META_KEY);
-            session = { game, log, resumedVoyage: null };
+            const before = Number(saveRequest.result.version ?? 0);
+            const newlyUpgraded = migrated && before < MARKET_CHANGE_VERSION;
+            // Kept with the save, so it's still there if the game closes before it's read.
+            if (newlyUpgraded) store.put(true, MARKET_NOTICE_KEY);
+            session = { game, log, resumedVoyage: null, marketNoticePending: noticeWaiting || newlyUpgraded };
           };
           if (migrated) {
             writeBackup(store, "migration", at, () => {
@@ -397,6 +419,7 @@ export function startCommandLog(game: GameState): Promise<void> {
         store.put(state, SAVE_KEY);
         store.put(state, LOG_BASE_KEY);
         store.put(log, LOG_META_KEY);
+        store.delete(MARKET_NOTICE_KEY);
       });
     }),
   );

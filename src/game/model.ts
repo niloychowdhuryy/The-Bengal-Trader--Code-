@@ -1249,6 +1249,11 @@ function addAutomatedTradeActivity(
 }
 
 
+/** Running routes stopped in port, which won't sail again until something changes. */
+export function countWaitingRoutes(state: Pick<GameState, "fleet">): number {
+  return state.fleet.filter(({ automatedRoute: route }) => route?.status === "running" && route.waiting).length;
+}
+
 export interface RouteLoad {
   units: Partial<Record<GoodId, number>>;
   cost: number;

@@ -2,9 +2,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { SaveBackupPanel } from "./components/SaveBackupPanel";
-import { createNewGame } from "./game/model";
+import { advanceWorld, buyPlayerShip, configureAutomatedTradeRoute, createNewGame } from "./game/model";
 import { loadGame, readRawSave, readSaveBackup } from "./game/storage";
 import saveV20 from "./game/__fixtures__/save-v20.json";
+import saveV28 from "./game/__fixtures__/save-v28.json";
 
 function resetDatabase(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -40,6 +41,54 @@ async function openBackups() {
 
 describe("keeping saves safe", () => {
   beforeEach(resetDatabase);
+
+  it("tells a player once that the markets changed, and points to their routes", async () => {
+    await writeRawSave(saveV28);
+    const first = render(<App />);
+    const notice = await screen.findByRole("dialog", { name: "Bengal's markets have changed" });
+    expect(notice).toHaveTextContent("Your automated routes may no longer be profitable.");
+    fireEvent.click(screen.getByRole("button", { name: "Later" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    first.unmount();
+
+    await waitFor(async () => {
+      render(<App />);
+      await screen.findByLabelText(/^Coins /);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("shows a marker that opens the fleet when a route has stopped", async () => {
+    const fresh = createNewGame("Maya", 8);
+    const docked = buyPlayerShip({
+      ...fresh,
+      npcMerchants: [],
+      npcActivity: [],
+      coins: 200_000,
+      highestCoins: 200_000,
+      currentTown: "hooghly",
+      selectedTown: "hooghly",
+      visitedTowns: ["dhaka", "hooghly", "tanda"],
+    }, "bora").state;
+    const shipId = docked.fleet.at(-1)!.id;
+    const routed = configureAutomatedTradeRoute(
+      docked,
+      shipId,
+      "tanda",
+      [{ good: "silk", buyAtOrigin: true, sellAtDestination: true }],
+      15_000,
+    ).state;
+    const nextDay = routed.worldDay + 1;
+    const stopped = advanceWorld({ ...routed, sailingDay: nextDay }, nextDay);
+    await writeRawSave({ ...stopped, npcMerchants: fresh.npcMerchants });
+    render(<App />);
+    const marker = await screen.findByRole("button", { name: /1 automated route is waiting/ });
+    expect(marker).toHaveTextContent("1 route waiting");
+    expect(marker.getAttribute("aria-label")).toContain("may no longer be profitable and needs your attention");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(marker);
+    expect(await screen.findByText(/may no longer be profitable and needs your attention/)).toBeInTheDocument();
+  });
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();

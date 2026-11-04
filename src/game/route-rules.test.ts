@@ -7,6 +7,7 @@ import {
   buyPlayerShip,
   cancelAutomatedTradeRoute,
   configureAutomatedTradeRoute,
+  countWaitingRoutes,
   createNewGame,
   getGoodPrice,
   planRouteJourney,
@@ -360,6 +361,17 @@ describe("routes in saves", () => {
     expect(ship.automatedRoute!.waiting?.reason).toBe("margin");
     expect(ship.automationLog.at(-1)?.message).toContain("no round trip would make");
     expect(cancelAutomatedTradeRoute(daysPass(start, 1), SHIP).error).toBeUndefined();
+  });
+
+  it("count as waiting only while running and stopped in port", () => {
+    expect(countWaitingRoutes(routeGame())).toBe(0);
+    const sailing = daysPass(routeGame(), 1);
+    expect(countWaitingRoutes(sailing)).toBe(0);
+    const stopped = daysPass(routeGame({ rules: twoWay("silk"), stock: {} }), 1);
+    expect(countWaitingRoutes(stopped)).toBe(1);
+    expect(countWaitingRoutes(setAutomatedTradeRouteStatus(stopped, SHIP, "paused").state)).toBe(0);
+    const cancelled = cancelAutomatedTradeRoute(stopped, SHIP).state;
+    expect(countWaitingRoutes(cancelled)).toBe(0);
   });
 
   it("upgrade from version 27 owing nothing, and keep trading", () => {
