@@ -222,8 +222,8 @@ Visual polish is committed. The owner has approved a larger online expansion, wh
 - **Milestone N, correct water and land navigation: implemented and committed, phone testing still to come.** Routes are traced from the painted water, journeys can change between boat and cart, and saves are version 20. The map now stays alive when leaving and returning, fixing a broken-map bug, and the port panel is compact and collapsible so it can't permanently hide the south. It comes before cloud saves, Coins, markets and voyage events. The route network doesn't match the painted map and needs retracing, with land legs and boat-to-cart transitions where the map needs them.
 - **Milestone T, individual town identities:** every town gets its own look, layout and landmarks, with every important building functional. Built with Stage 9; see [TOWN_IDENTITY_PLAN.md](./TOWN_IDENTITY_PLAN.md).
 
-- **At least 25 active NPC traders: implemented, awaiting review.** 26 merchants with real ships, cargo and purses trade across the shared market. See `src/game/npc.ts`. Merchants load across several goods, larger ships carry more, and investment is decided from their own trading record.
-- **Economy plan:** six steps, separate from the stages above: 1 simulation harness and baseline (**done**, see [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 2 Coins and save backup (**done**); 3 pricing fix, deeper stock and a single world tick (**done**, results in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 4 26 NPC merchants and recovery from a player dead end (**done**); 5 offline leaderboards (**done**, focused tests only until the next full checkpoint); 6 review of time-away progression, which is **not approved**.
+- **At least 25 active NPC traders: implemented.** 26 merchants with real ships, cargo and purses trade across the shared market. See `src/game/npc.ts`. Merchants load across several goods, larger ships carry more, and investment is decided from their own trading record.
+- **Economy plan:** six steps, separate from the stages above: 1 simulation harness and baseline (**done**, see [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 2 Coins and save backup (**done**); 3 pricing fix, deeper stock and a single world tick (**done**, results in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md)); 4 26 NPC merchants and recovery from a player dead end (**done**); 5 offline leaderboards (**done**); 6 review of time-away progression, which is **not approved**.
 - **Economy balancing requirements, owner's decision:** these must be built into later simulation and balancing work, and not dropped when NPCs and leaderboards arrive. Simulations check them from the stage that changes each system, and the full balancing pass must meet all three.
   1. **Automated trading** must be profitable and useful, but must not outperform active trading so significantly that manual play becomes pointless. At the baseline, a Bora on a route earns 7.88 gold a day against 6.45 for manual trading.
   2. **Delivery contracts** need a proper profitability and risk model, so a player has a genuine financial incentive to accept suitable ones. At the baseline, only 1 of 15 pays more than the goods handed over.
@@ -236,7 +236,44 @@ Visual polish is committed. The owner has approved a larger online expansion, wh
   - Contracts need meaningful profitability, and warehouses genuine strategic value.
   - Offline merchant leaderboards, for wealth and influence (Economy Plan Step 5): implemented. Rules, valuation and the 5-day schedule are in [GAME_RULES.md](./GAME_RULES.md). Influence is personal reputation alone for the player and merchants, because merchants have no local standing.
   - Future online leaderboards must distinguish real players from NPCs.
-- **Measured, still to be solved:** see "What's still out of balance" in [ECONOMY_BASELINE.md](./ECONOMY_BASELINE.md). Farms are the strongest strategy by far, and only 1 of 15 delivery contracts pays more than its goods.
+- **Economy rebalance:** benchmarks, farm costs, repeating contracts and route rules are done, with a full checkpoint passed on 4 November 2026. See [ECONOMY_REBALANCE_PROPOSAL.md](./ECONOMY_REBALANCE_PROPOSAL.md). Results and the 6 of 20 targets still unmet are in [ECONOMY_BENCHMARKS.md](./ECONOMY_BENCHMARKS.md). Delivery contracts stay at 130%, and warehouses and bulk contracts are still to come.
 - **Login and cloud-save setup: postponed by the owner** until the main game is built.
+
+## Planned gameplay features, from the owner's play observations (4 November 2026)
+
+These are separate features, not part of the completed economy rebalance. None is started, and each needs approval first.
+
+### Feature A: distinct and responsive city prices
+
+Make city prices meaningfully distinct, and responsive to local supply, demand and trading activity.
+
+- **Today:** at a new game, opium and lac each have only 2 different prices across the 15 ports, and salt and sugar have 3. The dearest port charges 1.3–1.8× the cheapest for any good. Prices already respond to stock, but in the benchmark runs only about 13–15 of 120 stalls sit 5% or more from their starting price.
+- **Likely work:** give each town a fuller supply and demand profile in `PORT_ECONOMIES`, and review how strongly stock moves prices.
+- **Why it's a big change:** it alters every trade, so merchants, routes, contracts and farms all have to be re-measured against the benchmarks. The rebalance's frozen records stay as the before-picture.
+- **Related:** the approved seasonal and event-driven price changes are a separate, later phase that builds on this.
+
+### Feature B: specialty hints when a city is selected
+
+When a city is selected, show its main produced or specialty goods as a hint about what may be cheaper there, without promising a low price. The hint reads the same data that drives prices, so it can't disagree with the market.
+
+- **Today:** in that data, 8 of the 15 towns have no main produced good at all, and Hooghly has 6. Hints built on it now would be empty for over half the map.
+- **Depends on Feature A,** which should give every town something to show. It should be a small change after that, and any later profile change carries through automatically.
+- **Wording matters:** stock, merchants and the player can all make a "cheap" good dear on the day, so it says "known for", not "cheap here".
+
+### Feature C: reroute or cancel a voyage under way
+
+Let the player reroute or cancel a voyage while it's under way, with clear consequences and no duplicated travel, cargo or costs.
+
+- **Independent of the other two,** and it doesn't change prices.
+- **Main difficulty:** the route planner only works from port to port, and a ship can be mid-river or on a cart road. Planning from there is new work, unless the first version only turns back along the path already travelled.
+- **Must be decided and tested:** what a change costs in days, travel events already rolled for the voyage, contract deadlines, and arrival encounters.
+- **Technical needs:** a new command, so replays stay exact, and probably a new save version for a voyage under way. Days already sailed have already moved the world, so they must not be counted again.
+
+### Recommended order
+
+1. **Feature A, starting with an investigation.** It changes pricing, and it's what Feature B and the later warehouse work rely on.
+2. **Feature B,** straight after A, as a small follow-up.
+3. **Feature C,** at any point, since nothing depends on it. It could go first if a better voyage experience matters more right now.
+4. **Warehouses and bulk contracts,** after A, then seasonal and event-driven prices. Warehouses need prices that differ between places and change over time to have a real purpose.
 
 Current status of everything is in [PROJECT_STATUS_SUMMARY.md](./PROJECT_STATUS_SUMMARY.md). Exit checks are in the plan. Each stage gets its own commit, passing tests and build, and a report. Physical mobile testing is a later dedicated phase.
